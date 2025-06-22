@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Journal Infiniti Kapital</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary: #0f172a;
+      --secondary: #1e293b;
+      --accent: #38bdf8;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --text: #f1f5f9;
+      --light-bg: #334155;
+      --border: #475569;
+    }
+
+    body {
+      background: linear-gradient(135deg, var(--primary), #0c1324);
+      color: var(--text);
+      font-family: 'Poppins', sans-serif;
+      min-height: 100vh;
+      padding: 2rem;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+      padding: 1.5rem;
+      background: rgba(30, 41, 59, 0.7);
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border);
+    }
+
+    h1 {
+      color: var(--accent);
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      text-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
+    }
+
+    .subtitle {
+      font-size: 1.1rem;
+      color: #94a3b8;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    @media (min-width: 768px) {
+      .dashboard {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .stats-card {
+      background: var(--secondary);
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--border);
+    }
+
+    .stats-card h2 {
+      font-size: 1.3rem;
+      margin-bottom: 1.5rem;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+
+    .stat-item {
+      text-align: center;
+      padding: 1rem;
+      background: var(--light-bg);
+      border-radius: 8px;
+    }
+
+    .stat-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin: 0.5rem 0;
+    }
+
+    .stat-label {
+      font-size: 0.9rem;
+      color: #94a3b8;
+    }
+
+    .win-rate {
+      height: 8px;
+      background: var(--light-bg);
+      border-radius: 4px;
+      margin-top: 1rem;
+      overflow: hidden;
+    }
+
+    .win-rate-bar {
+      height: 100%;
+      background: var(--success);
+      border-radius: 4px;
+      width: 65%;
+    }
+
+    .card {
+      background: var(--secondary);
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--border);
+      margin-bottom: 2rem;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (min-width: 640px) {
+      .form-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      .form-grid .span-2 {
+        grid-column: span 2;
+      }
+    }
+
+    .form-group {
+      margin-bottom: 1.2rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: #cbd5e1;
+    }
+
+    .input-icon {
+      position: relative;
+    }
+
+    .input-icon i {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #64748b;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 0.9rem 1rem 0.9rem 2.8rem;
+      background: var(--light-bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    textarea {
+      min-height: 100px;
+      padding-left: 1rem;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+    }
+
+    .result-options {
+      display: flex;
+      gap: 1rem;
+      margin-top: 0.5rem;
+    }
+
+    .result-option {
+      flex: 1;
+      text-align: center;
+      padding: 0.8rem;
+      border-radius: 8px;
+      background: var(--light-bg);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+    }
+
+    .result-option:hover {
+      background: #3f4d66;
+    }
+
+    .result-option.selected {
+      border-color: var(--accent);
+      background: rgba(56, 189, 248, 0.1);
+    }
+
+    .result-option.selected.win {
+      border-color: var(--success);
+      background: rgba(16, 185, 129, 0.1);
+    }
+
+    .result-option.selected.loss {
+      border-color: var(--danger);
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    .result-option.selected.break-even {
+      border-color: var(--warning);
+      background: rgba(245, 158, 11, 0.1);
+    }
+
+    button {
+      background: var(--accent);
+      color: #0f172a;
+      border: none;
+      padding: 1.1rem;
+      width: 100%;
+      font-weight: 600;
+      font-size: 1.1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: 'Poppins', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    button:hover {
+      background: #0ea5e9;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    #mensaje {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      border-radius: 8px;
+      text-align: center;
+      font-weight: 500;
+      display: none;
+    }
+
+    #mensaje.success {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid var(--success);
+      color: var(--success);
+      display: block;
+    }
+
+    #mensaje.error {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid var(--danger);
+      color: var(--danger);
+      display: block;
+    }
+
+    .trade-history {
+      margin-top: 3rem;
+    }
+
+    .trade-history h2 {
+      font-size: 1.5rem;
+      margin-bottom: 1.5rem;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+    }
+
+    .trade-item {
+      background: var(--secondary);
+      border-radius: 10px;
+      padding: 1.2rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .trade-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 1.2rem;
+      flex-shrink: 0;
+      font-size: 1.5rem;
+    }
+
+    .trade-icon.win {
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--success);
+    }
+
+    .trade-icon.loss {
+      background: rgba(239, 68, 68, 0.2);
+      color: var(--danger);
+    }
+
+    .trade-icon.break-even {
+      background: rgba(245, 158, 11, 0.2);
+      color: var(--warning);
+    }
+
+    .trade-info {
+      flex-grow: 1;
+    }
+
+    .trade-pair {
+      font-weight: 600;
+      font-size: 1.1rem;
+      margin-bottom: 0.3rem;
+    }
+
+    .trade-details {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      font-size: 0.9rem;
+      color: #94a3b8;
+    }
+
+    .trade-rr {
+      font-weight: 600;
+    }
+
+    .trade-rr.positive {
+      color: var(--success);
+    }
+
+    .trade-rr.negative {
+      color: var(--danger);
+    }
+
+    .trade-rr.neutral {
+      color: var(--warning);
+    }
+
+    .trade-date {
+      margin-left: auto;
+      color: #94a3b8;
+      font-size: 0.85rem;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 3rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border);
+      color: #64748b;
+      font-size: 0.9rem;
+    }
+
+    .required:after {
+      content: " *";
+      color: var(--danger);
+    }
+
+    /* Animaciones */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .card, .stats-card, .trade-item {
+      animation: fadeIn 0.5s ease-out forwards;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1><i class="fas fa-chart-line"></i> Journal Infiniti Kapital</h1>
+      <p class="subtitle">Registra, analiza y optimiza tus operaciones de trading para maximizar tu rentabilidad</p>
+    </header>
+
+    <div class="dashboard">
+      <div class="stats-card">
+        <h2><i class="fas fa-chart-pie"></i> Estadísticas de Trading</h2>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-value">42</div>
+            <div class="stat-label">Operaciones</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">65%</div>
+            <div class="stat-label">Tasa de acierto</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">2.8</div>
+            <div class="stat-label">Ratio Promedio</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">+18.5%</div>
+            <div class="stat-label">Rentabilidad</div>
+          </div>
+        </div>
+        <div class="win-rate">
+          <div class="win-rate-bar"></div>
+        </div>
+      </div>
+
+      <div class="stats-card">
+        <h2><i class="fas fa-trophy"></i> Mejores Setups</h2>
+        <div class="setup-list">
+          <div class="setup-item">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.8rem;">
+              <span>BOS + FVG</span>
+              <span>78% Éxito</span>
+            </div>
+            <div style="height: 6px; background: var(--light-bg); border-radius: 3px; overflow: hidden;">
+              <div style="height: 100%; width: 78%; background: var(--success);"></div>
+            </div>
+          </div>
+          <div class="setup-item" style="margin-top: 1.2rem;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.8rem;">
+              <span>Liquidity Grab</span>
+              <span>65% Éxito</span>
+            </div>
+            <div style="height: 6px; background: var(--light-bg); border-radius: 3px; overflow: hidden;">
+              <div style="height: 100%; width: 65%; background: var(--success);"></div>
+            </div>
+          </div>
+          <div class="setup-item" style="margin-top: 1.2rem;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.8rem;">
+              <span>Order Block</span>
+              <span>58% Éxito</span>
+            </div>
+            <div style="height: 6px; background: var(--light-bg); border-radius: 3px; overflow: hidden;">
+              <div style="height: 100%; width: 58%; background: var(--warning);"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-bottom: 1.5rem; color: var(--accent);"><i class="fas fa-plus-circle"></i> Nueva Operación</h2>
+      <form id="journalForm" class="form-grid">
+        <div class="form-group span-2">
+          <label for="fecha" class="required">Fecha de la operación</label>
+          <div class="input-icon">
+            <i class="fas fa-calendar-alt"></i>
+            <input type="date" id="fecha" name="Fecha" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="par" class="required">Par de divisas</label>
+          <div class="input-icon">
+            <i class="fas fa-money-bill-wave"></i>
+            <input type="text" id="par" name="Par" placeholder="Ej: EURUSD" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="rr" class="required">Riesgo/Beneficio (RR)</label>
+          <div class="input-icon">
+            <i class="fas fa-balance-scale"></i>
+            <input type="number" step="0.01" id="rr" name="RR" placeholder="Ej: 1.5" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="setup" class="required">Setup utilizado</label>
+          <div class="input-icon">
+            <i class="fas fa-cogs"></i>
+            <input type="text" id="setup" name="Setup" placeholder="Ej: BOS + FVG" required>
+          </div>
+        </div>
+
+        <div class="form-group span-2">
+          <label class="required">Resultado</label>
+          <div class="result-options">
+            <div class="result-option win" data-value="Ganancia">
+              <i class="fas fa-check-circle"></i> Ganancia
+            </div>
+            <div class="result-option loss" data-value="Pérdida">
+              <i class="fas fa-times-circle"></i> Pérdida
+            </div>
+            <div class="result-option break-even" data-value="BE">
+              <i class="fas fa-exchange-alt"></i> Break Even
+            </div>
+          </div>
+          <input type="hidden" id="resultado" name="Resultado" required>
+        </div>
+
+        <div class="form-group span-2">
+          <label for="comentario">Comentario y observaciones</label>
+          <textarea id="comentario" name="Comentario" placeholder="Detalles de la operación, lecciones aprendidas, emociones..."></textarea>
+        </div>
+
+        <div class="form-group span-2">
+          <button type="submit" id="submitBtn">
+            <i class="fas fa-save"></i> Registrar Operación
+          </button>
+          <div id="mensaje"></div>
+        </div>
+      </form>
+    </div>
+
+    <div class="trade-history">
+      <h2><i class="fas fa-history"></i> Historial Reciente</h2>
+      
+      <div class="trade-item">
+        <div class="trade-icon win">
+          <i class="fas fa-check"></i>
+        </div>
+        <div class="trade-info">
+          <div class="trade-pair">EURUSD</div>
+          <div class="trade-details">
+            <span>BOS + FVG</span>
+            <span class="trade-rr positive">RR: 2.4</span>
+          </div>
+        </div>
+        <div class="trade-date">15 Jun 2023</div>
+      </div>
+      
+      <div class="trade-item">
+        <div class="trade-icon break-even">
+          <i class="fas fa-exchange-alt"></i>
+        </div>
+        <div class="trade-info">
+          <div class="trade-pair">GBPJPY</div>
+          <div class="trade-details">
+            <span>Liquidity Grab</span>
+            <span class="trade-rr neutral">RR: 1.0</span>
+          </div>
+        </div>
+        <div class="trade-date">14 Jun 2023</div>
+      </div>
+      
+      <div class="trade-item">
+        <div class="trade-icon loss">
+          <i class="fas fa-times"></i>
+        </div>
+        <div class="trade-info">
+          <div class="trade-pair">XAUUSD</div>
+          <div class="trade-details">
+            <span>Order Block</span>
+            <span class="trade-rr negative">RR: 0.8</span>
+          </div>
+        </div>
+        <div class="trade-date">12 Jun 2023</div>
+      </div>
+      
+      <div class="trade-item">
+        <div class="trade-icon win">
+          <i class="fas fa-check"></i>
+        </div>
+        <div class="trade-info">
+          <div class="trade-pair">USDJPY</div>
+          <div class="trade-details">
+            <span>BOS + FVG</span>
+            <span class="trade-rr positive">RR: 3.1</span>
+          </div>
+        </div>
+        <div class="trade-date">10 Jun 2023</div>
+      </div>
+    </div>
+
+    <footer>
+      <p>Journal Infiniti Kapital &copy; 2023 - Herramienta profesional para traders serios</p>
+      <p style="margin-top: 0.5rem;">Registra, analiza y mejora tu estrategia de trading</p>
+    </footer>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const form = document.getElementById('journalForm');
+      const resultadoInput = document.getElementById('resultado');
+      const mensajeDiv = document.getElementById('mensaje');
+      const resultOptions = document.querySelectorAll('.result-option');
+      
+      // Selección de resultado
+      resultOptions.forEach(option => {
+        option.addEventListener('click', function() {
+          // Remover selección previa
+          resultOptions.forEach(opt => opt.classList.remove('selected'));
+          
+          // Seleccionar la opción actual
+          this.classList.add('selected');
+          this.classList.add(this.classList.contains('win') ? 'win' : 
+                            this.classList.contains('loss') ? 'loss' : 'break-even');
+          
+          // Actualizar input oculto
+          resultadoInput.value = this.getAttribute('data-value');
+        });
+      });
+      
+      // Manejo de envío del formulario
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Validación básica
+        if (!resultadoInput.value) {
+          showMessage('Por favor, selecciona un resultado', 'error');
+          return;
+        }
+        
+        // Simular envío
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registrando...';
+        
+        // Simular retraso de red
+        setTimeout(() => {
+          // Mostrar mensaje de éxito
+          showMessage('¡Operación registrada exitosamente!', 'success');
+          
+          // Resetear formulario
+          form.reset();
+          resultOptions.forEach(opt => opt.classList.remove('selected', 'win', 'loss', 'break-even'));
+          resultadoInput.value = '';
+          
+          // Restaurar botón
+          setTimeout(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-save"></i> Registrar Operación';
+          }, 2000);
+        }, 1500);
+      });
+      
+      // Función para mostrar mensajes
+      function showMessage(text, type) {
+        mensajeDiv.textContent = text;
+        mensajeDiv.className = '';
+        mensajeDiv.classList.add(type);
+        
+        // Ocultar mensaje después de 5 segundos
+        setTimeout(() => {
+          mensajeDiv.style.display = 'none';
+        }, 5000);
+      }
+    });
+  </script>
+</body>
+</html>
