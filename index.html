@@ -6,11 +6,12 @@
     <title>INFINITI KAPITAL - Journal Profesional</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --primary: #0f172a;
             --secondary: #1e293b;
-            --accent: #d4af37;
+            --accent: #3ecf8e;
             --success: #10b981;
             --warning: #f59e0b;
             --danger: #ef4444;
@@ -145,7 +146,7 @@
         }
         
         .nav-item:hover, .nav-item.active {
-            background: rgba(212, 175, 55, 0.1);
+            background: rgba(62, 207, 142, 0.1);
             color: var(--accent);
         }
         
@@ -202,7 +203,7 @@
         }
         
         .btn-icon:hover {
-            color: #c9a227;
+            color: #2fb877;
         }
         
         /* Grid Placement */
@@ -276,6 +277,11 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .progress-tracker-btn:hover {
+            background: #2fb877;
         }
         
         .metrics-grid {
@@ -340,6 +346,13 @@
             border-radius: 8px;
             padding: 15px;
             border: 1px solid var(--border);
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .trade-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
         
         .trade-pair {
@@ -557,6 +570,11 @@
             border-radius: 8px;
             font-weight: 600;
             cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background: #2fb877;
         }
         
         .btn-secondary {
@@ -566,6 +584,11 @@
             padding: 10px 20px;
             border-radius: 8px;
             cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-secondary:hover {
+            background: #475569;
         }
         
         /* Floating Button */
@@ -586,6 +609,12 @@
             align-items: center;
             justify-content: center;
             z-index: 100;
+            transition: all 0.3s ease;
+        }
+        
+        .add-trade-btn:hover {
+            background: #2fb877;
+            transform: scale(1.1);
         }
         
         /* Section Styles */
@@ -671,7 +700,7 @@
             align-items: center;
             gap: 10px;
             padding: 8px 15px;
-            background: rgba(212, 175, 55, 0.1);
+            background: rgba(62, 207, 142, 0.1);
             border-radius: 20px;
             margin-top: 15px;
         }
@@ -734,10 +763,76 @@
                 grid-template-columns: 1fr;
             }
         }
+        
+        /* Trade Modal */
+        .trade-modal-content {
+            width: 90%;
+            max-width: 600px;
+        }
+        
+        .trade-modal-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        
+        /* Error Message */
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+        
+        /* Supabase Status */
+        .supabase-status {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(30, 41, 59, 0.8);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 100;
+        }
+        
+        .supabase-connected {
+            color: var(--success);
+        }
+        
+        .supabase-disconnected {
+            color: var(--danger);
+        }
+        
+        /* Loading Indicator */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(62, 207, 142, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--accent);
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
-    <!-- Auth Modals -->
+    <!-- Supabase Status Indicator -->
+    <div class="supabase-status">
+        <i id="supabase-status-icon" class="fas fa-plug supabase-disconnected"></i>
+        <span id="supabase-status-text">Supabase: Desconectado</span>
+    </div>
+
+    <!-- Auth Modal -->
     <div id="auth-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -761,7 +856,9 @@
                         <input type="password" id="login-password" class="form-control" placeholder="••••••••">
                     </div>
                     
-                    <button class="btn-primary" id="login-btn">Iniciar Sesión</button>
+                    <button class="btn-primary" id="login-btn">
+                        <span id="login-btn-text">Iniciar Sesión</span>
+                    </button>
                 </div>
                 
                 <div id="register-form" class="auth-form" style="display: none;">
@@ -785,14 +882,88 @@
                         <input type="password" id="register-confirm" class="form-control" placeholder="••••••••">
                     </div>
                     
-                    <button class="btn-primary" id="register-btn">Crear Cuenta</button>
+                    <button class="btn-primary" id="register-btn">
+                        <span id="register-btn-text">Crear Cuenta</span>
+                    </button>
                 </div>
             </div>
             <div class="modal-footer">
                 <div class="user-status">
                     <div class="status-indicator"></div>
-                    <small>Datos almacenados localmente. Para multiusuario real se requiere backend.</small>
+                    <small>Conectado a Supabase: Almacenamiento seguro en la nube</small>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trade Modal -->
+    <div id="trade-modal" class="modal">
+        <div class="modal-content trade-modal-content">
+            <div class="modal-header">
+                <h2 id="trade-modal-title">Agregar Operación</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="trade-error" class="error-message" style="display: none;"></div>
+                <form id="trade-form">
+                    <div class="trade-modal-grid">
+                        <div class="form-group">
+                            <label for="trade-pair">Par</label>
+                            <select id="trade-pair" class="form-control" required>
+                                <option value="EURUSD">EUR/USD</option>
+                                <option value="GBPUSD">GBP/USD</option>
+                                <option value="USDJPY">USD/JPY</option>
+                                <option value="AUDUSD">AUD/USD</option>
+                                <option value="USDCAD">USD/CAD</option>
+                                <option value="EURGBP">EUR/GBP</option>
+                                <option value="EURJPY">EUR/JPY</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="trade-type">Tipo</label>
+                            <select id="trade-type" class="form-control" required>
+                                <option value="buy">Compra</option>
+                                <option value="sell">Venta</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="trade-result">Resultado ($)</label>
+                            <input type="number" id="trade-result" class="form-control" placeholder="Ej: 250.50" step="0.01" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="trade-risk">Riesgo (% del capital)</label>
+                            <input type="number" id="trade-risk" class="form-control" placeholder="Ej: 1.5" step="0.1" min="0.1" max="5" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="trade-reward">Beneficio Esperado (%)</label>
+                            <input type="number" id="trade-reward" class="form-control" placeholder="Ej: 3.0" step="0.1" min="0.1" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="trade-date">Fecha</label>
+                            <input type="date" id="trade-date" class="form-control" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="trade-challenge">Pertenece al Challenge</label>
+                            <select id="trade-challenge" class="form-control" required>
+                                <option value="yes">Sí</option>
+                                <option value="no">No</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <button type="button" class="btn-secondary" id="cancel-trade">Cancelar</button>
+                        <button type="submit" class="btn-primary" id="save-trade">
+                            <span id="save-trade-text">Guardar Operación</span>
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -802,6 +973,9 @@
         <div class="logo">
             <div class="logo-infiniti">INFINITI</div>
             <div class="logo-kapital">KAPITAL</div>
+            <div style="font-size: 0.7rem; color: var(--text-secondary); margin-top: 5px;">
+                Journal Profesional de Trading
+            </div>
         </div>
         
         <nav class="nav-menu">
@@ -845,7 +1019,7 @@
         
         <div class="user-status" style="margin: 20px 15px 0;">
             <div class="status-indicator" id="user-status-indicator"></div>
-            <small id="user-status-text">Sin autenticar (modo local)</small>
+            <small id="user-status-text">Sin autenticar (Conectado a Supabase)</small>
         </div>
     </aside>
     
@@ -859,7 +1033,7 @@
         
         <div class="user-controls">
             <div class="user-info">
-                <div class="user-avatar" id="user-avatar">AT</div>
+                <div class="user-avatar" id="user-avatar">IN</div>
                 <div class="user-name" id="user-display-name">Invitado</div>
             </div>
             <button class="btn-icon" id="auth-btn">
@@ -884,15 +1058,229 @@
                     <h2 class="card-title" id="welcome-title">Bienvenido, Invitado</h2>
                 </div>
                 <div class="welcome-content">
-                    <p class="welcome-text" id="welcome-message">Por favor inicia sesión para acceder a todas las funciones y guardar tus datos.</p>
+                    <p class="welcome-text" id="welcome-message">Por favor inicia sesión para acceder a todas las funciones y guardar tus datos en Supabase.</p>
                     <button class="progress-tracker-btn" id="auth-welcome-btn">
                         <i class="fas fa-user"></i> Iniciar Sesión
                     </button>
                 </div>
             </div>
             
-            <!-- Resto del dashboard... (igual que antes) -->
+            <!-- Metrics Summary -->
+            <div class="card metrics-summary">
+                <div class="card-header">
+                    <h2 class="card-title">Resumen de Métricas</h2>
+                    <div class="card-actions">
+                        <button class="btn-icon"><i class="fas fa-sync-alt"></i></button>
+                    </div>
+                </div>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-value" id="metric-total-profit">$0.00</div>
+                        <div class="metric-label">Beneficio Total</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="metric-win-rate">0.0%</div>
+                        <div class="metric-label">Tasa de Acierto</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="metric-profit-factor">0.00</div>
+                        <div class="metric-label">Factor de Beneficio</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="metric-risk-reward">0.00</div>
+                        <div class="metric-label">Riesgo/Beneficio</div>
+                    </div>
+                </div>
+                
+                <div class="summary-card">
+                    <div class="summary-title">Rendimiento General</div>
+                    <div class="summary-content">
+                        <p>Tu rendimiento actual es <strong>neutral</strong>. Continúa analizando tus operaciones para mejorar tus resultados.</p>
+                    </div>
+                </div>
+            </div>
             
+            <!-- Profit Factor -->
+            <div class="card profit-factor">
+                <div class="card-header">
+                    <h2 class="card-title">Factor de Beneficio</h2>
+                    <div class="card-actions">
+                        <button class="btn-icon"><i class="fas fa-info-circle"></i></button>
+                    </div>
+                </div>
+                <div class="metric-value">1.86</div>
+                <div class="metric-label">Meta: > 1.75</div>
+                <div class="chart-container">
+                    <canvas id="profit-factor-chart"></canvas>
+                </div>
+            </div>
+            
+            <!-- Risk Reward Ratio -->
+            <div class="card risk-reward">
+                <div class="card-header">
+                    <h2 class="card-title">Ratio Riesgo/Beneficio</h2>
+                    <div class="card-actions">
+                        <button class="btn-icon"><i class="fas fa-info-circle"></i></button>
+                    </div>
+                </div>
+                <div class="metric-value">1:2.8</div>
+                <div class="metric-label">Meta: > 1:2</div>
+                <div class="chart-container">
+                    <canvas id="risk-reward-chart"></canvas>
+                </div>
+            </div>
+            
+            <!-- Win Trades -->
+            <div class="card win-trades">
+                <div class="card-header">
+                    <h2 class="card-title">Operaciones Ganadoras</h2>
+                    <div class="card-actions">
+                        <button class="btn-icon"><i class="fas fa-info-circle"></i></button>
+                    </div>
+                </div>
+                <div class="metric-value" id="metric-win-trades">0/0</div>
+                <div class="metric-label">Meta: > 65%</div>
+                <div class="chart-container">
+                    <canvas id="win-trades-chart"></canvas>
+                </div>
+            </div>
+            
+            <!-- Distribution -->
+            <div class="card distribution-card">
+                <div class="card-header">
+                    <h2 class="card-title">Distribución de Activos</h2>
+                    <div class="card-actions">
+                        <button class="btn-icon"><i class="fas fa-expand"></i></button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="distribution-chart"></canvas>
+                </div>
+            </div>
+            
+            <!-- Recent Trades -->
+            <div class="card recent-trades">
+                <div class="card-header">
+                    <h2 class="card-title">Operaciones Recientes</h2>
+                    <div class="card-actions">
+                        <button class="btn-icon"><i class="fas fa-plus"></i></button>
+                    </div>
+                </div>
+                <div id="recent-trades-container">
+                    <div class="empty-state">
+                        <i class="fas fa-exchange-alt"></i>
+                        <p>No hay operaciones registradas</p>
+                        <button class="btn-primary" id="add-first-trade">Agregar Operación</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Balance Evolution -->
+            <div class="card balance-evolution">
+                <div class="card-header">
+                    <h2 class="card-title">Evolución del Balance</h2>
+                    <div class="card-actions">
+                        <button class="btn-icon"><i class="fas fa-expand"></i></button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="balance-chart"></canvas>
+                </div>
+            </div>
+            
+            <!-- Risk Analysis -->
+            <div class="card risk-analysis">
+                <div class="card-header">
+                    <h2 class="card-title">Análisis de Riesgo</h2>
+                    <div class="card-actions">
+                        <button class="btn-icon"><i class="fas fa-expand"></i></button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="risk-chart"></canvas>
+                </div>
+                
+                <div class="risk-levels">
+                    <div class="risk-card">
+                        <div class="risk-value risk-daily">1.2%</div>
+                        <div class="risk-label">Riesgo Diario</div>
+                    </div>
+                    <div class="risk-card">
+                        <div class="risk-value risk-weekly">4.8%</div>
+                        <div class="risk-label">Riesgo Semanal</div>
+                    </div>
+                    <div class="risk-card">
+                        <div class="risk-value risk-monthly">9.6%</div>
+                        <div class="risk-label">Riesgo Mensual</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- News Card -->
+            <div class="card news-card">
+                <div class="card-header">
+                    <h2 class="card-title">Noticias del Mercado</h2>
+                    <div class="card-actions">
+                        <button class="btn-icon"><i class="fas fa-rss"></i></button>
+                    </div>
+                </div>
+                <div class="welcome-content">
+                    <div class="summary-card">
+                        <div class="summary-title">Fed mantiene tasas estables</div>
+                        <div class="summary-content">
+                            <p>La Reserva Federal ha decidido mantener las tasas de interés sin cambios en su reunión de junio, citando una inflación persistente pero moderada.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="summary-card" style="margin-top: 15px; background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.2);">
+                        <div class="summary-title" style="color: #3b82f6;">EUR/USD alcanza máximo de 3 meses</div>
+                        <div class="summary-content">
+                            <p>El par EUR/USD ha subido un 2.3% esta semana, alcanzando su nivel más alto desde marzo debido a la debilidad del dólar.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Challenge Card -->
+            <div class="card challenge-card">
+                <div class="card-header">
+                    <h2 class="card-title">Challenge de Trading</h2>
+                    <div class="card-actions">
+                        <button class="btn-icon"><i class="fas fa-trophy"></i></button>
+                    </div>
+                </div>
+                <div class="challenge-progress">
+                    <div class="progress-container">
+                        <div class="progress-labels">
+                            <span>Inicio</span>
+                            <span id="challenge-progress-text">0%</span>
+                            <span>Meta: $10,000</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress" id="challenge-progress-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="challenge-stats">
+                        <div class="challenge-stat">
+                            <div class="challenge-stat-value" id="challenge-profit">$0</div>
+                            <div class="challenge-stat-label">Beneficio</div>
+                        </div>
+                        <div class="challenge-stat">
+                            <div class="challenge-stat-value" id="challenge-drawdown">0.0%</div>
+                            <div class="challenge-stat-label">Drawdown</div>
+                        </div>
+                        <div class="challenge-stat">
+                            <div class="challenge-stat-value" id="challenge-trades">0</div>
+                            <div class="challenge-stat-label">Operaciones</div>
+                        </div>
+                        <div class="challenge-stat">
+                            <div class="challenge-stat-value" id="challenge-winrate">0.0%</div>
+                            <div class="challenge-stat-label">Tasa de Acierto</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
         
         <!-- Configuración Section - Mejorada para multiusuario -->
@@ -928,37 +1316,24 @@
                     </div>
                     
                     <h3 style="margin: 25px 0 15px; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 10px;">
-                        Configuración Multiusuario
+                        Configuración de Supabase
                     </h3>
                     
+                    <div class="form-group">
+                        <label>URL de Supabase</label>
+                        <input type="text" id="supabase-url" class="form-control" placeholder="https://tu-id.supabase.co">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Clave Pública de Supabase</label>
+                        <input type="password" id="supabase-key" class="form-control" placeholder="tu_clave_publica">
+                    </div>
+                    
                     <div class="summary-card">
-                        <div class="summary-title">Preparación para Backend</div>
+                        <div class="summary-title">Estado de Conexión</div>
                         <div class="summary-content">
-                            <p>Para habilitar el sistema multiusuario completo, necesitarás:</p>
-                            <ul style="padding-left: 20px; margin-top: 10px;">
-                                <li>Servidor backend (Node.js, Python, etc.)</li>
-                                <li>Base de datos (PostgreSQL, MongoDB, Firebase)</li>
-                                <li>Implementar autenticación con JWT</li>
-                                <li>API REST para operaciones</li>
-                            </ul>
-                            <p style="margin-top: 15px;">Opciones recomendadas:</p>
-                            <div class="metrics-grid" style="margin-top: 15px;">
-                                <div class="metric-card">
-                                    <i class="fab fa-firebase fa-2x"></i>
-                                    <div class="metric-label">Firebase</div>
-                                </div>
-                                <div class="metric-card">
-                                    <i class="fab fa-google fa-2x"></i>
-                                    <div class="metric-label">Google Cloud</div>
-                                </div>
-                                <div class="metric-card">
-                                    <i class="fas fa-server fa-2x"></i>
-                                    <div class="metric-label">Supabase</div>
-                                </div>
-                                <div class="metric-card">
-                                    <i class="fab fa-node-js fa-2x"></i>
-                                    <div class="metric-label">Node.js</div>
-                                </div>
+                            <div id="supabase-connection-status">
+                                <i class="fas fa-circle-notch loading"></i> Verificando conexión...
                             </div>
                         </div>
                     </div>
@@ -970,8 +1345,26 @@
             </div>
         </div>
         
-        <!-- Resto de secciones... (igual que antes) -->
-        
+        <!-- Operaciones Section -->
+        <div id="operaciones-content" class="section-content">
+            <div class="card section-card">
+                <div class="card-header">
+                    <h2 class="card-title">Gestión de Operaciones</h2>
+                    <button class="btn-primary" id="add-trade-from-operations">
+                        <i class="fas fa-plus"></i> Agregar Operación
+                    </button>
+                </div>
+                <div class="welcome-content">
+                    <div id="operations-container">
+                        <div class="empty-state">
+                            <i class="fas fa-exchange-alt"></i>
+                            <p>No hay operaciones registradas</p>
+                            <button class="btn-primary" id="add-first-trade-operations">Agregar Operación</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </main>
     
     <!-- Floating Button -->
@@ -979,15 +1372,88 @@
         <i class="fas fa-plus"></i>
     </button>
     
-    <!-- Add Trade Modal -->
-    <div id="add-trade-modal" class="modal">
-        <!-- Contenido igual que antes... -->
-    </div>
-
     <script>
+        // Configuración de Supabase
+        const SUPABASE_URL = 'https://zbvrewetfqcedgcwbmoq.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpidnJld2V0ZnFjZWRnY3dibW9xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA3MDc4MjMsImV4cCI6MjA2NjI4MzgyM30.v-cB-sJtCWKKcOCbQTTGyJe6TFQ-IvP1_l75cgLvKDI';
+        
+        // Crear cliente Supabase
+        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+        
+        // =====================================
+        // FUNCIONES DE SUPABASE - CRUD OPERACIONES
+        // =====================================
+        
+        // Obtener operaciones del usuario
+        async function getTrades(userId) {
+            const { data, error } = await supabase
+                .from('trades')
+                .select('*')
+                .eq('user_id', userId)
+                .order('date', { ascending: false });
+
+            if (error) throw error;
+            return data;
+        }
+
+        // Agregar nueva operación
+        async function addTrade(tradeData) {
+            const { data, error } = await supabase
+                .from('trades')
+                .insert([{
+                    user_id: tradeData.userId,
+                    pair: tradeData.pair,
+                    type: tradeData.type,
+                    result: tradeData.result,
+                    risk: tradeData.risk,
+                    reward: tradeData.reward,
+                    in_challenge: tradeData.inChallenge,
+                    date: tradeData.date
+                }]);
+
+            if (error) throw error;
+            return data;
+        }
+
+        // Actualizar operación existente
+        async function updateTrade(tradeId, updates) {
+            const { data, error } = await supabase
+                .from('trades')
+                .update(updates)
+                .eq('id', tradeId);
+
+            if (error) throw error;
+            return data;
+        }
+        
+        // =====================================
+        // RESTO DEL CÓDIGO JS
+        // =====================================
+        
+        // Elementos del DOM
+        const authModal = document.getElementById('auth-modal');
+        const tradeModal = document.getElementById('trade-modal');
+        const authBtn = document.getElementById('auth-btn');
+        const authWelcomeBtn = document.getElementById('auth-welcome-btn');
+        const loginBtn = document.getElementById('login-btn');
+        const registerBtn = document.getElementById('register-btn');
+        const authTabs = document.querySelectorAll('.auth-tab');
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        const tradeForm = document.getElementById('trade-form');
+        const tradeError = document.getElementById('trade-error');
+        const addTradeBtn = document.getElementById('floating-add-trade-btn');
+        const cancelTradeBtn = document.getElementById('cancel-trade');
+        const addFirstTradeBtn = document.getElementById('add-first-trade');
+        const addFirstTradeOperationsBtn = document.getElementById('add-first-trade-operations');
+        const addTradeFromOperationsBtn = document.getElementById('add-trade-from-operations');
+        const saveTradeBtn = document.getElementById('save-trade');
+        const loginBtnText = document.getElementById('login-btn-text');
+        const registerBtnText = document.getElementById('register-btn-text');
+        const saveTradeText = document.getElementById('save-trade-text');
+        
         // Datos de usuarios y estado de autenticación
         let currentUser = null;
-        let users = JSON.parse(localStorage.getItem('infiniti_users')) || [];
         let tradingData = {
             totalProfit: 0,
             winRate: 0,
@@ -1008,15 +1474,35 @@
             trades: []
         };
         
-        // Elementos del DOM
-        const authModal = document.getElementById('auth-modal');
-        const authBtn = document.getElementById('auth-btn');
-        const authWelcomeBtn = document.getElementById('auth-welcome-btn');
-        const loginBtn = document.getElementById('login-btn');
-        const registerBtn = document.getElementById('register-btn');
-        const authTabs = document.querySelectorAll('.auth-tab');
-        const loginForm = document.getElementById('login-form');
-        const registerForm = document.getElementById('register-form');
+        // Estado de carga
+        let isLoading = false;
+        
+        // Verificar conexión con Supabase
+        async function checkSupabaseConnection() {
+            const statusIcon = document.getElementById('supabase-status-icon');
+            const statusText = document.getElementById('supabase-status-text');
+            const connectionStatus = document.getElementById('supabase-connection-status');
+            
+            try {
+                const { data, error } = await supabase
+                    .from('trades')
+                    .select('id')
+                    .limit(1);
+                
+                if (!error) {
+                    statusIcon.className = 'fas fa-plug supabase-connected';
+                    statusText.textContent = 'Supabase: Conectado';
+                    connectionStatus.innerHTML = '<i class="fas fa-check-circle" style="color: var(--success);"></i> Conexión exitosa con Supabase';
+                } else {
+                    throw error;
+                }
+            } catch (error) {
+                console.error('Error de conexión con Supabase:', error);
+                statusIcon.className = 'fas fa-plug supabase-disconnected';
+                statusText.textContent = 'Supabase: Error de conexión';
+                connectionStatus.innerHTML = `<i class="fas fa-exclamation-triangle" style="color: var(--danger);"></i> Error de conexión: ${error.message}`;
+            }
+        }
         
         // Actualizar estado del usuario en la interfaz
         function updateUserStatus() {
@@ -1036,75 +1522,420 @@
                 userName.textContent = currentUser.name;
                 welcomeTitle.textContent = `Bienvenido, ${currentUser.name}`;
                 userAvatar.textContent = currentUser.name.split(' ').map(n => n[0]).join('').substring(0, 2);
+                document.getElementById('welcome-message').textContent = 'Analiza tus operaciones para mejorar tu estrategia de trading.';
             } else {
                 statusIndicator.style.backgroundColor = 'var(--warning)';
-                statusText.textContent = 'Sin autenticar (modo local)';
+                statusText.textContent = 'Sin autenticar (Conectado a Supabase)';
                 configStatusIndicator.style.backgroundColor = 'var(--warning)';
                 configStatusText.textContent = 'Estado: Sin autenticar';
                 userName.textContent = 'Invitado';
                 welcomeTitle.textContent = 'Bienvenido, Invitado';
                 userAvatar.textContent = 'IN';
+                document.getElementById('welcome-message').textContent = 'Por favor inicia sesión para acceder a todas las funciones y guardar tus datos en Supabase.';
             }
         }
         
-        // Funciones de autenticación simuladas
-        function loginUser(email, password) {
-            const user = users.find(u => u.email === email && u.password === password);
-            if (user) {
-                currentUser = user;
-                // En un sistema real, aquí almacenaríamos el token JWT
-                localStorage.setItem('infiniti_current_user', JSON.stringify(user));
+        // Funciones de autenticación con Supabase
+        async function loginUser(email, password) {
+            if (isLoading) return false;
+            isLoading = true;
+            loginBtnText.innerHTML = '<span class="loading"></span> Autenticando...';
+            
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email,
+                    password
+                });
+                
+                if (error) {
+                    throw error;
+                }
+                
+                currentUser = {
+                    id: data.user.id,
+                    email: data.user.email,
+                    name: data.user.user_metadata?.full_name || data.user.email
+                };
+                
+                // Cargar datos de trading del usuario
+                await loadTradingData();
                 updateUserStatus();
+                authModal.style.display = 'none';
                 return true;
+            } catch (error) {
+                console.error('Error al iniciar sesión:', error);
+                alert(`Error al iniciar sesión: ${error.message}`);
+                return false;
+            } finally {
+                isLoading = false;
+                loginBtnText.textContent = 'Iniciar Sesión';
             }
-            return false;
         }
         
-        function registerUser(name, email, password) {
-            // Verificar si el usuario ya existe
-            if (users.some(u => u.email === email)) {
+        async function registerUser(name, email, password) {
+            if (isLoading) return false;
+            isLoading = true;
+            registerBtnText.innerHTML = '<span class="loading"></span> Creando cuenta...';
+            
+            try {
+                const { data, error } = await supabase.auth.signUp({
+                    email,
+                    password,
+                    options: {
+                        data: {
+                            full_name: name
+                        }
+                    }
+                });
+                
+                if (error) {
+                    throw error;
+                }
+                
+                // Crear perfil del usuario
+                await supabase
+                    .from('profiles')
+                    .insert([
+                        { 
+                            id: data.user.id, 
+                            full_name: name 
+                        }
+                    ]);
+                
+                currentUser = {
+                    id: data.user.id,
+                    email: data.user.email,
+                    name: name
+                };
+                
+                updateUserStatus();
+                authModal.style.display = 'none';
+                return true;
+            } catch (error) {
+                console.error('Error al registrar:', error);
+                alert(`Error al registrar: ${error.message}`);
                 return false;
+            } finally {
+                isLoading = false;
+                registerBtnText.textContent = 'Crear Cuenta';
+            }
+        }
+        
+        async function logoutUser() {
+            const { error } = await supabase.auth.signOut();
+            if (error) {
+                console.error('Error al cerrar sesión:', error);
+                return;
             }
             
-            // Crear nuevo usuario
-            const newUser = {
-                id: Date.now().toString(),
-                name,
-                email,
-                password, // En un sistema real, NUNCA almacenaríamos la contraseña en texto plano
-                createdAt: new Date().toISOString()
+            currentUser = null;
+            tradingData = {
+                totalProfit: 0,
+                winRate: 0,
+                profitFactor: 0,
+                riskRewardRatio: 0,
+                winTrades: 0,
+                totalTrades: 0,
+                dailyRisk: 0,
+                weeklyRisk: 0,
+                monthlyRisk: 0,
+                challenge: {
+                    progress: 0,
+                    profit: 0,
+                    drawdown: 0,
+                    trades: 0,
+                    winRate: 0
+                },
+                trades: []
+            };
+            updateUserStatus();
+            updateDashboardMetrics();
+            renderRecentTrades();
+        }
+        
+        // Cargar datos de trading desde Supabase
+        async function loadTradingData() {
+            if (!currentUser) return;
+            
+            try {
+                // Usamos la nueva función getTrades
+                const data = await getTrades(currentUser.id);
+                
+                tradingData.trades = data;
+                updateTradingMetrics();
+                renderRecentTrades();
+            } catch (error) {
+                console.error('Error al cargar operaciones:', error);
+                alert(`Error al cargar operaciones: ${error.message}`);
+            }
+        }
+        
+        // Agregar nueva operación a Supabase
+        async function saveTrade(trade) {
+            if (!currentUser) return;
+            
+            if (isLoading) return;
+            isLoading = true;
+            saveTradeText.innerHTML = '<span class="loading"></span> Guardando...';
+            
+            try {
+                // Usamos la nueva función addTrade
+                const tradeData = {
+                    userId: currentUser.id,
+                    pair: trade.pair,
+                    type: trade.type,
+                    result: trade.result,
+                    risk: trade.risk,
+                    reward: trade.reward,
+                    date: trade.date,
+                    inChallenge: trade.inChallenge
+                };
+                
+                const data = await addTrade(tradeData);
+                
+                // Agregar a datos locales
+                trade.id = data[0].id;
+                tradingData.trades.push(trade);
+                updateTradingMetrics();
+                renderRecentTrades();
+                closeTradeModal();
+            } catch (error) {
+                console.error('Error al guardar operación:', error);
+                tradeError.textContent = `Error al guardar: ${error.message}`;
+                tradeError.style.display = 'block';
+            } finally {
+                isLoading = false;
+                saveTradeText.textContent = 'Guardar Operación';
+            }
+        }
+        
+        // Actualizar métricas de trading
+        function updateTradingMetrics() {
+            const trades = tradingData.trades;
+            
+            if (trades.length === 0) {
+                // Resetear métricas
+                tradingData = {
+                    ...tradingData,
+                    totalProfit: 0,
+                    winRate: 0,
+                    profitFactor: 0,
+                    riskRewardRatio: 0,
+                    winTrades: 0,
+                    totalTrades: 0,
+                    dailyRisk: 0,
+                    weeklyRisk: 0,
+                    monthlyRisk: 0,
+                    challenge: {
+                        progress: 0,
+                        profit: 0,
+                        drawdown: 0,
+                        trades: 0,
+                        winRate: 0
+                    }
+                };
+                return;
+            }
+            
+            // Calcular ganancia total
+            const totalProfit = trades.reduce((sum, trade) => sum + trade.result, 0);
+            
+            // Contar operaciones ganadoras y perdedoras
+            const winTrades = trades.filter(t => t.result > 0).length;
+            const lossTrades = trades.filter(t => t.result < 0).length;
+            const totalTrades = trades.length;
+            const winRate = (winTrades / totalTrades) * 100;
+            
+            // Calcular profit factor
+            const totalWins = trades.filter(t => t.result > 0).reduce((sum, t) => sum + t.result, 0);
+            const totalLosses = Math.abs(trades.filter(t => t.result < 0).reduce((sum, t) => sum + t.result, 0));
+            const profitFactor = totalLosses === 0 ? 0 : totalWins / totalLosses;
+            
+            // Calcular risk-reward ratio promedio
+            const riskRewardSum = trades.reduce((sum, trade) => sum + (trade.reward / trade.risk), 0);
+            const riskRewardRatio = riskRewardSum / totalTrades;
+            
+            // Calcular riesgo diario, semanal y mensual (simplificado)
+            const today = new Date().toISOString().split('T')[0];
+            const dailyRiskTrades = trades.filter(t => t.date === today);
+            const dailyRisk = dailyRiskTrades.reduce((sum, t) => sum + t.risk, 0);
+            
+            // Actualizar objeto tradingData
+            tradingData = {
+                ...tradingData,
+                totalProfit,
+                winRate,
+                profitFactor,
+                riskRewardRatio,
+                winTrades,
+                totalTrades,
+                dailyRisk,
+                weeklyRisk: dailyRisk * 5, // Simplificación: asumir 5 días de trading
+                monthlyRisk: dailyRisk * 20 // Simplificación: asumir 20 días de trading
             };
             
-            users.push(newUser);
-            localStorage.setItem('infiniti_users', JSON.stringify(users));
+            // Actualizar métricas del challenge
+            const challengeTrades = trades.filter(t => t.in_challenge);
+            const challengeProfit = challengeTrades.reduce((sum, t) => sum + t.result, 0);
+            const challengeWinTrades = challengeTrades.filter(t => t.result > 0).length;
+            const challengeTotalTrades = challengeTrades.length;
+            const challengeWinRate = challengeTotalTrades === 0 ? 0 : (challengeWinTrades / challengeTotalTrades) * 100;
             
-            // Autenticar al nuevo usuario
-            currentUser = newUser;
-            localStorage.setItem('infiniti_current_user', JSON.stringify(newUser));
-            updateUserStatus();
-            
-            return true;
+            tradingData.challenge = {
+                progress: Math.min(100, (challengeProfit / 10000) * 100), // Meta de $10,000
+                profit: challengeProfit,
+                drawdown: 5.2, // Esto debería calcularse
+                trades: challengeTotalTrades,
+                winRate: challengeWinRate
+            };
         }
         
-        function logoutUser() {
-            currentUser = null;
-            localStorage.removeItem('infiniti_current_user');
-            updateUserStatus();
+        // Actualizar métricas en el dashboard
+        function updateDashboardMetrics() {
+            document.getElementById('metric-total-profit').textContent = 
+                `$${tradingData.totalProfit.toFixed(2)}`;
+            
+            document.getElementById('metric-win-rate').textContent = 
+                `${tradingData.winRate.toFixed(1)}%`;
+            
+            document.getElementById('metric-profit-factor').textContent = 
+                tradingData.profitFactor.toFixed(2);
+            
+            document.getElementById('metric-risk-reward').textContent = 
+                tradingData.riskRewardRatio.toFixed(2);
+            
+            document.getElementById('metric-win-trades').textContent = 
+                `${tradingData.winTrades}/${tradingData.totalTrades}`;
+            
+            // Actualizar tarjetas de riesgo
+            document.querySelector('.risk-daily').textContent = 
+                `${tradingData.dailyRisk.toFixed(1)}%`;
+            document.querySelector('.risk-weekly').textContent = 
+                `${tradingData.weeklyRisk.toFixed(1)}%`;
+            document.querySelector('.risk-monthly').textContent = 
+                `${tradingData.monthlyRisk.toFixed(1)}%`;
+            
+            // Actualizar challenge
+            document.getElementById('challenge-progress-bar').style.width = 
+                `${tradingData.challenge.progress}%`;
+            document.getElementById('challenge-progress-text').textContent = 
+                `${tradingData.challenge.progress.toFixed(1)}%`;
+            document.getElementById('challenge-profit').textContent = 
+                `$${tradingData.challenge.profit.toFixed(2)}`;
+            document.getElementById('challenge-drawdown').textContent = 
+                `${tradingData.challenge.drawdown.toFixed(1)}%`;
+            document.getElementById('challenge-trades').textContent = 
+                tradingData.challenge.trades;
+            document.getElementById('challenge-winrate').textContent = 
+                `${tradingData.challenge.winRate.toFixed(1)}%`;
+        }
+        
+        // Renderizar operaciones recientes
+        function renderRecentTrades() {
+            const container = document.getElementById('recent-trades-container');
+            if (!container) return;
+            
+            const recentTrades = [...tradingData.trades].reverse().slice(0, 4);
+            
+            if (recentTrades.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exchange-alt"></i>
+                        <p>No hay operaciones registradas</p>
+                        <button class="btn-primary" id="add-first-trade">Agregar Operación</button>
+                    </div>
+                `;
+                document.getElementById('add-first-trade')?.addEventListener('click', () => {
+                    openTradeModal();
+                });
+                return;
+            }
+            
+            let html = '<div class="trades-grid">';
+            
+            recentTrades.forEach(trade => {
+                const profitClass = trade.result >= 0 ? 'trade-profit' : 'trade-loss';
+                const sign = trade.result >= 0 ? '+' : '';
+                
+                html += `
+                    <div class="trade-item">
+                        <div class="trade-pair">${trade.pair}</div>
+                        <div class="trade-amount ${profitClass}">${sign}${trade.result.toFixed(2)}</div>
+                        <div class="trade-meta">
+                            <span>${trade.type === 'buy' ? 'Compra' : 'Venta'}</span>
+                            <span>${trade.date}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+        
+        // Abrir modal para agregar operación
+        function openTradeModal(trade = null) {
+            // Configurar título
+            document.getElementById('trade-modal-title').textContent = 
+                trade ? 'Editar Operación' : 'Agregar Operación';
+            
+            // Ocultar mensaje de error
+            tradeError.style.display = 'none';
+            
+            if (trade) {
+                // Llenar formulario si estamos editando
+                document.getElementById('trade-pair').value = trade.pair;
+                document.getElementById('trade-type').value = trade.type;
+                document.getElementById('trade-result').value = trade.result;
+                document.getElementById('trade-risk').value = trade.risk;
+                document.getElementById('trade-reward').value = trade.reward;
+                document.getElementById('trade-date').value = trade.date;
+                document.getElementById('trade-challenge').value = trade.in_challenge ? 'yes' : 'no';
+            } else {
+                // Resetear formulario
+                tradeForm.reset();
+                document.getElementById('trade-date').value = new Date().toISOString().split('T')[0];
+            }
+            
+            // Mostrar modal
+            tradeModal.style.display = 'flex';
+        }
+        
+        // Cerrar modal de operaciones
+        function closeTradeModal() {
+            tradeModal.style.display = 'none';
         }
         
         // Inicializar estado de usuario
-        function initUser() {
-            const storedUser = localStorage.getItem('infiniti_current_user');
-            if (storedUser) {
-                currentUser = JSON.parse(storedUser);
+        async function initUser() {
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                
+                if (user) {
+                    currentUser = {
+                        id: user.id,
+                        email: user.email,
+                        name: user.user_metadata?.full_name || user.email
+                    };
+                    await loadTradingData();
+                }
+                updateUserStatus();
+                updateDashboardMetrics();
+            } catch (error) {
+                console.error('Error al inicializar usuario:', error);
             }
-            updateUserStatus();
         }
         
         // Event Listeners
         document.addEventListener('DOMContentLoaded', function() {
             // Inicializar usuario
             initUser();
+            checkSupabaseConnection();
+            
+            // Establecer fecha actual
+            const now = new Date();
+            document.getElementById('current-date').textContent = 
+                `${now.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`;
             
             // Abrir modal de autenticación
             authBtn.addEventListener('click', () => {
@@ -1136,20 +1967,17 @@
             });
             
             // Login
-            loginBtn.addEventListener('click', () => {
+            loginBtn.addEventListener('click', async () => {
                 const email = document.getElementById('login-email').value;
                 const password = document.getElementById('login-password').value;
                 
-                if (loginUser(email, password)) {
-                    authModal.style.display = 'none';
+                if (await loginUser(email, password)) {
                     alert(`¡Bienvenido de nuevo, ${currentUser.name}!`);
-                } else {
-                    alert('Credenciales incorrectas. Por favor intenta de nuevo.');
                 }
             });
             
             // Registro
-            registerBtn.addEventListener('click', () => {
+            registerBtn.addEventListener('click', async () => {
                 const name = document.getElementById('register-name').value;
                 const email = document.getElementById('register-email').value;
                 const password = document.getElementById('register-password').value;
@@ -1160,15 +1988,187 @@
                     return;
                 }
                 
-                if (registerUser(name, email, password)) {
-                    authModal.style.display = 'none';
+                if (await registerUser(name, email, password)) {
                     alert(`¡Cuenta creada con éxito, ${name}! Ahora estás autenticado.`);
-                } else {
-                    alert('Este correo electrónico ya está registrado.');
                 }
             });
             
-            // ... Resto del código (igual que antes) ...
+            // Abrir modal de operaciones
+            addTradeBtn.addEventListener('click', () => {
+                if (!currentUser) {
+                    alert('Por favor inicia sesión para agregar operaciones.');
+                    return;
+                }
+                openTradeModal();
+            });
+            
+            addFirstTradeBtn?.addEventListener('click', () => {
+                if (!currentUser) {
+                    authModal.style.display = 'flex';
+                    return;
+                }
+                openTradeModal();
+            });
+            
+            addFirstTradeOperationsBtn?.addEventListener('click', () => {
+                if (!currentUser) {
+                    authModal.style.display = 'flex';
+                    return;
+                }
+                openTradeModal();
+            });
+            
+            addTradeFromOperationsBtn?.addEventListener('click', () => {
+                if (!currentUser) {
+                    authModal.style.display = 'flex';
+                    return;
+                }
+                openTradeModal();
+            });
+            
+            // Enviar formulario de operación
+            tradeForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const trade = {
+                    pair: document.getElementById('trade-pair').value,
+                    type: document.getElementById('trade-type').value,
+                    result: parseFloat(document.getElementById('trade-result').value),
+                    risk: parseFloat(document.getElementById('trade-risk').value),
+                    reward: parseFloat(document.getElementById('trade-reward').value),
+                    date: document.getElementById('trade-date').value,
+                    inChallenge: document.getElementById('trade-challenge').value === 'yes'
+                };
+                
+                // Validación básica
+                if (trade.risk > 5) {
+                    tradeError.textContent = 'El riesgo no puede ser mayor al 5% del capital';
+                    tradeError.style.display = 'block';
+                    return;
+                }
+                
+                // Usamos la nueva función saveTrade
+                await saveTrade(trade);
+            });
+            
+            // Cerrar modales
+            document.querySelectorAll('.close-modal').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    this.closest('.modal').style.display = 'none';
+                });
+            });
+            
+            cancelTradeBtn.addEventListener('click', closeTradeModal);
+            
+            // Cerrar modales al hacer clic fuera
+            window.addEventListener('click', function(e) {
+                if (e.target.classList.contains('modal')) {
+                    e.target.style.display = 'none';
+                }
+            });
+            
+            // Navegación del menú lateral
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    // Quitar clase activa de todos los items
+                    document.querySelectorAll('.nav-item').forEach(i => {
+                        i.classList.remove('active');
+                    });
+                    
+                    // Agregar clase activa al item seleccionado
+                    this.classList.add('active');
+                    
+                    // Ocultar todas las secciones
+                    document.querySelectorAll('.section-content').forEach(section => {
+                        section.classList.remove('active');
+                    });
+                    
+                    // Mostrar la sección correspondiente
+                    const target = this.getAttribute('data-target');
+                    document.getElementById(target).classList.add('active');
+                });
+            });
+            
+            // Inicializar gráficos (simulados)
+            setTimeout(() => {
+                // Gráfico de distribución de activos
+                const distributionCtx = document.getElementById('distribution-chart').getContext('2d');
+                new Chart(distributionCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Forex', 'Acciones', 'Cripto', 'Materias Primas'],
+                        datasets: [{
+                            data: [65, 15, 15, 5],
+                            backgroundColor: [
+                                'rgba(62, 207, 142, 0.8)',
+                                'rgba(16, 185, 129, 0.8)',
+                                'rgba(59, 130, 246, 0.8)',
+                                'rgba(245, 158, 11, 0.8)'
+                            ],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'right',
+                                labels: {
+                                    color: '#94a3b8'
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                // Gráfico de evolución del balance
+                const balanceCtx = document.getElementById('balance-chart').getContext('2d');
+                new Chart(balanceCtx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
+                        datasets: [{
+                            label: 'Balance ($)',
+                            data: [5000, 6200, 5800, 7500, 9200, 10500],
+                            borderColor: 'rgba(62, 207, 142, 1)',
+                            backgroundColor: 'rgba(62, 207, 142, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: false,
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.05)'
+                                },
+                                ticks: {
+                                    color: '#94a3b8'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                },
+                                ticks: {
+                                    color: '#94a3b8'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: '#94a3b8'
+                                }
+                            }
+                        }
+                    }
+                });
+            }, 500);
         });
     </script>
 </body>
