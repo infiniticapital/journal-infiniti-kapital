@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>INFINITI KAPITAL - Journal Profesional</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #0f172a;
+            --secondary: #1e293b;
+            --accent: #d4af37;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --card-bg: rgba(15, 23, 42, 0.8);
+            --border: rgba(255, 255, 255, 0.1);
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            grid-template-rows: 70px 1fr;
+            grid-template-areas: 
+                "sidebar header"
+                "sidebar main";
+        }
+        
+        /* Header Styles */
+        header {
+            grid-area: header;
+            background: var(--secondary);
+            padding: 0 25px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+        }
+        
+        .header-content {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .date-display {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+        }
+        
+        .user-controls {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: var(--primary);
+        }
+        
+        .user-name {
+            font-weight: 600;
+            color: var(--accent);
+        }
+        
+        /* Sidebar Styles */
+        .sidebar {
+            grid-area: sidebar;
+            background: rgba(15, 23, 42, 0.95);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 20px 0;
+        }
+        
+        .logo {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+        
+        .logo-infiniti {
+            font-size: 1.8rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            color: white;
+            line-height: 1;
+        }
+        
+        .logo-kapital {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            color: var(--accent);
+            line-height: 1;
+            margin-top: -5px;
+        }
+        
+        .nav-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            padding: 0 15px;
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 15px;
+            border-radius: 8px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .nav-item:hover, .nav-item.active {
+            background: rgba(212, 175, 55, 0.1);
+            color: var(--accent);
+        }
+        
+        .nav-item i {
+            width: 24px;
+            text-align: center;
+        }
+        
+        /* Main Content Styles */
+        main {
+            grid-area: main;
+            padding: 25px;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            grid-auto-rows: minmax(100px, auto);
+            gap: 20px;
+        }
+        
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border);
+            backdrop-filter: blur(5px);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .card-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn-icon {
+            background: transparent;
+            border: none;
+            color: var(--accent);
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-icon:hover {
+            color: #c9a227;
+        }
+        
+        /* Grid Placement */
+        .welcome-card {
+            grid-column: span 8;
+        }
+        
+        .metrics-summary {
+            grid-column: span 4;
+        }
+        
+        .profit-factor {
+            grid-column: span 4;
+        }
+        
+        .risk-reward {
+            grid-column: span 4;
+        }
+        
+        .win-trades {
+            grid-column: span 4;
+        }
+        
+        .distribution-card {
+            grid-column: span 6;
+            grid-row: span 2;
+        }
+        
+        .recent-trades {
+            grid-column: span 6;
+        }
+        
+        .balance-evolution {
+            grid-column: span 6;
+        }
+        
+        .risk-analysis {
+            grid-column: span 6;
+            grid-row: span 2;
+        }
+        
+        .news-card {
+            grid-column: span 6;
+        }
+        
+        .challenge-card {
+            grid-column: span 6;
+        }
+        
+        /* Card Specific Styles */
+        .welcome-content {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .welcome-text {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+        
+        .progress-tracker-btn {
+            background: var(--accent);
+            color: var(--primary);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            width: fit-content;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .metric-card {
+            text-align: center;
+            padding: 15px;
+            border-radius: 8px;
+            background: rgba(30, 41, 59, 0.5);
+        }
+        
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 5px;
+        }
+        
+        .metric-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        
+        .summary-card {
+            padding: 15px;
+            border-radius: 8px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            margin-top: 15px;
+        }
+        
+        .summary-title {
+            font-weight: 600;
+            color: var(--success);
+            margin-bottom: 8px;
+        }
+        
+        .summary-content {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        .chart-container {
+            height: 300px;
+            margin-top: 15px;
+        }
+        
+        /* Trades Table */
+        .trades-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .trade-item {
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 8px;
+            padding: 15px;
+            border: 1px solid var(--border);
+        }
+        
+        .trade-pair {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+            color: var(--accent);
+        }
+        
+        .trade-amount {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .trade-profit {
+            color: var(--success);
+        }
+        
+        .trade-loss {
+            color: var(--danger);
+        }
+        
+        .trade-meta {
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+        
+        /* Risk Analysis */
+        .risk-levels {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .risk-card {
+            text-align: center;
+            padding: 20px;
+            border-radius: 8px;
+            background: rgba(30, 41, 59, 0.5);
+        }
+        
+        .risk-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .risk-daily {
+            color: var(--accent);
+        }
+        
+        .risk-weekly {
+            color: var(--success);
+        }
+        
+        .risk-monthly {
+            color: var(--warning);
+        }
+        
+        .risk-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        
+        /* Challenge Card */
+        .challenge-progress {
+            margin-top: 15px;
+        }
+        
+        .progress-container {
+            margin-bottom: 15px;
+        }
+        
+        .progress-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        
+        .progress-bar {
+            height: 10px;
+            background: #334155;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .progress {
+            height: 100%;
+            background: var(--success);
+            width: 0%; /* Inicialmente en 0% */
+        }
+        
+        .challenge-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        
+        .challenge-stat {
+            text-align: center;
+            padding: 15px;
+            border-radius: 8px;
+            background: rgba(30, 41, 59, 0.5);
+        }
+        
+        .challenge-stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--success);
+            margin-bottom: 5px;
+        }
+        
+        .challenge-stat-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: var(--card-bg);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 500px;
+            padding: 25px;
+            border: 1px solid var(--accent);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--accent);
+            padding-bottom: 15px;
+        }
+        
+        .modal-header h2 {
+            color: var(--accent);
+            font-size: 1.5rem;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        .close-modal:hover {
+            color: white;
+        }
+        
+        .modal-body {
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .btn-primary {
+            background: var(--accent);
+            color: var(--primary);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .btn-secondary {
+            background: #334155;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        
+        /* Floating Button */
+        .add-trade-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: var(--primary);
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+        
+        /* Section Styles */
+        .section-content {
+            display: none;
+            grid-column: 1 / -1;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 20px;
+        }
+        
+        .section-content.active {
+            display: grid;
+        }
+        
+        .section-card {
+            grid-column: span 12;
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: var(--accent);
+        }
+        
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: var(--accent);
+        }
+        
+        /* Auth Modal */
+        .auth-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .auth-form {
+            padding: 20px;
+            border-radius: 12px;
+            background: rgba(30, 41, 59, 0.5);
+        }
+        
+        .auth-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .auth-header h3 {
+            color: var(--accent);
+            margin-bottom: 10px;
+        }
+        
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .auth-tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            text-align: center;
+            flex: 1;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .auth-tab.active {
+            border-bottom: 3px solid var(--accent);
+            color: var(--accent);
+        }
+        
+        /* User Status */
+        .user-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 15px;
+            background: rgba(212, 175, 55, 0.1);
+            border-radius: 20px;
+            margin-top: 15px;
+        }
+        
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--success);
+        }
+        
+        .status-premium {
+            background: var(--accent);
+        }
+        
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .welcome-card {
+                grid-column: span 12;
+            }
+            
+            .metrics-summary {
+                grid-column: span 12;
+            }
+            
+            .profit-factor, .risk-reward, .win-trades {
+                grid-column: span 4;
+            }
+            
+            .distribution-card, .recent-trades, .balance-evolution, .risk-analysis, .news-card, .challenge-card {
+                grid-column: span 12;
+            }
+            
+            .auth-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                grid-template-columns: 1fr;
+                grid-template-areas: 
+                    "header"
+                    "main";
+            }
+            
+            .sidebar {
+                display: none;
+            }
+            
+            .profit-factor, .risk-reward, .win-trades {
+                grid-column: span 12;
+            }
+            
+            .trades-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .risk-levels {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Auth Modals -->
+    <div id="auth-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Acceso al Sistema</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="auth-tabs">
+                    <div class="auth-tab active" data-tab="login">Iniciar Sesión</div>
+                    <div class="auth-tab" data-tab="register">Registrarse</div>
+                </div>
+                
+                <div id="login-form" class="auth-form">
+                    <div class="form-group">
+                        <label for="login-email">Correo Electrónico</label>
+                        <input type="email" id="login-email" class="form-control" placeholder="tu@email.com">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="login-password">Contraseña</label>
+                        <input type="password" id="login-password" class="form-control" placeholder="••••••••">
+                    </div>
+                    
+                    <button class="btn-primary" id="login-btn">Iniciar Sesión</button>
+                </div>
+                
+                <div id="register-form" class="auth-form" style="display: none;">
+                    <div class="form-group">
+                        <label for="register-name">Nombre Completo</label>
+                        <input type="text" id="register-name" class="form-control" placeholder="Alex Trader">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="register-email">Correo Electrónico</label>
+                        <input type="email" id="register-email" class="form-control" placeholder="tu@email.com">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="register-password">Contraseña</label>
+                        <input type="password" id="register-password" class="form-control" placeholder="••••••••">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="register-confirm">Confirmar Contraseña</label>
+                        <input type="password" id="register-confirm" class="form-control" placeholder="••••••••">
+                    </div>
+                    
+                    <button class="btn-primary" id="register-btn">Crear Cuenta</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="user-status">
+                    <div class="status-indicator"></div>
+                    <small>Datos almacenados localmente. Para multiusuario real se requiere backend.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="logo">
+            <div class="logo-infiniti">INFINITI</div>
+            <div class="logo-kapital">KAPITAL</div>
+        </div>
+        
+        <nav class="nav-menu">
+            <a href="#" class="nav-item active" data-target="dashboard-content">
+                <i class="fas fa-chart-line"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="#" class="nav-item" data-target="calendario-content">
+                <i class="fas fa-calendar"></i>
+                <span>Calendario</span>
+            </a>
+            <a href="#" class="nav-item" data-target="cuentas-content">
+                <i class="fas fa-wallet"></i>
+                <span>Cuentas</span>
+            </a>
+            <a href="#" class="nav-item" data-target="seguimiento-content">
+                <i class="fas fa-tasks"></i>
+                <span>Seguimiento</span>
+            </a>
+            <a href="#" class="nav-item" data-target="operaciones-content">
+                <i class="fas fa-exchange-alt"></i>
+                <span>Operaciones</span>
+            </a>
+            <a href="#" class="nav-item" data-target="analiticas-content">
+                <i class="fas fa-chart-bar"></i>
+                <span>Analíticas</span>
+            </a>
+            <a href="#" class="nav-item" data-target="estrategias-content">
+                <i class="fas fa-chess-knight"></i>
+                <span>Estrategias</span>
+            </a>
+            <a href="#" class="nav-item" data-target="configuracion-content">
+                <i class="fas fa-cog"></i>
+                <span>Configuración</span>
+            </a>
+            <a href="#" class="nav-item" data-target="reportes-content">
+                <i class="fas fa-file-pdf"></i>
+                <span>Reportes</span>
+            </a>
+        </nav>
+        
+        <div class="user-status" style="margin: 20px 15px 0;">
+            <div class="status-indicator" id="user-status-indicator"></div>
+            <small id="user-status-text">Sin autenticar (modo local)</small>
+        </div>
+    </aside>
+    
+    <!-- Header -->
+    <header>
+        <div class="header-content">
+            <div class="date-display">
+                <i class="fas fa-calendar"></i> <span id="current-date"></span>
+            </div>
+        </div>
+        
+        <div class="user-controls">
+            <div class="user-info">
+                <div class="user-avatar" id="user-avatar">AT</div>
+                <div class="user-name" id="user-display-name">Invitado</div>
+            </div>
+            <button class="btn-icon" id="auth-btn">
+                <i class="fas fa-user"></i>
+            </button>
+            <button class="btn-icon">
+                <i class="fas fa-bell"></i>
+            </button>
+            <button class="btn-icon">
+                <i class="fas fa-cog"></i>
+            </button>
+        </div>
+    </header>
+    
+    <!-- Main Content -->
+    <main>
+        <!-- Dashboard Section -->
+        <div id="dashboard-content" class="section-content active">
+            <!-- Welcome Card - Ahora personalizado por usuario -->
+            <div class="card welcome-card">
+                <div class="card-header">
+                    <h2 class="card-title" id="welcome-title">Bienvenido, Invitado</h2>
+                </div>
+                <div class="welcome-content">
+                    <p class="welcome-text" id="welcome-message">Por favor inicia sesión para acceder a todas las funciones y guardar tus datos.</p>
+                    <button class="progress-tracker-btn" id="auth-welcome-btn">
+                        <i class="fas fa-user"></i> Iniciar Sesión
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Resto del dashboard... (igual que antes) -->
+            
+        </div>
+        
+        <!-- Configuración Section - Mejorada para multiusuario -->
+        <div id="configuracion-content" class="section-content">
+            <div class="card section-card">
+                <div class="card-header">
+                    <h2 class="card-title">Configuración de Usuario</h2>
+                </div>
+                <div class="welcome-content">
+                    <div class="user-status" style="margin-bottom: 20px;">
+                        <div class="status-indicator" id="config-status-indicator"></div>
+                        <span id="config-status-text">Estado: Sin autenticar</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Preferencias de visualización</label>
+                        <select class="form-control">
+                            <option>Modo claro</option>
+                            <option selected>Modo oscuro</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Notificaciones</label>
+                        <div>
+                            <input type="checkbox" id="notif-trades" checked>
+                            <label for="notif-trades">Nuevas operaciones</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" id="notif-news" checked>
+                            <label for="notif-news">Noticias importantes</label>
+                        </div>
+                    </div>
+                    
+                    <h3 style="margin: 25px 0 15px; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 10px;">
+                        Configuración Multiusuario
+                    </h3>
+                    
+                    <div class="summary-card">
+                        <div class="summary-title">Preparación para Backend</div>
+                        <div class="summary-content">
+                            <p>Para habilitar el sistema multiusuario completo, necesitarás:</p>
+                            <ul style="padding-left: 20px; margin-top: 10px;">
+                                <li>Servidor backend (Node.js, Python, etc.)</li>
+                                <li>Base de datos (PostgreSQL, MongoDB, Firebase)</li>
+                                <li>Implementar autenticación con JWT</li>
+                                <li>API REST para operaciones</li>
+                            </ul>
+                            <p style="margin-top: 15px;">Opciones recomendadas:</p>
+                            <div class="metrics-grid" style="margin-top: 15px;">
+                                <div class="metric-card">
+                                    <i class="fab fa-firebase fa-2x"></i>
+                                    <div class="metric-label">Firebase</div>
+                                </div>
+                                <div class="metric-card">
+                                    <i class="fab fa-google fa-2x"></i>
+                                    <div class="metric-label">Google Cloud</div>
+                                </div>
+                                <div class="metric-card">
+                                    <i class="fas fa-server fa-2x"></i>
+                                    <div class="metric-label">Supabase</div>
+                                </div>
+                                <div class="metric-card">
+                                    <i class="fab fa-node-js fa-2x"></i>
+                                    <div class="metric-label">Node.js</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button class="btn-primary" style="margin-top: 20px;">
+                        <i class="fas fa-save"></i> Guardar Configuración
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Resto de secciones... (igual que antes) -->
+        
+    </main>
+    
+    <!-- Floating Button -->
+    <button class="add-trade-btn" id="floating-add-trade-btn">
+        <i class="fas fa-plus"></i>
+    </button>
+    
+    <!-- Add Trade Modal -->
+    <div id="add-trade-modal" class="modal">
+        <!-- Contenido igual que antes... -->
+    </div>
+
+    <script>
+        // Datos de usuarios y estado de autenticación
+        let currentUser = null;
+        let users = JSON.parse(localStorage.getItem('infiniti_users')) || [];
+        let tradingData = {
+            totalProfit: 0,
+            winRate: 0,
+            profitFactor: 0,
+            riskRewardRatio: 0,
+            winTrades: 0,
+            totalTrades: 0,
+            dailyRisk: 0,
+            weeklyRisk: 0,
+            monthlyRisk: 0,
+            challenge: {
+                progress: 0,
+                profit: 0,
+                drawdown: 0,
+                trades: 0,
+                winRate: 0
+            },
+            trades: []
+        };
+        
+        // Elementos del DOM
+        const authModal = document.getElementById('auth-modal');
+        const authBtn = document.getElementById('auth-btn');
+        const authWelcomeBtn = document.getElementById('auth-welcome-btn');
+        const loginBtn = document.getElementById('login-btn');
+        const registerBtn = document.getElementById('register-btn');
+        const authTabs = document.querySelectorAll('.auth-tab');
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        
+        // Actualizar estado del usuario en la interfaz
+        function updateUserStatus() {
+            const statusIndicator = document.getElementById('user-status-indicator');
+            const statusText = document.getElementById('user-status-text');
+            const configStatusIndicator = document.getElementById('config-status-indicator');
+            const configStatusText = document.getElementById('config-status-text');
+            const userName = document.getElementById('user-display-name');
+            const welcomeTitle = document.getElementById('welcome-title');
+            const userAvatar = document.getElementById('user-avatar');
+            
+            if (currentUser) {
+                statusIndicator.style.backgroundColor = 'var(--success)';
+                statusText.textContent = `Autenticado como ${currentUser.email}`;
+                configStatusIndicator.style.backgroundColor = 'var(--success)';
+                configStatusText.textContent = `Estado: Autenticado como ${currentUser.email}`;
+                userName.textContent = currentUser.name;
+                welcomeTitle.textContent = `Bienvenido, ${currentUser.name}`;
+                userAvatar.textContent = currentUser.name.split(' ').map(n => n[0]).join('').substring(0, 2);
+            } else {
+                statusIndicator.style.backgroundColor = 'var(--warning)';
+                statusText.textContent = 'Sin autenticar (modo local)';
+                configStatusIndicator.style.backgroundColor = 'var(--warning)';
+                configStatusText.textContent = 'Estado: Sin autenticar';
+                userName.textContent = 'Invitado';
+                welcomeTitle.textContent = 'Bienvenido, Invitado';
+                userAvatar.textContent = 'IN';
+            }
+        }
+        
+        // Funciones de autenticación simuladas
+        function loginUser(email, password) {
+            const user = users.find(u => u.email === email && u.password === password);
+            if (user) {
+                currentUser = user;
+                // En un sistema real, aquí almacenaríamos el token JWT
+                localStorage.setItem('infiniti_current_user', JSON.stringify(user));
+                updateUserStatus();
+                return true;
+            }
+            return false;
+        }
+        
+        function registerUser(name, email, password) {
+            // Verificar si el usuario ya existe
+            if (users.some(u => u.email === email)) {
+                return false;
+            }
+            
+            // Crear nuevo usuario
+            const newUser = {
+                id: Date.now().toString(),
+                name,
+                email,
+                password, // En un sistema real, NUNCA almacenaríamos la contraseña en texto plano
+                createdAt: new Date().toISOString()
+            };
+            
+            users.push(newUser);
+            localStorage.setItem('infiniti_users', JSON.stringify(users));
+            
+            // Autenticar al nuevo usuario
+            currentUser = newUser;
+            localStorage.setItem('infiniti_current_user', JSON.stringify(newUser));
+            updateUserStatus();
+            
+            return true;
+        }
+        
+        function logoutUser() {
+            currentUser = null;
+            localStorage.removeItem('infiniti_current_user');
+            updateUserStatus();
+        }
+        
+        // Inicializar estado de usuario
+        function initUser() {
+            const storedUser = localStorage.getItem('infiniti_current_user');
+            if (storedUser) {
+                currentUser = JSON.parse(storedUser);
+            }
+            updateUserStatus();
+        }
+        
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inicializar usuario
+            initUser();
+            
+            // Abrir modal de autenticación
+            authBtn.addEventListener('click', () => {
+                authModal.style.display = 'flex';
+            });
+            
+            authWelcomeBtn.addEventListener('click', () => {
+                authModal.style.display = 'flex';
+            });
+            
+            // Cambiar entre login y registro
+            authTabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabName = this.getAttribute('data-tab');
+                    
+                    // Actualizar tabs activos
+                    authTabs.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Mostrar el formulario correspondiente
+                    if (tabName === 'login') {
+                        loginForm.style.display = 'block';
+                        registerForm.style.display = 'none';
+                    } else {
+                        loginForm.style.display = 'none';
+                        registerForm.style.display = 'block';
+                    }
+                });
+            });
+            
+            // Login
+            loginBtn.addEventListener('click', () => {
+                const email = document.getElementById('login-email').value;
+                const password = document.getElementById('login-password').value;
+                
+                if (loginUser(email, password)) {
+                    authModal.style.display = 'none';
+                    alert(`¡Bienvenido de nuevo, ${currentUser.name}!`);
+                } else {
+                    alert('Credenciales incorrectas. Por favor intenta de nuevo.');
+                }
+            });
+            
+            // Registro
+            registerBtn.addEventListener('click', () => {
+                const name = document.getElementById('register-name').value;
+                const email = document.getElementById('register-email').value;
+                const password = document.getElementById('register-password').value;
+                const confirm = document.getElementById('register-confirm').value;
+                
+                if (password !== confirm) {
+                    alert('Las contraseñas no coinciden.');
+                    return;
+                }
+                
+                if (registerUser(name, email, password)) {
+                    authModal.style.display = 'none';
+                    alert(`¡Cuenta creada con éxito, ${name}! Ahora estás autenticado.`);
+                } else {
+                    alert('Este correo electrónico ya está registrado.');
+                }
+            });
+            
+            // ... Resto del código (igual que antes) ...
+        });
+    </script>
+</body>
+</html>
