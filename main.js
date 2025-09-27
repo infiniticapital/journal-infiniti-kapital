@@ -1,48 +1,54 @@
-// main.js
+// ===== 1) IMPORTS DESDE CDN (modular v9+) =====
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getFirestore, collection, getDocs, setDoc, doc, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// 1. CONFIGURACIÓN DE FIREBASE
-// Esta parte ya la tenías bien
+// ===== 2) CONFIG EXACTA (ajústala con tu consola Firebase) =====
 const firebaseConfig = {
-    apiKey: "AIzaSyCUS-Bg9Z7i...", // Tu API Key
-    authDomain: "journal-infiniti-kapital.firebaseapp.com",
-    projectId: "journal-infiniti-kapital",
-    storageBucket: "journal-infiniti-kapital.firebaseio.com",
-    messagingSenderId: "78211615687",
-    appId: "1:78211615687:web:82b05b3ad3dcd6c8e7e2",
-    measurementId: "G-D0E8FPMLGQ"
+  apiKey: "TU_API_KEY",
+  authDomain: "journal-infiniti-kapital.firebaseapp.com",
+  projectId: "journal-infiniti-kapital",
+  storageBucket: "journal-infiniti-kapital.appspot.com",   // FIX
+  messagingSenderId: "TU_MESSAGING_SENDER_ID",
+  appId: "TU_APP_ID",
+  measurementId: "TU_MEASUREMENT_ID"
 };
 
-// 2. INICIALIZACIÓN DE FIREBASE (Esta parte faltaba)
-// Importa las funciones necesarias desde el SDK que instalaste
-import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, getDocs } from 'firebase/firestore';
-
-// Inicializa Firebase y Firestore
+// ===== 3) INIT =====
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-console.log("Firebase conectado y listo!");
+const db  = getFirestore(app);
+console.log("✅ Firebase inicializado");
 
+// ===== 4) TEST WRITE + READ =====
+async function writeTest() {
+  const ref = doc(collection(db, "entries"), "fb-healthcheck");
+  await setDoc(ref, {
+    title: "Ping OK",
+    ts: serverTimestamp()
+  });
+  console.log("Escritura OK");
+}
 
-// 3. LÓGICA DEL JOURNAL (Esta parte también faltaba)
-const entriesCollection = collection(db, 'entries');
+async function readEntries() {
+  const snap = await getDocs(collection(db, "entries"));
+  if (snap.empty) {
+    console.log("No hay entradas en 'entries'.");
+  } else {
+    snap.forEach(d => console.log("Entrada:", d.id, d.data()));
+  }
+}
 
-// Se ejecuta cuando el HTML ha cargado completamente
-window.addEventListener('DOMContentLoaded', async () => {
-    console.log('Obteniendo entradas de la base de datos...');
-    try {
-        const querySnapshot = await getDocs(entriesCollection);
-        
-        if (querySnapshot.empty) {
-            console.log("No se encontraron entradas en la base de datos.");
-            return;
-        }
-
-        querySnapshot.forEach((doc) => {
-            // Aquí va la lógica para mostrar cada entrada en tu página
-            console.log(`Entrada encontrada: ${doc.id} => Título: ${doc.data().title}`);
-        });
-
-    } catch (error) {
-        console.error("Error obteniendo las entradas: ", error);
-    }
+document.getElementById("test-fb")?.addEventListener("click", async () => {
+  try {
+    await writeTest();
+    await readEntries();
+    alert("Firestore conectado ✅ (ver consola y pestaña Network)");
+  } catch (e) {
+    console.error("❌ Firebase ERROR:", e);
+    alert("Firebase ERROR: " + (e?.message || e));
+  }
 });
+
+// Ejecuta lectura al cargar
+window.addEventListener("DOMContentLoaded", readEntries);
