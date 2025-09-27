@@ -1,17 +1,14 @@
 // main.js
 
-// --- 1. CONFIGURACIÓN DE FIREBASE ---
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.7/firebase-app.js";
-import { getFirestore, collection, getDocs, addDoc, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore.js";
-
-// Tu configuración personal de Firebase (la que obtuviste de la consola)
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-    apiKey: "AIzaSy...",
-    authDomain: "your-project-id.firebaseapp.com",
-    projectId: "your-project-id",
-    storageBucket: "your-project-id.appspot.com",
-    messagingSenderId: "...",
-    appId: "..."
+  apiKey: "AIzaSyCuS-0g97JluGH6FTF5JBmwaW7d5aJ3WWw",
+  authDomain: "journal-infiniti-kapital.firebaseapp.com",
+  projectId: "journal-infiniti-kapital",
+  storageBucket: "journal-infiniti-kapital.firebasestorage.app",
+  messagingSenderId: "78211615687",
+  appId: "1:78211615687:web:02b05ba83acd46c8c6e7e2",
+  measurementId: "G-D0ERFPMLGQ"
 };
 
 // Inicializar Firebase y Firestore
