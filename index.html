@@ -1,170 +1,185 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>INFINITI KAPITAL — Journal</title>
 
-  <!-- Estilos mínimos para que el modal funcione en cualquier tema -->
+  <!-- Fuente y base de estilos (ligero y encapsulado) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet"/>
+
   <style>
-    :root {
-      --bg: #0b1220;
-      --panel: #101826;
-      --text: #e6edf3;
-      --muted: #9fb0c0;
-      --accent: #d4af37;
-      --border: #1f2a3a;
-      --danger: #ef4444;
-      --success: #10b981;
+    :root{
+      --bg:#0b1020; --bg2:#0f1524; --bg3:#121a2e;
+      --card:#0f1524; --text:#e5e7eb; --muted:#98a2b3;
+      --border:rgba(255,255,255,.08);
+      --gold:#eacc66; --gold-2:rgba(234,204,102,.15);
+      --accent:#22304b;
+      --success:#10b981; --danger:#ef4444;
     }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:linear-gradient(135deg,var(--bg),var(--bg2));color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;display:grid;grid-template-columns:240px 1fr;grid-template-rows:64px 1fr;grid-template-areas:"sidebar header" "sidebar main"}
+    a{color:inherit;text-decoration:none}
 
-    html, body {
-      margin: 0; padding: 0;
-      background: var(--bg); color: var(--text);
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
-    }
+    /* Header */
+    header{grid-area:header;display:flex;align-items:center;justify-content:space-between;padding:0 16px;background:var(--bg3);border-bottom:1px solid var(--border)}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:800}
+    .brand .k{background:var(--gold);color:#1a1a1a;padding:2px 8px;border-radius:999px;font-weight:800}
+    .header-right{display:flex;align-items:center;gap:10px}
+    .badge{background:var(--gold-2);color:var(--gold);padding:6px 10px;border-radius:999px;font-size:.85rem}
+    .btn{border:0;border-radius:8px;padding:8px 12px;cursor:pointer}
+    .btn.icon{background:transparent;color:var(--text);border:1px solid var(--border)}
+    .btn.primary{background:var(--gold);color:#111827;font-weight:700}
+    .hidden{display:none !important}
 
-    .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    /* Sidebar */
+    aside{grid-area:sidebar;background:rgba(15,23,42,.95);border-right:1px solid var(--border);padding:14px 10px 16px 10px;display:flex;flex-direction:column;gap:12px}
+    .nav-title{opacity:.55;font-size:.8rem;margin:8px 14px}
+    .nav{display:flex;flex-direction:column;gap:6px}
+    .nav a{display:flex;align-items:center;gap:10px;padding:10px 12px;margin:0 4px;border-radius:10px;color:#cbd5e1}
+    .nav a:hover,.nav a.active{background:rgba(234,204,102,.12);color:var(--gold)}
+    .spacer{flex:1}
 
-    header {
-      display:flex; align-items:center; justify-content:space-between;
-      padding: 16px 20px; border-bottom: 1px solid var(--border);
-      position: sticky; top: 0; backdrop-filter: blur(6px);
-      background: color-mix(in srgb, var(--bg) 85%, transparent);
-      z-index: 10;
-    }
-    .brand { display:flex; gap:10px; align-items:center; font-weight:700; }
-    .tag { background: var(--panel); padding:4px 8px; border:1px solid var(--border); border-radius: 999px; color: var(--accent); font-weight:700; }
-    .btn {
-      display:inline-flex; align-items:center; gap:8px;
-      padding:10px 14px; border:1px solid var(--border); border-radius:10px;
-      background: var(--panel); color: var(--text); cursor:pointer; text-decoration:none;
-    }
-    .btn:hover { border-color: color-mix(in srgb, var(--accent) 40%, var(--border)); }
-    .btn-primary { background: var(--accent); color: #141414; border-color: var(--accent); font-weight: 700; }
-    .btn-danger { background: transparent; border-color: #3a1f24; color: #ffb4be; }
-    .grid { display:grid; gap:16px; grid-template-columns: repeat(12, 1fr); }
-    .card { grid-column: span 6; background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
-    .card h3 { margin: 0 0 8px 0; font-size: 16px; color: var(--muted); }
-    .big { font-size: 28px; font-weight: 800; color: var(--text); }
+    /* Main */
+    main{grid-area:main;padding:18px 18px 40px;overflow:auto}
+    .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:0 10px 24px rgba(0,0,0,.24)}
+    .card h3{margin:0 0 8px;font-size:1rem;color:#f8fafc}
+    .muted{color:var(--muted);font-size:.92rem}
 
-    /* Utilidades */
-    .hidden { display: none !important; }
-    .flex { display: flex !important; }
+    .span-6{grid-column:span 6}
+    .span-4{grid-column:span 4}
+    .span-8{grid-column:span 8}
+    .span-12{grid-column:span 12}
 
-    /* Modal */
-    .modal {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,.55);
-      align-items: center; justify-content: center;
-      z-index: 50;
-    }
-    .modal-panel {
-      width: 100%; max-width: 520px;
-      background: var(--panel); border: 1px solid var(--accent);
-      border-radius: 14px; padding: 18px;
-      box-shadow: 0 10px 40px rgba(0,0,0,.35);
-    }
-    .modal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom: 12px; }
-    .modal-title { font-size: 18px; font-weight: 800; color: var(--accent); }
-    .form-row { margin: 10px 0; display:flex; flex-direction:column; gap:6px; }
-    label { font-size: 13px; color: var(--muted); }
-    input {
-      height: 44px; border-radius: 10px; border: 1px solid var(--border);
-      background: #0d1524; color: var(--text); padding: 0 12px; outline: none;
-    }
-    input:focus { border-color: color-mix(in srgb, var(--accent) 40%, var(--border)); }
-    .actions { display:flex; gap:10px; justify-content: flex-end; margin-top: 8px; }
-    .pill { padding: 6px 10px; border-radius: 999px; border:1px solid var(--border); background: #0d1524; color: var(--muted); display:inline-flex; align-items:center; gap:8px; }
+    .metric{font-size:2rem;font-weight:800;letter-spacing:.5px}
+    .metric.gold{color:var(--gold)}
+    .metric.green{color:var(--success)}
+    .metric.red{color:var(--danger)}
 
-    @media (max-width: 820px) {
-      .card { grid-column: 1 / -1; }
-      header { flex-wrap: wrap; gap: 10px; }
+    /* Modal Auth encapsulado */
+    #ik-auth-overlay{position:fixed;inset:0;background:rgba(0,0,0,.62);display:none;align-items:center;justify-content:center;z-index:9999}
+    #ik-auth-card{width:min(560px,92vw);background:#0f1524;border:1px solid rgba(234,204,102,.35);border-radius:14px;padding:18px;color:#e5e7eb;box-shadow:0 12px 40px rgba(0,0,0,.55)}
+    #ik-auth-card h3{margin:0 0 12px;font-weight:800;color:var(--gold)}
+    #ik-auth-card .row{margin:10px 0}
+    #ik-auth-card input{width:100%;padding:11px 12px;border-radius:10px;border:1px solid #2b3348;background:#0b1020;color:#e5e7eb}
+    #ik-auth-card .actions{display:flex;gap:10px;justify-content:flex-end;margin-top:14px}
+    #ik-auth-card .btn{border:0;border-radius:10px;padding:10px 14px;cursor:pointer}
+    #ik-auth-card .btn.primary{background:var(--gold);color:#0b1020;font-weight:800}
+    #ik-auth-card .btn.ghost{background:#23304b;color:#e5e7eb}
+
+    /* Responsive */
+    @media (max-width:1024px){
+      body{grid-template-columns:1fr;grid-template-areas:"header" "main"}
+      aside{display:none}
+      .span-6,.span-4,.span-8,.span-12{grid-column:span 12}
     }
   </style>
 </head>
-<body>
 
-  <!-- Top bar -->
+<body>
+  <!-- Sidebar -->
+  <aside>
+    <div class="brand" style="padding:6px 10px 2px 10px;">
+      <span>INFINITI</span><span class="k">KAPITAL</span>
+    </div>
+    <div class="nav-title">Menú</div>
+    <nav class="nav">
+      <a href="#" class="active">Dashboard</a>
+      <a href="#">Calendario</a>
+      <a href="#">Cuentas</a>
+      <a href="#">Operaciones</a>
+      <a href="#">Analíticas</a>
+      <a href="#">Estrategias</a>
+      <a href="#">Configuración</a>
+      <a href="#" id="link-admin" class="hidden">Admin</a>
+    </nav>
+    <div class="spacer"></div>
+    <div style="opacity:.5;font-size:.8rem;text-align:center">© Infiniti Kapital</div>
+  </aside>
+
+  <!-- Header -->
   <header>
     <div class="brand">
-      <div>INFINITI</div>
-      <div class="tag">KAPITAL</div>
+      <span>INFINITI</span>
+      <span class="k">KAPITAL</span>
     </div>
-    <div class="actions">
-      <button class="btn" id="btn-logout" title="Cerrar sesión" style="display:none;">Cerrar sesión</button>
-      <button class="btn btn-primary" id="btn-login-open" title="Acceder">Acceder</button>
+    <div class="header-right">
+      <span id="user-name" class="badge hidden"></span>
+      <button id="btn-login" class="btn icon">Acceder</button>
+      <button id="btn-logout" class="btn icon hidden">Cerrar sesión</button>
     </div>
   </header>
 
   <!-- Main -->
-  <main class="container">
-    <div class="pill">
-      Bienvenido, <strong id="user-name">Invitado</strong>
-      <span style="opacity:.6;">(modo invitado)</span>
-    </div>
+  <main>
+    <div class="grid">
+      <div class="card span-12">
+        <h3 id="welcome-title">Bienvenido, <span class="muted">Invitado</span></h3>
+        <div class="muted" id="welcome-msg">Inicia sesión para guardar tus operaciones en la nube.</div>
+      </div>
 
-    <p id="welcome-message" style="color:var(--muted); margin: 10px 0 22px;">
-      Inicia sesión para guardar tus operaciones en la nube.
-    </p>
-
-    <section class="grid">
-      <div class="card">
+      <div class="card span-6">
         <h3>Resumen</h3>
-        <div class="big">$0.00</div>
+        <div class="metric gold" id="m-profit">$0.00</div>
+        <div class="muted">Beneficio total</div>
       </div>
-      <div class="card">
+
+      <div class="card span-6">
         <h3>Factor</h3>
-        <div class="big">0.00</div>
+        <div class="metric" id="m-factor">0.00</div>
+        <div class="muted">Factor de beneficio</div>
       </div>
-      <div class="card">
+
+      <div class="card span-6">
         <h3>R/B</h3>
-        <div class="big">0.00</div>
+        <div class="metric" id="m-rb">0.00</div>
+        <div class="muted">Promedio</div>
       </div>
-      <div class="card">
+
+      <div class="card span-6">
         <h3>Ganadoras</h3>
-        <div class="big">0</div>
+        <div class="metric green" id="m-wins">0</div>
+        <div class="muted">de 0</div>
       </div>
-    </section>
+    </div>
   </main>
 
-  <!-- Modal de autenticación -->
-  <div id="auth-modal" class="modal hidden">
-    <div class="modal-panel">
-      <div class="modal-header">
-        <div class="modal-title">Acceso</div>
-        <button class="btn" id="btn-login-close">Cerrar</button>
+  <!-- ===== Modal de autenticación (encapsulado) ===== -->
+  <div id="ik-auth-overlay">
+    <div id="ik-auth-card">
+      <h3>Acceso</h3>
+      <div class="row">
+        <input id="auth-email" type="email" placeholder="tu@correo.com" autocomplete="username" />
       </div>
-
-      <div class="form-row">
-        <label for="login-email">Email</label>
-        <input id="login-email" type="email" placeholder="tu@correo.com" />
+      <div class="row">
+        <input id="auth-pass" type="password" placeholder="Contraseña" autocomplete="current-password" />
       </div>
-
-      <div class="form-row">
-        <label for="login-pass">Contraseña</label>
-        <input id="login-pass" type="password" placeholder="••••••••" />
-      </div>
-
       <div class="actions">
-        <button class="btn" id="btn-create-account">Crear cuenta</button>
-        <button class="btn btn-primary" id="btn-login-submit">Entrar</button>
+        <button id="btn-create" class="btn ghost">Crear cuenta</button>
+        <button id="btn-cancel" class="btn ghost">Cancelar</button>
+        <button id="btn-enter"  class="btn primary">Entrar</button>
       </div>
     </div>
   </div>
 
-  <!-- Firebase + Lógica (PLUG & PLAY) -->
+  <!-- ===== Firebase + Lógica Auth (módulos CDN) ===== -->
   <script type="module">
-    /* ===== Firebase ===== */
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js';
-    import {
-      getAuth,
-      onAuthStateChanged,
-      signInWithEmailAndPassword,
-      createUserWithEmailAndPassword,
-      signOut,
-    } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js';
+    /* SDKs */
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { 
+      getAuth, onAuthStateChanged, signInWithEmailAndPassword,
+      createUserWithEmailAndPassword, signOut,
+      setPersistence, browserLocalPersistence
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { 
+      getFirestore, doc, setDoc, serverTimestamp, getDoc 
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+    /* CONFIG TUYA (válida) */
     const firebaseConfig = {
       apiKey: "AIzaSyCuS-0g97JluGH6FTF5JBmwaW7d5aJ3WWw",
       authDomain: "journal-infiniti-kapital.firebaseapp.com",
@@ -177,85 +192,106 @@
 
     const app  = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const db   = getFirestore(app);
 
-    /* ===== Helpers de UI ===== */
-    const $ = (s) => document.querySelector(s);
-    const showModal  = () => { $('#auth-modal')?.classList.remove('hidden'); $('#auth-modal')?.classList.add('flex'); };
-    const hideModal  = () => { $('#auth-modal')?.classList.add('hidden');   $('#auth-modal')?.classList.remove('flex'); };
-    const emailVal   = () => $('#login-email')?.value.trim() || '';
-    const passVal    = () => $('#login-pass')?.value || '';
+    /* Refs UI */
+    const $ = (q)=>document.querySelector(q);
+    const btnLogin  = $('#btn-login');
+    const btnLogout = $('#btn-logout');
+    const overlay   = $('#ik-auth-overlay');
+    const emailIn   = $('#auth-email');
+    const passIn    = $('#auth-pass');
+    const btnEnter  = $('#btn-enter');
+    const btnCreate = $('#btn-create');
+    const btnCancel = $('#btn-cancel');
+    const userName  = $('#user-name');
+    const welcomeTitle = $('#welcome-title');
+    const welcomeMsg   = $('#welcome-msg');
+    const linkAdmin    = $('#link-admin');
 
-    const ok  = (m) => alert(m);
-    const err = (e) => alert(e?.message || e);
+    /* helpers */
+    const openAuth  = ()=>{ overlay.style.display='flex'; setTimeout(()=>emailIn?.focus(),10); };
+    const closeAuth = ()=>{ overlay.style.display='none'; };
+    function toast(msg){ alert(msg); }
 
-    /* ===== Enlaces de botones ===== */
-    $('#btn-login-open')?.addEventListener('click', (e) => { e.preventDefault(); showModal(); });
-    $('#btn-login-close')?.addEventListener('click', (e) => { e.preventDefault(); hideModal(); });
+    /* listeners */
+    btnLogin?.addEventListener('click', openAuth);
+    btnCancel?.addEventListener('click', closeAuth);
+    overlay?.addEventListener('click', (e)=>{ if(e.target===overlay) closeAuth(); });
 
-    // Crear cuenta
-    $('#btn-create-account')?.addEventListener('click', async (e) => {
-      e.preventDefault();
-      const email = emailVal(), pass = passVal();
-      if (!email || !pass) return err('Escribe email y contraseña.');
-      try {
-        console.log('[AUTH] createUserWithEmailAndPassword');
-        await createUserWithEmailAndPassword(auth, email, pass);
-        ok('Cuenta creada y sesión iniciada.');
-        hideModal();
-      } catch (e) {
-        console.error(e);
-        err(e);
-      }
-    });
-
-    // Iniciar sesión
-    $('#btn-login-submit')?.addEventListener('click', async (e) => {
-      e.preventDefault();
-      const email = emailVal(), pass = passVal();
-      if (!email || !pass) return err('Escribe email y contraseña.');
-      try {
-        console.log('[AUTH] signInWithEmailAndPassword');
+    btnEnter?.addEventListener('click', async ()=>{
+      const email = (emailIn?.value||'').trim();
+      const pass  = (passIn?.value||'').trim();
+      if(!email || !pass) return toast('Completa email y contraseña');
+      try{
+        await setPersistence(auth, browserLocalPersistence);
         await signInWithEmailAndPassword(auth, email, pass);
-        ok('Sesión iniciada.');
-        hideModal();
-      } catch (e) {
-        console.error(e);
-        err(e);
+        closeAuth();
+      }catch(err){
+        console.error(err);
+        toast(err.message||'Error de acceso');
       }
     });
 
-    // Cerrar sesión
-    $('#btn-logout')?.addEventListener('click', async (e) => {
-      e.preventDefault();
-      try {
-        await signOut(auth);
-        ok('Sesión cerrada.');
-      } catch (e) {
-        console.error(e);
-        err(e);
+    btnCreate?.addEventListener('click', async ()=>{
+      const email = (emailIn?.value||'').trim();
+      const pass  = (passIn?.value||'').trim();
+      if(!email || !pass) return toast('Completa email y contraseña');
+      try{
+        await setPersistence(auth, browserLocalPersistence);
+        const cred = await createUserWithEmailAndPassword(auth, email, pass);
+        // Perfil mínimo
+        await setDoc(doc(db, 'users', cred.user.uid), {
+          email, displayName: email.split('@')[0],
+          role: 'user',
+          createdAt: serverTimestamp()
+        }, { merge:true });
+        closeAuth();
+        toast('Cuenta creada. Sesión iniciada.');
+      }catch(err){
+        console.error(err);
+        toast(err.message||'No se pudo crear la cuenta');
       }
     });
 
-    /* ===== Reactividad de la sesión ===== */
-    onAuthStateChanged(auth, (user) => {
-      console.log('[AUTH] onAuthStateChanged ->', user?.uid || null);
+    btnLogout?.addEventListener('click', async ()=>{
+      try{ await signOut(auth); }catch(e){ console.error(e); }
+    });
 
-      const welcome = $('#welcome-message');
-      const uname   = $('#user-name');
-      const btnIn   = $('#btn-login-open');
-      const btnOut  = $('#btn-logout');
+    /* Estado de sesión */
+    onAuthStateChanged(auth, async (user)=>{
+      if(user){
+        // Asegura documento /users/{uid}
+        const pRef = doc(db,'users',user.uid);
+        const snap = await getDoc(pRef);
+        if(!snap.exists()){
+          await setDoc(pRef, {
+            email: user.email || '',
+            displayName: user.displayName || (user.email||'').split('@')[0],
+            role: 'user',
+            createdAt: serverTimestamp()
+          }, {merge:true});
+        }
+        const role = snap.exists() ? (snap.data().role || 'user') : 'user';
 
-      if (user) {
-        hideModal();
-        if (uname)   uname.textContent   = user.email || 'Usuario';
-        if (welcome) welcome.textContent = 'Tu sesión está activa. Tus operaciones se guardarán en la nube.';
-        if (btnIn)   btnIn.style.display = 'none';
-        if (btnOut)  btnOut.style.display = 'inline-flex';
-      } else {
-        if (uname)   uname.textContent   = 'Invitado';
-        if (welcome) welcome.textContent = 'Inicia sesión para guardar tus operaciones en la nube.';
-        if (btnIn)   btnIn.style.display = 'inline-flex';
-        if (btnOut)  btnOut.style.display = 'none';
+        document.body.classList.add('is-auth');
+        btnLogin?.classList.add('hidden');
+        btnLogout?.classList.remove('hidden');
+        userName?.classList.remove('hidden');
+        userName.textContent = user.email || 'Usuario';
+        welcomeTitle.innerHTML = `Bienvenido, <span>${user.email||'Usuario'}</span>`;
+        welcomeMsg.textContent = "Tu sesión está activa. Tus operaciones se guardarán en la nube.";
+        linkAdmin?.classList.toggle('hidden', role!=='admin');
+
+      }else{
+        document.body.classList.remove('is-auth');
+        btnLogin?.classList.remove('hidden');
+        btnLogout?.classList.add('hidden');
+        userName?.classList.add('hidden');
+        userName.textContent = '';
+        welcomeTitle.innerHTML = `Bienvenido, <span class="muted">Invitado</span>`;
+        welcomeMsg.textContent = "Inicia sesión para guardar tus operaciones en la nube.";
+        linkAdmin?.classList.add('hidden');
       }
     });
   </script>
