@@ -9,7 +9,8 @@
       --bg:#0b1220;--panel:#0f172a;--card:#101827;--text:#e5e7eb;--muted:#94a3b8;
       --accent:#d4af37;--success:#10b981;--danger:#ef4444;--border:rgba(255,255,255,.08)
     }
-    html,body{height:100%} body{margin:0;background:linear-gradient(135deg,#0b1220,#0f172a);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial}
+    html,body{height:100%}
+    body{margin:0;background:linear-gradient(135deg,#0b1220,#0f172a);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial}
     header,main{max-width:1200px;margin:auto}
     header{display:flex;gap:16px;align-items:center;justify-content:space-between;padding:16px}
     .brand{font-weight:800;letter-spacing:.5px}
@@ -21,7 +22,7 @@
     .cards{grid-template-columns:repeat(12,1fr)}
     .card{grid-column:span 6;background:rgba(15,23,42,.8);border:1px solid var(--border);border-radius:14px;padding:16px;backdrop-filter:blur(4px)}
     .card h3{margin:0 0 10px}
-    /* Admin panel area – se muestra solo si body.is-admin */
+    /* Admin panel */
     #admin-area{display:none}
     body.is-admin #admin-area{display:block}
     /* Modal */
@@ -30,7 +31,7 @@
     .field{display:flex;flex-direction:column;gap:6px;margin:10px 0}
     .field input{background:#0b1220;border:1px solid #334155;color:var(--text);border-radius:10px;padding:10px}
     .row{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
-    /* Mobile hamburger demo (si ya tienes uno puedes ignorarlo) */
+    /* Mobile hamburger */
     .hamburger{display:none;gap:6px;flex-direction:column;cursor:pointer}
     .hamburger span{width:24px;height:2px;background:var(--text)}
     nav ul{display:flex;gap:12px;list-style:none;margin:0;padding:0}
@@ -51,8 +52,8 @@
     <nav id="nav">
       <div class="hamburger" id="btn-menu"><span></span><span></span><span></span></div>
       <ul>
-        <li><button class="btn outline" id="btn-open-login">Acceder</button></li>
-        <li><button class="btn outline hidden" id="btn-logout">Salir</button></li>
+        <li><button class="btn outline" id="btn-open-login" type="button">Acceder</button></li>
+        <li><button class="btn outline hidden" id="btn-logout" type="button">Salir</button></li>
       </ul>
     </nav>
   </header>
@@ -63,7 +64,6 @@
       <p id="welcome">Inicia sesión para guardar tus operaciones en la nube.</p>
     </section>
 
-    <!-- Ejemplo de tarjetas del dashboard -->
     <section class="card"><h3>Resumen</h3><p>$0.00</p></section>
     <section class="card"><h3>Factor</h3><p>0.00</p></section>
     <section class="card"><h3>R/B</h3><p>0.00</p></section>
@@ -73,12 +73,12 @@
     <section id="admin-area" class="card" style="grid-column:span 12">
       <div style="display:flex;justify-content:space-between;align-items:center">
         <h3>Panel de Administración</h3>
-        <button class="btn outline" id="btn-refresh-users">Actualizar</button>
+        <button class="btn outline" id="btn-refresh-users" type="button">Actualizar</button>
       </div>
       <div style="overflow:auto;border:1px solid var(--border);border-radius:12px;margin-top:12px">
         <table>
           <thead><tr><th>UID</th><th>Nombre</th><th>Email</th><th>Rol</th><th>Acciones</th></tr></thead>
-          <tbody id="users-tbody"><tr><td colspan="5">—</td></tr></tbody>
+        <tbody id="users-tbody"><tr><td colspan="5">—</td></tr></tbody>
         </table>
       </div>
     </section>
@@ -89,25 +89,26 @@
     <div class="box">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
         <h3 style="margin:0;color:var(--accent)">Acceso</h3>
-        <button class="btn outline" id="btn-close">Cerrar</button>
+        <button class="btn outline" id="btn-close" type="button">Cerrar</button>
       </div>
       <div class="field">
-        <label>Email</label>
+        <label for="email">Email</label>
         <input id="email" type="email" placeholder="tu@correo.com" />
       </div>
       <div class="field">
-        <label>Contraseña</label>
+        <label for="pass">Contraseña</label>
         <input id="pass" type="password" placeholder="••••••••" />
       </div>
       <div class="row">
-        <button class="btn outline" id="btn-register">Crear cuenta</button>
-        <button class="btn" id="btn-login">Entrar</button>
+        <button class="btn outline" id="btn-register" type="button">Crear cuenta</button>
+        <button class="btn" id="btn-login" type="button">Entrar</button>
       </div>
     </div>
   </div>
 
-  <!-- Firebase + App (MÓDULO) -->
+  <!-- App -->
   <script type="module">
+    // Firebase SDKs (CDN)
     import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
     import {
       getAuth, onAuthStateChanged,
@@ -117,7 +118,7 @@
       getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, serverTimestamp, query, limit
     } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
-    // --- CONFIG CORREGIDA (tuya) ---
+    // Config TUYA (corregida)
     const firebaseConfig = {
       apiKey: "AIzaSyCuS-0g97JluGH6FTF5JBmwaW7d5aJ3WWw",
       authDomain: "journal-infiniti-kapital.firebaseapp.com",
@@ -128,34 +129,69 @@
       measurementId: "G-D0ERFPMLGQ"
     };
 
-    // Evita doble init
+    // Init (evita doble)
     const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db   = getFirestore(app);
 
-    // ---- UI helpers
-    const $ = (sel) => document.querySelector(sel);
-    const $$ = (sel) => document.querySelectorAll(sel);
+    // Helpers DOM
+    const $ = (sel)=>document.querySelector(sel);
+    const $$ = (sel)=>document.querySelectorAll(sel);
     const modal = $("#login-modal");
-    $("#btn-open-login").onclick = ()=> modal.style.display = "flex";
-    $("#btn-close").onclick = ()=> modal.style.display = "none";
-    $("#btn-menu").onclick = ()=> $("#nav").classList.toggle("open");
 
-    // ---- Cuenta usuarios para definir primer admin
-    async function usersExist() {
+    // Diagnóstico: wiring
+    console.log("[wireup] script cargado");
+    ["#btn-open-login","#btn-close","#btn-register","#btn-login","#btn-logout","#btn-menu","#btn-refresh-users"].forEach(id=>{
+      const el = document.querySelector(id);
+      console.log("[wireup]", id, el ? "OK" : "MISSING");
+    });
+
+    // UI listeners
+    $("#btn-open-login").onclick = ()=> { console.log("[click] open-login"); modal.style.display = "flex"; };
+    $("#btn-close").onclick      = ()=> { console.log("[click] close");      modal.style.display = "none";  };
+    $("#btn-menu").onclick       = ()=> { console.log("[click] menu");       $("#nav").classList.toggle("open"); };
+    $("#btn-logout").onclick     = ()=> { console.log("[click] logout");     signOut(auth); };
+    $("#btn-refresh-users").onclick = ()=> { console.log("[click] refresh-users"); renderUsers(); };
+
+    // Registro / Login
+    $("#btn-register").onclick = async ()=>{
+      try{
+        console.log("[click] register");
+        const email = $("#email").value.trim();
+        const pass  = $("#pass").value;
+        if(!email || !pass) return alert("Completa email y contraseña.");
+        const { user } = await createUserWithEmailAndPassword(auth, email, pass);
+        await updateProfile(user, { displayName: email.split("@")[0] });
+        await ensureUserDoc(user);
+        modal.style.display = "none";
+      }catch(e){ console.error(e); alert(e.message); }
+    };
+
+    $("#btn-login").onclick = async ()=>{
+      try{
+        console.log("[click] login");
+        const email = $("#email").value.trim();
+        const pass  = $("#pass").value;
+        if(!email || !pass) return alert("Completa email y contraseña.");
+        await signInWithEmailAndPassword(auth, email, pass);
+        modal.style.display = "none";
+      }catch(e){ console.error(e); alert(e.message); }
+    };
+
+    // Primer admin automático
+    async function usersExist(){
       const snap = await getDocs(query(collection(db,"users"), limit(1)));
       return !snap.empty;
     }
-
-    async function ensureUserDoc(user) {
+    async function ensureUserDoc(user){
       const ref = doc(db,"users",user.uid);
       const snap = await getDoc(ref);
-      if (!snap.exists()) {
-        const first = !(await usersExist()); // si NO existen usuarios, este es el primero
+      if(!snap.exists()){
+        const first = !(await usersExist());
         const role = first ? "admin" : "user";
-        await setDoc(ref, {
-          email: user.email || "",
-          displayName: user.displayName || (user.email ? user.email.split("@")[0] : "Usuario"),
+        await setDoc(ref,{
+          email: user.email||"",
+          displayName: user.displayName || (user.email?user.email.split("@")[0]:"Usuario"),
           role,
           createdAt: serverTimestamp()
         });
@@ -164,66 +200,49 @@
       return snap.data();
     }
 
-    // ---- Registro / Login / Logout
-    $("#btn-register").onclick = async ()=>{
-      const email = $("#email").value.trim();
-      const pass  = $("#pass").value;
-      if (!email || !pass) { alert("Completa email y contraseña."); return; }
-      const { user } = await createUserWithEmailAndPassword(auth, email, pass);
-      await updateProfile(user, { displayName: email.split("@")[0] });
-      await ensureUserDoc(user);
-      modal.style.display = "none";
-    };
-
-    $("#btn-login").onclick = async ()=>{
-      const email = $("#email").value.trim();
-      const pass  = $("#pass").value;
-      if (!email || !pass) { alert("Completa email y contraseña."); return; }
-      await signInWithEmailAndPassword(auth, email, pass);
-      modal.style.display = "none";
-    };
-
-    $("#btn-logout").onclick = ()=> signOut(auth);
-
-    // ---- Admin panel
-    async function renderUsers() {
+    // Render admin table
+    async function renderUsers(){
       const tbody = $("#users-tbody");
+      if(!tbody) return;
       tbody.innerHTML = `<tr><td colspan="5">Cargando…</td></tr>`;
-      const list = await getDocs(collection(db,"users"));
-      tbody.innerHTML = "";
-      list.forEach(s=>{
-        const u = s.data();
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${s.id}</td>
-          <td>${u.displayName||"—"}</td>
-          <td>${u.email||"—"}</td>
-          <td>
-            <select data-uid="${s.id}">
-              <option value="user"  ${u.role==="user"?"selected":""}>user</option>
-              <option value="admin" ${u.role==="admin"?"selected":""}>admin</option>
-            </select>
-          </td>
-          <td><button class="btn outline" data-save="${s.id}">Guardar</button></td>
-        `;
-        tbody.appendChild(tr);
-      });
-      tbody.querySelectorAll("button[data-save]").forEach(btn=>{
-        btn.onclick = async ()=>{
-          const uid = btn.getAttribute("data-save");
-          const sel = tbody.querySelector(`select[data-uid="${uid}"]`);
-          try{
-            await updateDoc(doc(db,"users",uid), { role: sel.value });
-            alert("Rol actualizado.");
-          }catch(e){ alert("Error: "+e.message); }
-        };
-      });
+      try{
+        const list = await getDocs(collection(db,"users"));
+        tbody.innerHTML = "";
+        list.forEach(s=>{
+          const u = s.data();
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${s.id}</td>
+            <td>${u.displayName||"—"}</td>
+            <td>${u.email||"—"}</td>
+            <td>
+              <select data-uid="${s.id}">
+                <option value="user"  ${u.role==="user"?"selected":""}>user</option>
+                <option value="admin" ${u.role==="admin"?"selected":""}>admin</option>
+              </select>
+            </td>
+            <td><button class="btn outline" data-save="${s.id}" type="button">Guardar</button></td>
+          `;
+          tbody.appendChild(tr);
+        });
+        tbody.querySelectorAll("button[data-save]").forEach(btn=>{
+          btn.onclick = async ()=>{
+            const uid = btn.getAttribute("data-save");
+            const sel = tbody.querySelector(`select[data-uid="${uid}"]`);
+            try{ await updateDoc(doc(db,"users",uid), { role: sel.value }); alert("Rol actualizado."); }
+            catch(e){ alert("Error: "+e.message); }
+          };
+        });
+      }catch(e){
+        console.error(e);
+        tbody.innerHTML = `<tr><td colspan="5">Error: ${e.message}</td></tr>`;
+      }
     }
-    $("#btn-refresh-users").onclick = renderUsers;
 
-    // ---- Estado de sesión
+    // Estado de sesión
     onAuthStateChanged(auth, async (user)=>{
-      if (!user) {
+      console.log("[auth] state", !!user);
+      if(!user){
         document.body.classList.remove("is-admin");
         $("#user-name").textContent = "Invitado";
         $("#user-role").textContent = "Invitado";
