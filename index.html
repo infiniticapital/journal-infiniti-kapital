@@ -4,263 +4,259 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>INFINITI KAPITAL — Journal</title>
+
+  <!-- Estilos mínimos para que el modal funcione en cualquier tema -->
   <style>
-    :root{
-      --bg:#0b1220;--panel:#0f172a;--card:#101827;--text:#e5e7eb;--muted:#94a3b8;
-      --accent:#d4af37;--success:#10b981;--danger:#ef4444;--border:rgba(255,255,255,.08)
+    :root {
+      --bg: #0b1220;
+      --panel: #101826;
+      --text: #e6edf3;
+      --muted: #9fb0c0;
+      --accent: #d4af37;
+      --border: #1f2a3a;
+      --danger: #ef4444;
+      --success: #10b981;
     }
-    html,body{height:100%}
-    body{margin:0;background:linear-gradient(135deg,#0b1220,#0f172a);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial}
-    header,main{max-width:1200px;margin:auto}
-    header{display:flex;gap:16px;align-items:center;justify-content:space-between;padding:16px}
-    .brand{font-weight:800;letter-spacing:.5px}
-    .pill{background:rgba(212,175,55,.15);color:var(--accent);border:1px solid var(--accent);padding:6px 10px;border-radius:999px;font-weight:600}
-    .btn{background:var(--accent);border:none;color:#0f172a;font-weight:700;border-radius:10px;padding:10px 14px;cursor:pointer}
-    .btn.outline{background:transparent;border:1px solid var(--border);color:var(--text)}
-    .hidden{display:none !important}
-    .grid{display:grid;gap:16px}
-    .cards{grid-template-columns:repeat(12,1fr)}
-    .card{grid-column:span 6;background:rgba(15,23,42,.8);border:1px solid var(--border);border-radius:14px;padding:16px;backdrop-filter:blur(4px)}
-    .card h3{margin:0 0 10px}
-    /* Admin panel */
-    #admin-area{display:none}
-    body.is-admin #admin-area{display:block}
+
+    html, body {
+      margin: 0; padding: 0;
+      background: var(--bg); color: var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
+    }
+
+    .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+
+    header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding: 16px 20px; border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; backdrop-filter: blur(6px);
+      background: color-mix(in srgb, var(--bg) 85%, transparent);
+      z-index: 10;
+    }
+    .brand { display:flex; gap:10px; align-items:center; font-weight:700; }
+    .tag { background: var(--panel); padding:4px 8px; border:1px solid var(--border); border-radius: 999px; color: var(--accent); font-weight:700; }
+    .btn {
+      display:inline-flex; align-items:center; gap:8px;
+      padding:10px 14px; border:1px solid var(--border); border-radius:10px;
+      background: var(--panel); color: var(--text); cursor:pointer; text-decoration:none;
+    }
+    .btn:hover { border-color: color-mix(in srgb, var(--accent) 40%, var(--border)); }
+    .btn-primary { background: var(--accent); color: #141414; border-color: var(--accent); font-weight: 700; }
+    .btn-danger { background: transparent; border-color: #3a1f24; color: #ffb4be; }
+    .grid { display:grid; gap:16px; grid-template-columns: repeat(12, 1fr); }
+    .card { grid-column: span 6; background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+    .card h3 { margin: 0 0 8px 0; font-size: 16px; color: var(--muted); }
+    .big { font-size: 28px; font-weight: 800; color: var(--text); }
+
+    /* Utilidades */
+    .hidden { display: none !important; }
+    .flex { display: flex !important; }
+
     /* Modal */
-    .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.6);z-index:9999;padding:16px}
-    .modal .box{width:100%;max-width:420px;background:var(--panel);border:1px solid var(--accent);border-radius:14px;padding:18px}
-    .field{display:flex;flex-direction:column;gap:6px;margin:10px 0}
-    .field input{background:#0b1220;border:1px solid #334155;color:var(--text);border-radius:10px;padding:10px}
-    .row{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
-    /* Mobile hamburger */
-    .hamburger{display:none;gap:6px;flex-direction:column;cursor:pointer}
-    .hamburger span{width:24px;height:2px;background:var(--text)}
-    nav ul{display:flex;gap:12px;list-style:none;margin:0;padding:0}
-    @media (max-width:900px){
-      .card{grid-column:span 12}
-      .hamburger{display:flex}
-      nav ul{display:none;position:absolute;top:56px;left:16px;right:16px;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:10px}
-      nav.open ul{display:block}
+    .modal {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.55);
+      align-items: center; justify-content: center;
+      z-index: 50;
     }
-    table{width:100%;border-collapse:collapse}
-    th,td{padding:10px;border-top:1px solid var(--border);text-align:left}
-    thead th{border-top:none;background:rgba(255,255,255,.04)}
+    .modal-panel {
+      width: 100%; max-width: 520px;
+      background: var(--panel); border: 1px solid var(--accent);
+      border-radius: 14px; padding: 18px;
+      box-shadow: 0 10px 40px rgba(0,0,0,.35);
+    }
+    .modal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom: 12px; }
+    .modal-title { font-size: 18px; font-weight: 800; color: var(--accent); }
+    .form-row { margin: 10px 0; display:flex; flex-direction:column; gap:6px; }
+    label { font-size: 13px; color: var(--muted); }
+    input {
+      height: 44px; border-radius: 10px; border: 1px solid var(--border);
+      background: #0d1524; color: var(--text); padding: 0 12px; outline: none;
+    }
+    input:focus { border-color: color-mix(in srgb, var(--accent) 40%, var(--border)); }
+    .actions { display:flex; gap:10px; justify-content: flex-end; margin-top: 8px; }
+    .pill { padding: 6px 10px; border-radius: 999px; border:1px solid var(--border); background: #0d1524; color: var(--muted); display:inline-flex; align-items:center; gap:8px; }
+
+    @media (max-width: 820px) {
+      .card { grid-column: 1 / -1; }
+      header { flex-wrap: wrap; gap: 10px; }
+    }
   </style>
 </head>
 <body>
+
+  <!-- Top bar -->
   <header>
-    <div class="brand">INFINITI <span class="pill">KAPITAL</span></div>
-    <nav id="nav">
-      <div class="hamburger" id="btn-menu"><span></span><span></span><span></span></div>
-      <ul>
-        <li><button class="btn outline" id="btn-open-login" type="button">Acceder</button></li>
-        <li><button class="btn outline hidden" id="btn-logout" type="button">Salir</button></li>
-      </ul>
-    </nav>
+    <div class="brand">
+      <div>INFINITI</div>
+      <div class="tag">KAPITAL</div>
+    </div>
+    <div class="actions">
+      <button class="btn" id="btn-logout" title="Cerrar sesión" style="display:none;">Cerrar sesión</button>
+      <button class="btn btn-primary" id="btn-login-open" title="Acceder">Acceder</button>
+    </div>
   </header>
 
-  <main class="grid cards" style="padding:16px">
-    <section class="card" style="grid-column:span 12">
-      <h3>Bienvenido, <span id="user-name">Invitado</span> <small style="color:var(--muted)">(<span id="user-role">Invitado</span>)</small></h3>
-      <p id="welcome">Inicia sesión para guardar tus operaciones en la nube.</p>
-    </section>
+  <!-- Main -->
+  <main class="container">
+    <div class="pill">
+      Bienvenido, <strong id="user-name">Invitado</strong>
+      <span style="opacity:.6;">(modo invitado)</span>
+    </div>
 
-    <section class="card"><h3>Resumen</h3><p>$0.00</p></section>
-    <section class="card"><h3>Factor</h3><p>0.00</p></section>
-    <section class="card"><h3>R/B</h3><p>0.00</p></section>
-    <section class="card"><h3>Ganadoras</h3><p>0 / 0</p></section>
+    <p id="welcome-message" style="color:var(--muted); margin: 10px 0 22px;">
+      Inicia sesión para guardar tus operaciones en la nube.
+    </p>
 
-    <!-- Panel de Administración (solo Admin) -->
-    <section id="admin-area" class="card" style="grid-column:span 12">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <h3>Panel de Administración</h3>
-        <button class="btn outline" id="btn-refresh-users" type="button">Actualizar</button>
+    <section class="grid">
+      <div class="card">
+        <h3>Resumen</h3>
+        <div class="big">$0.00</div>
       </div>
-      <div style="overflow:auto;border:1px solid var(--border);border-radius:12px;margin-top:12px">
-        <table>
-          <thead><tr><th>UID</th><th>Nombre</th><th>Email</th><th>Rol</th><th>Acciones</th></tr></thead>
-        <tbody id="users-tbody"><tr><td colspan="5">—</td></tr></tbody>
-        </table>
+      <div class="card">
+        <h3>Factor</h3>
+        <div class="big">0.00</div>
+      </div>
+      <div class="card">
+        <h3>R/B</h3>
+        <div class="big">0.00</div>
+      </div>
+      <div class="card">
+        <h3>Ganadoras</h3>
+        <div class="big">0</div>
       </div>
     </section>
   </main>
 
-  <!-- Modal de acceso -->
-  <div class="modal" id="login-modal">
-    <div class="box">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-        <h3 style="margin:0;color:var(--accent)">Acceso</h3>
-        <button class="btn outline" id="btn-close" type="button">Cerrar</button>
+  <!-- Modal de autenticación -->
+  <div id="auth-modal" class="modal hidden">
+    <div class="modal-panel">
+      <div class="modal-header">
+        <div class="modal-title">Acceso</div>
+        <button class="btn" id="btn-login-close">Cerrar</button>
       </div>
-      <div class="field">
-        <label for="email">Email</label>
-        <input id="email" type="email" placeholder="tu@correo.com" />
+
+      <div class="form-row">
+        <label for="login-email">Email</label>
+        <input id="login-email" type="email" placeholder="tu@correo.com" />
       </div>
-      <div class="field">
-        <label for="pass">Contraseña</label>
-        <input id="pass" type="password" placeholder="••••••••" />
+
+      <div class="form-row">
+        <label for="login-pass">Contraseña</label>
+        <input id="login-pass" type="password" placeholder="••••••••" />
       </div>
-      <div class="row">
-        <button class="btn outline" id="btn-register" type="button">Crear cuenta</button>
-        <button class="btn" id="btn-login" type="button">Entrar</button>
+
+      <div class="actions">
+        <button class="btn" id="btn-create-account">Crear cuenta</button>
+        <button class="btn btn-primary" id="btn-login-submit">Entrar</button>
       </div>
     </div>
   </div>
 
-  <!-- App -->
+  <!-- Firebase + Lógica (PLUG & PLAY) -->
   <script type="module">
-    // Firebase SDKs (CDN)
-    import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+    /* ===== Firebase ===== */
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js';
     import {
-      getAuth, onAuthStateChanged,
-      createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, updateProfile
-    } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
-    import {
-      getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, serverTimestamp, query, limit
-    } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+      getAuth,
+      onAuthStateChanged,
+      signInWithEmailAndPassword,
+      createUserWithEmailAndPassword,
+      signOut,
+    } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js';
 
-    // Config TUYA (corregida)
     const firebaseConfig = {
       apiKey: "AIzaSyCuS-0g97JluGH6FTF5JBmwaW7d5aJ3WWw",
       authDomain: "journal-infiniti-kapital.firebaseapp.com",
       projectId: "journal-infiniti-kapital",
-      storageBucket: "journal-infiniti-kapital.appspot.com",
+      storageBucket: "journal-infiniti-kapital.firebasestorage.app",
       messagingSenderId: "78211615687",
       appId: "1:78211615687:web:02b05ba83acd46c8c6e7e2",
       measurementId: "G-D0ERFPMLGQ"
     };
 
-    // Init (evita doble)
-    const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+    const app  = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const db   = getFirestore(app);
 
-    // Helpers DOM
-    const $ = (sel)=>document.querySelector(sel);
-    const $$ = (sel)=>document.querySelectorAll(sel);
-    const modal = $("#login-modal");
+    /* ===== Helpers de UI ===== */
+    const $ = (s) => document.querySelector(s);
+    const showModal  = () => { $('#auth-modal')?.classList.remove('hidden'); $('#auth-modal')?.classList.add('flex'); };
+    const hideModal  = () => { $('#auth-modal')?.classList.add('hidden');   $('#auth-modal')?.classList.remove('flex'); };
+    const emailVal   = () => $('#login-email')?.value.trim() || '';
+    const passVal    = () => $('#login-pass')?.value || '';
 
-    // Diagnóstico: wiring
-    console.log("[wireup] script cargado");
-    ["#btn-open-login","#btn-close","#btn-register","#btn-login","#btn-logout","#btn-menu","#btn-refresh-users"].forEach(id=>{
-      const el = document.querySelector(id);
-      console.log("[wireup]", id, el ? "OK" : "MISSING");
+    const ok  = (m) => alert(m);
+    const err = (e) => alert(e?.message || e);
+
+    /* ===== Enlaces de botones ===== */
+    $('#btn-login-open')?.addEventListener('click', (e) => { e.preventDefault(); showModal(); });
+    $('#btn-login-close')?.addEventListener('click', (e) => { e.preventDefault(); hideModal(); });
+
+    // Crear cuenta
+    $('#btn-create-account')?.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const email = emailVal(), pass = passVal();
+      if (!email || !pass) return err('Escribe email y contraseña.');
+      try {
+        console.log('[AUTH] createUserWithEmailAndPassword');
+        await createUserWithEmailAndPassword(auth, email, pass);
+        ok('Cuenta creada y sesión iniciada.');
+        hideModal();
+      } catch (e) {
+        console.error(e);
+        err(e);
+      }
     });
 
-    // UI listeners
-    $("#btn-open-login").onclick = ()=> { console.log("[click] open-login"); modal.style.display = "flex"; };
-    $("#btn-close").onclick      = ()=> { console.log("[click] close");      modal.style.display = "none";  };
-    $("#btn-menu").onclick       = ()=> { console.log("[click] menu");       $("#nav").classList.toggle("open"); };
-    $("#btn-logout").onclick     = ()=> { console.log("[click] logout");     signOut(auth); };
-    $("#btn-refresh-users").onclick = ()=> { console.log("[click] refresh-users"); renderUsers(); };
-
-    // Registro / Login
-    $("#btn-register").onclick = async ()=>{
-      try{
-        console.log("[click] register");
-        const email = $("#email").value.trim();
-        const pass  = $("#pass").value;
-        if(!email || !pass) return alert("Completa email y contraseña.");
-        const { user } = await createUserWithEmailAndPassword(auth, email, pass);
-        await updateProfile(user, { displayName: email.split("@")[0] });
-        await ensureUserDoc(user);
-        modal.style.display = "none";
-      }catch(e){ console.error(e); alert(e.message); }
-    };
-
-    $("#btn-login").onclick = async ()=>{
-      try{
-        console.log("[click] login");
-        const email = $("#email").value.trim();
-        const pass  = $("#pass").value;
-        if(!email || !pass) return alert("Completa email y contraseña.");
+    // Iniciar sesión
+    $('#btn-login-submit')?.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const email = emailVal(), pass = passVal();
+      if (!email || !pass) return err('Escribe email y contraseña.');
+      try {
+        console.log('[AUTH] signInWithEmailAndPassword');
         await signInWithEmailAndPassword(auth, email, pass);
-        modal.style.display = "none";
-      }catch(e){ console.error(e); alert(e.message); }
-    };
-
-    // Primer admin automático
-    async function usersExist(){
-      const snap = await getDocs(query(collection(db,"users"), limit(1)));
-      return !snap.empty;
-    }
-    async function ensureUserDoc(user){
-      const ref = doc(db,"users",user.uid);
-      const snap = await getDoc(ref);
-      if(!snap.exists()){
-        const first = !(await usersExist());
-        const role = first ? "admin" : "user";
-        await setDoc(ref,{
-          email: user.email||"",
-          displayName: user.displayName || (user.email?user.email.split("@")[0]:"Usuario"),
-          role,
-          createdAt: serverTimestamp()
-        });
-        return { role };
-      }
-      return snap.data();
-    }
-
-    // Render admin table
-    async function renderUsers(){
-      const tbody = $("#users-tbody");
-      if(!tbody) return;
-      tbody.innerHTML = `<tr><td colspan="5">Cargando…</td></tr>`;
-      try{
-        const list = await getDocs(collection(db,"users"));
-        tbody.innerHTML = "";
-        list.forEach(s=>{
-          const u = s.data();
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td>${s.id}</td>
-            <td>${u.displayName||"—"}</td>
-            <td>${u.email||"—"}</td>
-            <td>
-              <select data-uid="${s.id}">
-                <option value="user"  ${u.role==="user"?"selected":""}>user</option>
-                <option value="admin" ${u.role==="admin"?"selected":""}>admin</option>
-              </select>
-            </td>
-            <td><button class="btn outline" data-save="${s.id}" type="button">Guardar</button></td>
-          `;
-          tbody.appendChild(tr);
-        });
-        tbody.querySelectorAll("button[data-save]").forEach(btn=>{
-          btn.onclick = async ()=>{
-            const uid = btn.getAttribute("data-save");
-            const sel = tbody.querySelector(`select[data-uid="${uid}"]`);
-            try{ await updateDoc(doc(db,"users",uid), { role: sel.value }); alert("Rol actualizado."); }
-            catch(e){ alert("Error: "+e.message); }
-          };
-        });
-      }catch(e){
+        ok('Sesión iniciada.');
+        hideModal();
+      } catch (e) {
         console.error(e);
-        tbody.innerHTML = `<tr><td colspan="5">Error: ${e.message}</td></tr>`;
+        err(e);
       }
-    }
+    });
 
-    // Estado de sesión
-    onAuthStateChanged(auth, async (user)=>{
-      console.log("[auth] state", !!user);
-      if(!user){
-        document.body.classList.remove("is-admin");
-        $("#user-name").textContent = "Invitado";
-        $("#user-role").textContent = "Invitado";
-        $("#welcome").textContent   = "Inicia sesión para guardar tus operaciones en la nube.";
-        $("#btn-open-login").classList.remove("hidden");
-        $("#btn-logout").classList.add("hidden");
-        $("#users-tbody").innerHTML = `<tr><td colspan="5">—</td></tr>`;
-        return;
+    // Cerrar sesión
+    $('#btn-logout')?.addEventListener('click', async (e) => {
+      e.preventDefault();
+      try {
+        await signOut(auth);
+        ok('Sesión cerrada.');
+      } catch (e) {
+        console.error(e);
+        err(e);
       }
-      const profile = await ensureUserDoc(user);
-      const isAdmin = profile.role === "admin";
-      document.body.classList.toggle("is-admin", isAdmin);
-      $("#user-name").textContent = user.displayName || (user.email?user.email.split("@")[0]:"Usuario");
-      $("#user-role").textContent = isAdmin ? "Admin" : "Usuario";
-      $("#welcome").textContent   = "Tu sesión está activa. Tus operaciones se guardarán en la nube.";
-      $("#btn-open-login").classList.add("hidden");
-      $("#btn-logout").classList.remove("hidden");
-      if (isAdmin) await renderUsers();
+    });
+
+    /* ===== Reactividad de la sesión ===== */
+    onAuthStateChanged(auth, (user) => {
+      console.log('[AUTH] onAuthStateChanged ->', user?.uid || null);
+
+      const welcome = $('#welcome-message');
+      const uname   = $('#user-name');
+      const btnIn   = $('#btn-login-open');
+      const btnOut  = $('#btn-logout');
+
+      if (user) {
+        hideModal();
+        if (uname)   uname.textContent   = user.email || 'Usuario';
+        if (welcome) welcome.textContent = 'Tu sesión está activa. Tus operaciones se guardarán en la nube.';
+        if (btnIn)   btnIn.style.display = 'none';
+        if (btnOut)  btnOut.style.display = 'inline-flex';
+      } else {
+        if (uname)   uname.textContent   = 'Invitado';
+        if (welcome) welcome.textContent = 'Inicia sesión para guardar tus operaciones en la nube.';
+        if (btnIn)   btnIn.style.display = 'inline-flex';
+        if (btnOut)  btnOut.style.display = 'none';
+      }
     });
   </script>
 </body>
