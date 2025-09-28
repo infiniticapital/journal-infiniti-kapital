@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>INFINITI KAPITAL - Journal Profesional</title>
 
-  <!-- Iconos y Chart -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <!-- Iconos y Chart.js -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
@@ -31,10 +31,10 @@
       position:sticky; top:0;
     }
     .left-h{display:flex; align-items:center; gap:12px}
-    .burger{display:none; background:none; border:0; color:var(--text); font-size:22px; padding:8px}
     .date{color:var(--muted)}
     .user{display:flex; align-items:center; gap:12px}
     .avatar{width:36px;height:36px;border-radius:50%;background:var(--accent);color:#111;display:grid;place-items:center;font-weight:800}
+    .burger{display:none; background:none; border:0; color:var(--text); font-size:22px; padding:8px; cursor:pointer}
 
     /* Sidebar */
     .sidebar{
@@ -57,7 +57,7 @@
     }
     .nav .icon{width:22px; text-align:center}
 
-    /* Submenus */
+    /* Submenús */
     .submenu{display:grid; gap:6px; padding:6px 0 6px 34px; max-height:0; overflow:hidden; transition:max-height .25s ease}
     .submenu a{padding:10px 12px}
     .nav button.nav-link{justify-content:space-between}
@@ -98,7 +98,7 @@
       background:var(--accent); color:#111; border:0; font-size:20px; box-shadow:0 10px 30px rgba(0,0,0,.35); z-index:25;
     }
 
-    /* MODALS FIX */
+    /* MODALES */
     .modal{
       display:none; position:fixed; inset:0; padding:20px; background:var(--backdrop);
       z-index:1000; align-items:center; justify-content:center;
@@ -123,21 +123,24 @@
     .btn.primary{background:var(--accent); color:#111}
     .btn.secondary{background:#334155; color:#fff}
 
-    /* Drawer (móvil) */
+    /* Drawer móvil */
     .drawer-backdrop{display:none; position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:25}
-    .drawer-open .drawer-backdrop{display:block}
     @media (max-width: 1024px){
       .welcome,.metrics,.dist,.recent,.balance,.risk,.news,.challenge,.factor,.rr,.wins { grid-column:1/-1 }
     }
     @media (max-width: 860px){
       body{ grid-template-columns:1fr; grid-template-areas:"header" "main"; }
-      .sidebar{ position:fixed; left:0; top:0; bottom:0; transform:translateX(-100%); width:280px }
-      .drawer-open .sidebar{ transform:translateX(0) }
+      .sidebar{ position:fixed; left:0; top:0; bottom:0; transform:translateX(-100%); width:280px; max-width:85vw; }
       .burger{ display:inline-flex }
+      body.sidebar-open .sidebar{ transform:translateX(0) }
+      body.sidebar-open .drawer-backdrop{ display:block }
       main{ padding:16px }
     }
-    /* Aumentar área de toque en móvil */
-    .nav a,.nav button.nav-link{min-height:44px}
+
+    /* Multiusuario/Admin */
+    .hidden{display:none!important}
+    .only-admin{display:none}
+    .is-admin .only-admin{display:block}
   </style>
 </head>
 <body>
@@ -150,7 +153,8 @@
     </div>
 
     <nav class="nav" id="nav">
-      <a href="#" class="nav-item active" data-target="dashboard"><span class="icon"><i class="fa-solid fa-chart-line"></i></span>Dashboard</a>
+      <a href="#" class="nav-item active" data-target="dashboard">
+        <span class="icon"><i class="fa-solid fa-chart-line"></i></span>Dashboard</a>
 
       <!-- Submenú Calendario -->
       <button class="nav-link" aria-expanded="false" aria-controls="sm-cal">
@@ -185,6 +189,11 @@
       <a href="#" class="nav-item" data-target="seguimiento"><span class="icon"><i class="fa-solid fa-tasks"></i></span>Seguimiento</a>
       <a href="#" class="nav-item" data-target="estrategias"><span class="icon"><i class="fa-solid fa-chess-knight"></i></span>Estrategias</a>
       <a href="#" class="nav-item" data-target="configuracion"><span class="icon"><i class="fa-solid fa-cog"></i></span>Configuración</a>
+
+      <!-- Link Panel Admin -->
+      <a href="#" class="nav-item only-admin" data-target="admin">
+        <span class="icon"><i class="fa-solid fa-shield-halved"></i></span> Admin
+      </a>
     </nav>
   </aside>
   <div class="drawer-backdrop" id="drawerBackdrop"></div>
@@ -197,28 +206,26 @@
     </div>
     <div class="user">
       <div class="avatar">AT</div>
-      <button class="btn-icon"><i class="fa-regular fa-bell"></i></button>
-      <button class="btn-icon"><i class="fa-solid fa-gear"></i></button>
+      <div class="user-name">Invitado</div>
+      <button class="btn-icon" id="btn-login" title="Iniciar sesión"><i class="fa-regular fa-user"></i></button>
+      <button class="btn-icon hidden" id="btn-logout" title="Cerrar sesión"><i class="fa-solid fa-right-from-bracket"></i></button>
     </div>
   </header>
 
-  <!-- Botón test Firebase -->
-  <button id="test-fb" class="btn primary" style="position:fixed; left:18px; bottom:18px; z-index:40;">Test Firebase</button>
-
   <!-- Main -->
-  <main>
+  <main id="app">
     <!-- DASHBOARD -->
     <section id="dashboard" class="section active">
       <div class="card welcome">
-        <div class="card-header"><div class="card-title">Bienvenido, Alex</div></div>
-        <p id="welcome-message" style="color:var(--muted)">Aún no has realizado operaciones hoy.</p>
-        <button class="btn primary" style="margin-top:10px"><i class="fa-solid fa-tasks"></i> Configurar Seguimiento</button>
+        <div class="card-header"><div class="card-title">Bienvenido</div></div>
+        <p id="welcome-message" style="color:var(--muted)">Inicia sesión para guardar tus operaciones en la nube.</p>
+        <button class="btn primary" style="margin-top:10px" id="btn-open-auth"><i class="fa-solid fa-right-to-bracket"></i> Acceder</button>
       </div>
 
       <div class="card metrics">
         <div class="card-header"><div class="card-title">Resumen</div></div>
         <div class="metric-card"><div class="metric-val" id="total-profit">$0.00</div><div class="metric-lab">Beneficio Total</div></div>
-        <div class="metric-card" style="margin-top:10px"><div class="metric-val" id="win-rate">0%</div><div class="metric-lab">Tasa de Acierto</div></div>
+        <div class="metric-card" style="margin-top:10px"><div class="metric-val" id="win-rate">0%</</div><div class="metric-lab">Tasa de Acierto</div></div>
       </div>
 
       <div class="card factor"><div class="card-header"><div class="card-title">Factor</div></div><div class="metric-card"><div class="metric-val" id="profit-factor">0.00</div><div class="metric-lab">Operaciones: <span id="total-trades">0</span></div></div></div>
@@ -273,8 +280,51 @@
     <section id="operaciones" class="section"><div class="card" style="grid-column:1/-1"><div class="card-title">Historial</div><div class="chart"><canvas id="operacionesChart"></canvas></div></div></section>
     <section id="analiticas" class="section"><div class="card" style="grid-column:1/-1"><div class="card-title">Analíticas</div><div class="chart"><canvas id="analiticasChart"></canvas></div></div></section>
     <section id="seguimiento" class="section"><div class="card" style="grid-column:1/-1"><div class="card-title">Seguimiento</div><div class="chart"><canvas id="seguimientoChart"></canvas></div></div></section>
-    <section id="estrategias" class="section"><div class="card" style="grid-column:1/-1"><div class="card-title">Estrategias</div></div></section>
+    <section id="estrategias" class="section"><div class="card" style="grid-column:1/-1"><div class="card-title">Estrategias</div></section>
     <section id="configuracion" class="section"><div class="card" style="grid-column:1/-1"><div class="card-title">Configuración</div><p style="color:var(--muted)">Preferencias...</p></div></section>
+
+    <!-- PANEL ADMIN -->
+    <section id="admin" class="section only-admin">
+      <div class="card" style="grid-column:1/-1">
+        <div class="card-header">
+          <div class="card-title">Panel de Administración</div>
+          <div><button class="btn primary" id="btn-refresh-users"><i class="fa-solid fa-rotate"></i> Actualizar</button></div>
+        </div>
+
+        <div class="card" style="margin-bottom:14px">
+          <div class="card-title" style="margin-bottom:8px">Usuarios</div>
+          <div style="overflow:auto">
+            <table style="width:100%; border-collapse:collapse">
+              <thead style="color:var(--muted)">
+                <tr>
+                  <th style="text-align:left;padding:8px;border-bottom:1px solid var(--border)">UID</th>
+                  <th style="text-align:left;padding:8px;border-bottom:1px solid var(--border)">Nombre</th>
+                  <th style="text-align:left;padding:8px;border-bottom:1px solid var(--border)">Email</th>
+                  <th style="text-align:left;padding:8px;border-bottom:1px solid var(--border)">Rol</th>
+                  <th style="text-align:left;padding:8px;border-bottom:1px solid var(--border)">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="admin-users-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title" style="margin-bottom:8px">Detalle de Usuario</div>
+          <div id="admin-user-detail" style="color:var(--muted)">Selecciona un usuario…</div>
+          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:12px">
+            <div class="card">
+              <div class="card-title">Cuentas</div>
+              <div id="admin-user-accounts" style="color:var(--muted)">—</div>
+            </div>
+            <div class="card">
+              <div class="card-title">Trades</div>
+              <div id="admin-user-trades" style="color:var(--muted)">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <!-- FAB -->
@@ -285,7 +335,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <h2 id="trade-title">Agregar Operación</h2>
-        <button class="close-modal" aria-label="Cerrar">&times;</button>
+        <button class="close-modal" data-close>&times;</button>
       </div>
       <div class="modal-body">
         <div class="form-group"><label>Par</label>
@@ -301,7 +351,7 @@
           <select id="trade-challenge" class="form-control"><option value="yes">Sí</option><option value="no">No</option></select></div>
       </div>
       <div class="modal-footer">
-        <button class="btn secondary" id="cancel-trade-btn">Cancelar</button>
+        <button class="btn secondary" data-close>Cancelar</button>
         <button class="btn primary" id="save-trade-btn">Guardar Operación</button>
       </div>
     </div>
@@ -312,7 +362,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <h2 id="acc-title">Agregar Nueva Cuenta</h2>
-        <button class="close-modal" aria-label="Cerrar">&times;</button>
+        <button class="close-modal" data-close>&times;</button>
       </div>
       <div class="modal-body">
         <div class="form-group"><label>Nombre</label><input id="account-name" class="form-control" placeholder="Ej: Cuenta Principal" /></div>
@@ -323,28 +373,56 @@
         <input type="hidden" id="editing-account-id" />
       </div>
       <div class="modal-footer">
-        <button class="btn secondary" id="cancel-account-btn">Cancelar</button>
+        <button class="btn secondary" data-close>Cancelar</button>
         <button class="btn primary" id="save-account-btn">Guardar Cuenta</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: AUTH -->
+  <div id="auth-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="auth-title">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="auth-title">Acceso</h2>
+        <button class="close-modal" data-close>&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Email</label>
+          <input id="auth-email" type="email" class="form-control" placeholder="tu@correo.com" />
+        </div>
+        <div class="form-group">
+          <label>Contraseña</label>
+          <input id="auth-pass" type="password" class="form-control" placeholder="••••••••" />
+        </div>
+        <div class="form-group" id="auth-name-wrap" style="display:none">
+          <label>Nombre</label>
+          <input id="auth-name" class="form-control" placeholder="Tu nombre" />
+        </div>
+        <div id="auth-error" class="hidden" style="margin-top:8px;color:var(--danger)"></div>
+      </div>
+      <div class="modal-footer" style="justify-content:space-between">
+        <div>
+          <button class="btn secondary" id="auth-toggle-mode">Crear cuenta</button>
+        </div>
+        <div>
+          <button class="btn secondary" data-close>Cancelar</button>
+          <button class="btn primary" id="auth-submit">Entrar</button>
+        </div>
       </div>
     </div>
   </div>
 
   <!-- ===== JS UI (no-module) ===== -->
   <script>
-    // Estado demo
-    let tradingData = { totalProfit:0, winRate:0, profitFactor:0, riskRewardRatio:0, winTrades:0, totalTrades:0,
-      dailyRisk:0, weeklyRisk:0, monthlyRisk:0,
-      challenge:{progress:0,profit:0,drawdown:0,trades:0,winRate:0}, trades:[] };
-    let accounts = [{id:1,name:"Cuenta Principal",balance:15325.75,type:"principal"}];
-
-    // Utilidades DOM
+    // Helpers
     const $ = s => document.querySelector(s);
     const $$ = s => document.querySelectorAll(s);
 
     // Fecha
     function setDate(){ $('#current-date').textContent = new Date().toLocaleDateString('es-ES',{weekday:'long',day:'2-digit',month:'long',year:'numeric'}) }
 
-    // Charts básicos
+    // Charts
     let distributionChart, balanceChart, riskChart;
     function initCharts(){
       const d = $('#distributionChart'); if (d) distributionChart = new Chart(d.getContext('2d'),{type:'bar',
@@ -358,28 +436,28 @@
         options:{responsive:true,maintainAspectRatio:false}});
     }
 
-    // ---------- MODALES ----------
-    function openModalById(id){
-      $$('.modal').forEach(m=>m.classList.remove('show'));
-      const m = document.getElementById(id);
-      if (m){ m.classList.add('show'); document.body.style.overflow='hidden'; }
-    }
-    function closeAllModals(){
-      $$('.modal').forEach(m=>m.classList.remove('show'));
-      document.body.style.overflow='';
-    }
+    // Drawer móvil
+    (function(){
+      const burger = document.getElementById('burger');
+      const backdrop = document.getElementById('drawerBackdrop');
+      const open = ()=>{ document.body.classList.add('sidebar-open'); burger?.setAttribute('aria-expanded','true'); document.body.style.overflow='hidden'; };
+      const close= ()=>{ document.body.classList.remove('sidebar-open'); burger?.setAttribute('aria-expanded','false'); document.body.style.overflow=''; };
+      const toggle=()=> document.body.classList.contains('sidebar-open') ? close() : open();
+      burger?.addEventListener('click', toggle);
+      backdrop?.addEventListener('click', close);
+      window.addEventListener('keydown', e=>{ if(e.key==='Escape') close(); });
+      // Cerrar al navegar desde sidebar
+      document.querySelectorAll('.nav a,[data-target]').forEach(el=>{
+        el.addEventListener('click', ()=>{ if (window.matchMedia('(max-width:860px)').matches) close(); });
+      });
+    })();
 
-    // ---------- NAV / SUBMENÚS ----------
+    // Navegación/secciones + submenús
     function setActiveSection(id){
       $$('.section').forEach(s=>s.classList.remove('active'));
       const tgt = document.getElementById(id); if (tgt) tgt.classList.add('active');
-      // resalta item
       $$('.nav a').forEach(a=>a.classList.toggle('active', a.dataset.target===id));
-      // cierra drawer en móvil
-      document.body.classList.remove('drawer-open');
-      $('#burger')?.setAttribute('aria-expanded','false');
     }
-
     function restoreAccordionState(){
       const state = JSON.parse(sessionStorage.getItem('nav-acc-state') || '{}');
       Object.entries(state).forEach(([id,open])=>{
@@ -389,181 +467,320 @@
       });
     }
     function persistAccordionState(){
-      const state = {};
-      $$('.submenu').forEach(p => { state[p.id] = p.classList.contains('open'); });
+      const state = {}; $$('.submenu').forEach(p => { state[p.id] = p.classList.contains('open'); });
       sessionStorage.setItem('nav-acc-state', JSON.stringify(state));
     }
 
-    // ---------- CUENTAS & TRADES DEMO ----------
-    function updateAccounts(){
-      const el = $('#accounts-container');
+    // Modales util
+    function openModalById(id){ document.getElementById(id)?.classList.add('show'); document.body.style.overflow='hidden'; }
+    function closeAllModals(){ $$('.modal').forEach(m=>m.classList.remove('show')); document.body.style.overflow=''; }
+
+    // Estado demo local (si no hay login)
+    window.__local = {
+      tradingData:{ totalProfit:0, winRate:0, profitFactor:0, riskRewardRatio:0, winTrades:0, totalTrades:0,
+        dailyRisk:0, weeklyRisk:0, monthlyRisk:0, challenge:{progress:0,profit:0,drawdown:0,trades:0,winRate:0}, trades:[] },
+      accounts:[]
+    };
+
+    function updateRecentTrades(trades){
+      const el = $('#recent-trades-container');
       if (!el) return;
+      if (!trades || !trades.length){ el.textContent='Sin registros.'; return; }
+      el.innerHTML = trades.slice(0,4).map(t=>{
+        const sign = (t.result||0)>=0?'+':'-';
+        const col  = (t.result||0)>=0? 'var(--success)' : 'var(--danger)';
+        return `<div>${t.pair} · ${String(t.type||'').toUpperCase()} · <b style="color:${col}">${sign}$${Math.abs(t.result||0).toFixed(2)}</b> · ${t.dateStr||''}</div>`;
+      }).join('');
+    }
+    function updateAccountsUI(accounts){
+      const el = $('#accounts-container'); if (!el) return;
       let html = `<div class="btn primary" id="add-account-card" style="display:inline-flex;align-items:center;gap:8px"><i class="fa-solid fa-plus"></i> Agregar Cuenta</div>`;
-      accounts.forEach(a=>{
+      (accounts||[]).forEach(a=>{
         html += `<div class="card" style="margin-top:10px">
-          <div class="card-header"><div class="card-title">${a.name}</div>
-          <div><button class="btn-icon edit-account" data-id="${a.id}"><i class="fa-solid fa-pen"></i></button>
-               <button class="btn-icon delete-account" data-id="${a.id}"><i class="fa-solid fa-trash"></i></button></div></div>
-          <div class="metric-card"><div class="metric-val">$${a.balance.toFixed(2)}</div><div class="metric-lab">${a.type}</div></div></div>`;
+          <div class="card-header"><div class="card-title">${a.name||'Cuenta'}</div></div>
+          <div class="metric-card"><div class="metric-val">$${(a.balance||0).toFixed(2)}</div><div class="metric-lab">${a.type||'—'}</div></div></div>`;
       });
       el.innerHTML = html;
       $('#add-account-card')?.addEventListener('click',()=>openModalById('add-account-modal'));
-      $$('.edit-account').forEach(b=>b.addEventListener('click',e=>{
-        const id = +e.currentTarget.dataset.id;
-        const acc = accounts.find(x=>x.id===id);
-        if (acc){
-          $('#acc-title').textContent='Editar Cuenta';
-          $('#account-name').value=acc.name; $('#account-balance').value=acc.balance; $('#account-type').value=acc.type; $('#editing-account-id').value=id;
-          openModalById('add-account-modal');
+    }
+
+    // Recalcula tarjetas top a partir de trades
+    function recalcFromTrades(trades){
+      const t = trades||[];
+      const wins = t.filter(x=>x.result>0), losses = t.filter(x=>x.result<0);
+      const total = t.length;
+      const totalWins = wins.reduce((s,x)=>s+x.result,0);
+      const totalLoss = Math.abs(losses.reduce((s,x)=>s+x.result,0));
+      const winRate = total? (wins.length/total)*100 : 0;
+      const pf = totalLoss? totalWins/totalLoss : 0;
+      const rr = (wins.length && losses.length)? (totalWins/wins.length)/(totalLoss/losses.length) : 0;
+
+      $('#total-trades').textContent = total;
+      $('#total-trades-2').textContent = total;
+      $('#win-trades').textContent = wins.length;
+      $('#win-rate').textContent = `${winRate.toFixed(1)}%`;
+      $('#profit-factor').textContent = pf.toFixed(2);
+      $('#risk-reward').textContent = rr.toFixed(2);
+      $('#total-profit').textContent = `$${(totalWins-totalLoss).toFixed(2)}`;
+
+      if (distributionChart){
+        distributionChart.data.datasets[0].data = [wins.length, losses.length, t.filter(x=>x.result===0).length];
+        distributionChart.update();
+      }
+      if (balanceChart){
+        const data = []; let bal = 10000;
+        for (let i=0;i<7;i++){ if (i<t.length) bal += t[t.length-1-i]?.result||0; data.unshift(bal) }
+        balanceChart.data.datasets[0].data = data; balanceChart.update();
+      }
+      updateRecentTrades(t);
+    }
+
+    document.addEventListener('DOMContentLoaded', ()=>{
+      setDate(); initCharts(); restoreAccordionState();
+
+      // Nav simple
+      $$('.nav a').forEach(a=>a.addEventListener('click', e=>{
+        e.preventDefault(); const id = a.dataset.target; if (id) setActiveSection(id);
+      }));
+      // Submenús
+      $$('.nav button.nav-link').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const id = btn.getAttribute('aria-controls'); const panel = document.getElementById(id);
+          const isOpen = btn.getAttribute('aria-expanded')==='true';
+          btn.setAttribute('aria-expanded', String(!isOpen)); panel.classList.toggle('open', !isOpen); persistAccordionState();
+        });
+      });
+
+      // Abrir modales
+      $('#add-trade-btn')?.addEventListener('click', ()=>openModalById('add-trade-modal'));
+      $('#floating-add-trade-btn')?.addEventListener('click', ()=>openModalById('add-trade-modal'));
+      $('#quick-add-trade')?.addEventListener('click', (e)=>{ e.preventDefault(); openModalById('add-trade-modal'); });
+      $('#add-account-btn')?.addEventListener('click', ()=>openModalById('add-account-modal'));
+      $('#btn-open-auth')?.addEventListener('click', ()=>openModalById('auth-modal'));
+      $$('[data-close]').forEach(x=>x.addEventListener('click', closeAllModals));
+      window.addEventListener('click', e=>{ if (e.target.classList && e.target.classList.contains('modal')) closeAllModals(); });
+
+      // Demo local (sin login): que no reviente
+      updateAccountsUI(window.__local.accounts);
+      recalcFromTrades(window.__local.tradingData.trades);
+    });
+  </script>
+
+  <!-- ===== Firebase/Firestore + Auth + Admin (module) ===== -->
+  <script type="module">
+    import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+    import {
+      getAuth, onAuthStateChanged, signInWithEmailAndPassword,
+      createUserWithEmailAndPassword, signOut, updateProfile
+    } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+    import {
+      getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs, query, orderBy, onSnapshot
+    } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+    const firebaseConfig = {
+      apiKey: "TU_API_KEY_AQUI",                // <-- pon tu API key real
+      authDomain: "journal-infiniti-kapital.firebaseapp.com",
+      projectId: "journal-infiniti-kapital",
+      storageBucket: "journal-infiniti-kapital.appspot.com",
+      appId: "1:78211615687:web:82b05b3ad3dcd6c8e7e2",
+      measurementId: "G-D0E8FPMLGQ"
+    };
+
+    const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+
+    const $ = s => document.querySelector(s);
+    const $$ = s => document.querySelectorAll(s);
+
+    // ---- Auth modal ----
+    let authMode = 'login'; // login | register
+    function setAuthMode(mode){
+      authMode = mode;
+      $('#auth-title').textContent = mode==='login' ? 'Iniciar Sesión' : 'Crear Cuenta';
+      $('#auth-toggle-mode').textContent = mode==='login' ? 'Crear cuenta' : 'Ya tengo cuenta';
+      $('#auth-name-wrap').style.display = mode==='register' ? 'block' : 'none';
+      $('#auth-error').classList.add('hidden');
+    }
+    $('#auth-toggle-mode')?.addEventListener('click', ()=> setAuthMode(authMode==='login' ? 'register' : 'login'));
+    $('#auth-submit')?.addEventListener('click', async ()=>{
+      const email = $('#auth-email').value.trim();
+      const pass  = $('#auth-pass').value.trim();
+      const name  = $('#auth-name').value.trim() || 'Trader';
+      const err   = $('#auth-error');
+      try{
+        err.classList.add('hidden');
+        if (authMode==='login'){
+          await signInWithEmailAndPassword(auth, email, pass);
+        } else {
+          const cred = await createUserWithEmailAndPassword(auth, email, pass);
+          await updateProfile(cred.user, { displayName: name });
+          await setDoc(doc(db, 'users', cred.user.uid), {
+            displayName: name, email, role: 'user', createdAt: Date.now()
+          });
         }
-      }));
-      $$('.delete-account').forEach(b=>b.addEventListener('click',e=>{
-        const id = +e.currentTarget.dataset.id;
-        if (confirm('Eliminar cuenta?')){ accounts=accounts.filter(x=>x.id!==id); updateAccounts(); }
-      }));
+        document.getElementById('auth-modal')?.classList.remove('show'); document.body.style.overflow='';
+      }catch(e){ err.textContent = e.message; err.classList.remove('hidden'); }
+    });
+
+    $('#btn-login')?.addEventListener('click', ()=>{ document.getElementById('auth-modal')?.classList.add('show'); document.body.style.overflow='hidden'; });
+    $('#btn-logout')?.addEventListener('click', ()=> signOut(auth));
+
+    // ---- Realtime propio ----
+    let unsubTrades=null, unsubAccounts=null;
+    function bindSelfRealtime(uid){
+      unsubTrades && unsubTrades(); unsubAccounts && unsubAccounts();
+
+      const tRef = collection(db, 'users', uid, 'trades');
+      unsubTrades = onSnapshot(query(tRef, orderBy('createdAt','desc')), snap=>{
+        const trades = snap.docs.map(d=>({id:d.id,...d.data()}));
+        window.__currentTrades = trades;
+        // Recalcula
+        (window.recalcFromTrades || window._noop || (()=>{}))(trades);
+      });
+
+      const aRef = collection(db, 'users', uid, 'accounts');
+      unsubAccounts = onSnapshot(aRef, snap=>{
+        const accounts = snap.docs.map(d=>({id:d.id,...d.data()}));
+        window.__currentAccounts = accounts;
+        (window.updateAccountsUI || window._noop || (()=>{}))(accounts);
+      });
     }
 
-    function updateRecentTrades(){
-      const el = $('#recent-trades-container');
-      if (!el) return;
-      if (!tradingData.trades.length){ el.textContent='Sin registros.'; return; }
-      el.innerHTML = tradingData.trades.slice(-4).reverse().map(t=>{
-        const cls = t.result>=0?'style="color:var(--success)"':'style="color:var(--danger)"';
-        const sign = t.result>=0?'+':'-';
-        return `<div>${t.pair} · ${t.type.toUpperCase()} · <b ${cls}>${sign}$${Math.abs(t.result).toFixed(2)}</b> · ${t.date}</div>`;
-      }).join('');
+    // Exponer helpers UI globales del primer script
+    window.recalcFromTrades = (trades)=>{ 
+      // usa la función ya definida en el primer script
+      const f = window.eval?.('recalcFromTrades') || window.recalcFromTrades;
+      if (f && f !== window.recalcFromTrades) f(trades); else {
+        // fallback (si algún navegador bloquea eval)
+        const t = trades||[];
+        const wins = t.filter(x=>x.result>0), losses = t.filter(x=>x.result<0);
+        $('#win-trades').textContent = wins.length;
+        $('#total-trades').textContent = t.length;
+        $('#total-trades-2').textContent = t.length;
+      }
+    };
+
+    // ---- Guardar Trade / Account (usa Firestore si hay login, local si no) ----
+    async function saveTrade({ pair, type, result, risk, reward, inChallenge }){
+      const now = new Date();
+      const dateStr = `${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()}`;
+      const user = auth.currentUser;
+      if (user){
+        await addDoc(collection(db, 'users', user.uid, 'trades'), {
+          pair, type, result: Number(result||0), risk: Number(risk||0), reward: Number(reward||0),
+          inChallenge: !!inChallenge, createdAt: Date.now(), dateStr
+        });
+      } else {
+        // local (no persistente)
+        window.__local.tradingData.trades.unshift({pair,type,result:Number(result||0),risk:Number(risk||0),reward:Number(reward||0),inChallenge:!!inChallenge,dateStr});
+        window.recalcFromTrades(window.__local.tradingData.trades);
+      }
+    }
+    async function saveAccount({ name, balance, type }){
+      const user = auth.currentUser;
+      if (user){
+        await addDoc(collection(db, 'users', user.uid, 'accounts'), {
+          name, balance: Number(balance||0), type, createdAt: Date.now()
+        });
+      } else {
+        window.__local.accounts.push({name, balance:Number(balance||0), type});
+        window.updateAccountsUI(window.__local.accounts);
+      }
     }
 
-    function updateTopCards(){
-      $('#total-profit').textContent = `$${tradingData.totalProfit.toFixed(2)}`;
-      $('#win-rate').textContent = `${tradingData.winRate.toFixed(1)}%`;
-      $('#profit-factor').textContent = tradingData.profitFactor.toFixed(2);
-      $('#risk-reward').textContent = tradingData.riskRewardRatio.toFixed(2);
-      $('#win-trades').textContent = tradingData.winTrades;
-      $('#total-trades').textContent = tradingData.totalTrades;
-      $('#total-trades-2').textContent = tradingData.totalTrades;
-      $('#daily-risk').textContent = `${tradingData.dailyRisk.toFixed(1)}%`;
-      $('#weekly-risk').textContent = `${tradingData.weeklyRisk.toFixed(1)}%`;
-      $('#monthly-risk').textContent = `${tradingData.monthlyRisk.toFixed(1)}%`;
-      $('#challenge-progress-value').textContent = `${tradingData.challenge.progress.toFixed(0)}%`;
-      $('#challenge-progress-bar').style.width = `${tradingData.challenge.progress}%`;
-      $('#challenge-profit').textContent = `+${tradingData.challenge.profit.toFixed(1)}%`;
-      $('#challenge-drawdown').textContent = `${tradingData.challenge.drawdown.toFixed(1)}%`;
-      $('#challenge-trades').textContent = tradingData.challenge.trades;
-      $('#challenge-win-rate').textContent = `${tradingData.challenge.winRate.toFixed(1)}%`;
-    }
-
-    function addTrade(){
-      const now = new Date(), d = `${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()}`;
-      const trade = {
+    // Botones guardar
+    $('#save-trade-btn')?.addEventListener('click', async ()=>{
+      const data = {
         pair: $('#trade-pair-input').value,
         type: $('#trade-type-input').value,
         result: parseFloat($('#trade-result-input').value)||0,
         risk: parseFloat($('#trade-risk-input').value)||0,
         reward: parseFloat($('#trade-reward-input').value)||0,
-        inChallenge: $('#trade-challenge').value==='yes', date:d
+        inChallenge: $('#trade-challenge').value==='yes'
       };
-      tradingData.trades.push(trade);
-      tradingData.totalTrades++;
-      tradingData.totalProfit += trade.result;
-      if (trade.result>0) tradingData.winTrades++;
-      tradingData.winRate = tradingData.totalTrades? (tradingData.winTrades/tradingData.totalTrades)*100:0;
-      const wins = tradingData.trades.filter(t=>t.result>0), losses = tradingData.trades.filter(t=>t.result<0);
-      const tw = wins.reduce((s,t)=>s+t.result,0), tl = Math.abs(losses.reduce((s,t)=>s+t.result,0));
-      tradingData.profitFactor = tl? tw/tl:0;
-      if (wins.length && losses.length){
-        tradingData.riskRewardRatio = (tw/wins.length) / (tl/losses.length);
-      }
-      tradingData.dailyRisk = trade.risk; tradingData.weeklyRisk = trade.risk*4; tradingData.monthlyRisk = trade.risk*20;
-
-      if (trade.inChallenge){
-        tradingData.challenge.trades++;
-        tradingData.challenge.profit += trade.result>0? trade.result/100:0;
-        tradingData.challenge.drawdown = Math.min(tradingData.challenge.drawdown || 0, trade.result<0? Math.abs(trade.result)/100 : 0);
-        const cw = tradingData.trades.filter(t=>t.inChallenge && t.result>0).length;
-        tradingData.challenge.winRate = tradingData.challenge.trades? (cw/tradingData.challenge.trades)*100:0;
-        tradingData.challenge.progress = Math.min(100, tradingData.challenge.trades*5);
-      }
-
-      updateTopCards(); updateRecentTrades();
-      if (distributionChart){ distributionChart.data.datasets[0].data = [
-        tradingData.trades.filter(t=>t.result>0).length,
-        tradingData.trades.filter(t=>t.result<0).length,
-        tradingData.trades.filter(t=>t.result===0).length
-      ]; distributionChart.update(); }
-      if (balanceChart){
-        const data = []; let bal = 10000;
-        for (let i=0;i<7;i++){ if (i<tradingData.trades.length) bal += tradingData.trades[i].result; data.push(bal) }
-        balanceChart.data.datasets[0].data = data; balanceChart.update();
-      }
-      closeAllModals();
+      await saveTrade(data);
+      // limpiar + cerrar
       $('#trade-result-input').value=''; $('#trade-risk-input').value=''; $('#trade-reward-input').value='';
-    }
+      document.getElementById('add-trade-modal')?.classList.remove('show'); document.body.style.overflow='';
+    });
 
-    function saveAccount(){
-      const name = $('#account-name').value.trim();
-      const balance = parseFloat($('#account-balance').value)||0;
-      const type = $('#account-type').value;
-      const editing = $('#editing-account-id').value;
-      if (editing){
-        const id = +editing; const i = accounts.findIndex(a=>a.id===id);
-        if (i>-1) accounts[i] = {id,name,balance,type};
+    $('#save-account-btn')?.addEventListener('click', async ()=>{
+      const data = {
+        name: $('#account-name').value.trim(),
+        balance: parseFloat($('#account-balance').value)||0,
+        type: $('#account-type').value
+      };
+      await saveAccount(data);
+      $('#account-name').value=''; $('#account-balance').value=''; $('#account-type').value='principal';
+      document.getElementById('add-account-modal')?.classList.remove('show'); document.body.style.overflow='';
+    });
+
+    // ---- Panel Admin ----
+    async function loadUsersTable(){
+      if (!auth.currentUser) return;
+      const token = await auth.currentUser.getIdTokenResult(true);
+      const role = token.claims.role || 'user';
+      if (role !== 'admin') return;
+
+      const tbody = $('#admin-users-tbody'); if (!tbody) return;
+      tbody.innerHTML = '<tr><td colspan="5" style="padding:8px;color:var(--muted)">Cargando…</td></tr>';
+      const snap = await getDocs(collection(db, 'users'));
+      const rows = [];
+      snap.forEach(d=>{
+        const u = d.data();
+        rows.push(`<tr>
+          <td style="padding:8px;border-bottom:1px solid var(--border)">${d.id}</td>
+          <td style="padding:8px;border-bottom:1px solid var(--border)">${u.displayName||'—'}</td>
+          <td style="padding:8px;border-bottom:1px solid var(--border)">${u.email||'—'}</td>
+          <td style="padding:8px;border-bottom:1px solid var(--border)">${u.role||'user'}</td>
+          <td style="padding:8px;border-bottom:1px solid var(--border)">
+            <button class="btn secondary btn-open-user" data-uid="${d.id}"><i class="fa-regular fa-folder-open"></i> Abrir</button>
+          </td>
+        </tr>`);
+      });
+      tbody.innerHTML = rows.join('') || '<tr><td colspan="5" style="padding:8px;color:var(--muted)">Sin usuarios.</td></tr>';
+      $$('.btn-open-user').forEach(btn=> btn.addEventListener('click', ()=> openUserDetail(btn.dataset.uid)) );
+    }
+    async function openUserDetail(uid){
+      $('#admin-user-detail').textContent = `Usuario: ${uid}`;
+      $('#admin-user-accounts').textContent = 'Cargando…';
+      $('#admin-user-trades').textContent   = 'Cargando…';
+
+      const accSnap = await getDocs(collection(db, 'users', uid, 'accounts'));
+      const trdSnap = await getDocs(query(collection(db, 'users', uid, 'trades'), orderBy('createdAt','desc')));
+      const accHtml = []; accSnap.forEach(d=>{ const a=d.data(); accHtml.push(`<div style="padding:8px;border-bottom:1px solid var(--border)"><b>${a.name||'Cuenta'}</b> · $${(a.balance||0).toFixed(2)} · ${a.type||'—'}</div>`); });
+      $('#admin-user-accounts').innerHTML = accHtml.join('') || '<span style="color:var(--muted)">Sin cuentas</span>';
+
+      const trdHtml = []; trdSnap.forEach(d=>{ const t=d.data(); const sign=(t.result||0)>=0?'+':'-'; const col=(t.result||0)>=0?'var(--success)':'var(--danger)';
+        trdHtml.push(`<div style="padding:8px;border-bottom:1px solid var(--border)">${t.dateStr||''} · ${t.pair||'—'} · ${String(t.type||'').toUpperCase()} · <b style="color:${col}">${sign}$${Math.abs(t.result||0).toFixed(2)}</b></div>`); });
+      $('#admin-user-trades').innerHTML = trdHtml.join('') || '<span style="color:var(--muted)">Sin trades</span>';
+    }
+    $('#btn-refresh-users')?.addEventListener('click', loadUsersTable);
+
+    // ---- Sesión ----
+    onAuthStateChanged(auth, async (user)=>{
+      if (user){
+        const token = await user.getIdTokenResult(true);
+        const role  = token.claims.role || 'user';
+        document.body.classList.toggle('is-admin', role==='admin');
+        $('.user-name') && ($('.user-name').textContent = user.displayName || user.email);
+        $('#btn-login')?.classList.add('hidden'); $('#btn-logout')?.classList.remove('hidden');
+        $('#welcome-message').textContent = "Tu sesión está activa. Tus operaciones se guardarán en la nube.";
+        bindSelfRealtime(user.uid);
+        if (role==='admin') await loadUsersTable();
       } else {
-        const id = accounts.length ? Math.max(...accounts.map(a=>a.id))+1 : 1;
-        accounts.push({id,name,balance,type});
+        document.body.classList.remove('is-admin');
+        $('.user-name') && ($('.user-name').textContent = 'Invitado');
+        $('#btn-login')?.classList.remove('hidden'); $('#btn-logout')?.classList.add('hidden');
+        $('#welcome-message').textContent = "Inicia sesión para guardar tus operaciones en la nube.";
+        // Limpia panel admin
+        $('#admin-users-tbody') && ($('#admin-users-tbody').innerHTML='');
+        $('#admin-user-detail') && ($('#admin-user-detail').textContent='Selecciona un usuario…');
+        $('#admin-user-accounts') && ($('#admin-user-accounts').textContent='—');
+        $('#admin-user-trades') && ($('#admin-user-trades').textContent='—');
       }
-      updateAccounts(); closeAllModals();
-      $('#account-name').value=''; $('#account-balance').value=''; $('#account-type').value='principal'; $('#editing-account-id').value='';
-    }
-
-    // ---------- INIT ----------
-    document.addEventListener('DOMContentLoaded', ()=>{
-      setDate(); initCharts(); updateTopCards(); updateAccounts(); updateRecentTrades(); restoreAccordionState();
-
-      // Burger / Drawer
-      $('#burger')?.addEventListener('click', ()=>{
-        const open = !document.body.classList.contains('drawer-open');
-        document.body.classList.toggle('drawer-open', open);
-        $('#burger').setAttribute('aria-expanded', String(open));
-      });
-      $('#drawerBackdrop')?.addEventListener('click', ()=>{ document.body.classList.remove('drawer-open'); $('#burger')?.setAttribute('aria-expanded','false'); });
-
-      // Enlaces de secciones planas
-      $$('.nav a').forEach(a=>a.addEventListener('click', e=>{
-        e.preventDefault();
-        const id = a.dataset.target; if (id) setActiveSection(id);
-      }));
-
-      // Submenús (accordion)
-      $$('.nav button.nav-link').forEach(btn=>{
-        btn.addEventListener('click', ()=>{
-          const id = btn.getAttribute('aria-controls');
-          const panel = document.getElementById(id);
-          const isOpen = btn.getAttribute('aria-expanded')==='true';
-          btn.setAttribute('aria-expanded', String(!isOpen));
-          panel.classList.toggle('open', !isOpen);
-          persistAccordionState();
-        });
-      });
-
-      // Atajos
-      $('#add-trade-btn')?.addEventListener('click', ()=>openModalById('add-trade-modal'));
-      $('#floating-add-trade-btn')?.addEventListener('click', ()=>openModalById('add-trade-modal'));
-      $('#quick-add-trade')?.addEventListener('click', (e)=>{ e.preventDefault(); openModalById('add-trade-modal'); });
-
-      $('#add-account-btn')?.addEventListener('click', ()=>openModalById('add-account-modal'));
-
-      // Cierre modales
-      $$('.close-modal,#cancel-trade-btn,#cancel-account-btn').forEach(x=>x.addEventListener('click', closeAllModals));
-      window.addEventListener('click', e=>{ if (e.target.classList && e.target.classList.contains('modal')) closeAllModals(); });
-
-      // Guardar
-      $('#save-trade-btn')?.addEventListener('click', addTrade);
-      $('#save-account-btn')?.addEventListener('click', saveAccount);
     });
   </script>
-
-  <!-- ===== Firebase/Firestore (module) ===== -->
-  <script type="module" src="./main.js"></script>
 </body>
 </html>
