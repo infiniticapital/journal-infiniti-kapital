@@ -543,14 +543,11 @@
       if (tgt) {
         tgt.classList.add('active');
       }
-      
       $$('.nav a').forEach(a => a.classList.toggle('active', a.dataset.target === id));
-
-      // Si la sección que activamos es el calendario, le pedimos que se redibuje
       if (id === 'calendario' && window.calendar) {
         setTimeout(() => {
           window.calendar.updateSize();
-        }, 10); // Un pequeño retardo para asegurar que el CSS ha hecho visible el contenedor
+        }, 10);
       }
     }
     function restoreAccordionState(){
@@ -664,12 +661,10 @@
       const winRate = total ? (wins.length / total) * 100 : 0;
       const profitFactor = totalLoss ? totalWins / totalLoss : 0;
       const avgRR = (wins.length && losses.length) ? (totalWins / wins.length) / (totalLoss / losses.length) : 0;
-
       $('#analytics-total-profit').textContent = `$${totalProfit.toFixed(2)}`;
       $('#analytics-win-rate').textContent = `${winRate.toFixed(1)}%`;
       $('#analytics-profit-factor').textContent = profitFactor.toFixed(2);
       $('#analytics-rr').textContent = avgRR.toFixed(2);
-
       renderEquityCurve(t);
     }
     function renderEquityCurve(trades) {
@@ -810,65 +805,55 @@
         select.appendChild(option);
       });
     }
-
-function updateChallengeTrackerUI(progress) {
-  const p = progress || {};
-  const profitPercent = p.profitPercent || 0;
-  const target = p.profitTargetPercent || 10;
-  
-  // Cálculo a prueba de errores
-  const progressPercent = target > 0 ? (profitPercent / target) * 100 : 0;
-  
-  $('#challenge-profit').textContent = `${profitPercent.toFixed(2)}%`;
-  $('#challenge-drawdown').textContent = `${p.drawdownPercent?.toFixed(2) || 0.00}%`;
-  $('#challenge-trades').textContent = p.tradeCount || 0;
-  $('#challenge-win-rate').textContent = `${p.winRate?.toFixed(1) || 0}%`;
-  $('#challenge-progress-value').textContent = `${progressPercent.toFixed(1)}%`;
-  
-  const progressBar = $('#challenge-progress-bar');
-  if (progressBar) progressBar.style.width = `${Math.min(100, progressPercent)}%`;
-
-  const ddElement = $('#challenge-drawdown').closest('.metric-card');
-  if (ddElement) {
-    const isViolated = (p.drawdownPercent || 0) >= (p.maxLossPercent || 10);
-    ddElement.style.backgroundColor = isViolated ? 'rgba(239, 68, 68, .4)' : '';
-  }
-}
-
-function recalcFromTrades(trades){
-  const t = trades||[];
-  const wins = t.filter(x=>x.result>0), losses = t.filter(x=>x.result<0);
-  const total = t.length;
-  const totalWins = wins.reduce((s,x)=>s+x.result,0);
-  const totalLoss = Math.abs(losses.reduce((s,x)=>s+x.result,0));
-  const winRate = total? (wins.length/total)*100 : 0;
-  const pf = totalLoss? totalWins/totalLoss : 0;
-  const rr = (wins.length && losses.length)? (totalWins/wins.length)/(totalLoss/losses.length) : 0;
-
-  $('#total-trades').textContent = total;
-  $('#total-trades-2').textContent = total;
-  $('#win-trades').textContent = wins.length;
-  $('#win-rate').textContent = `${winRate.toFixed(1)}%`;
-  $('#profit-factor').textContent = pf.toFixed(2);
-  $('#risk-reward').textContent = rr.toFixed(2);
-  $('#total-profit').textContent = `$${(totalWins-totalLoss).toFixed(2)}`;
-
-  if (distributionChart){
-    distributionChart.data.datasets[0].data = [wins.length, losses.length, t.filter(x=>x.result===0).length];
-    distributionChart.data.datasets[0].label = 'Operaciones'; // <-- ETIQUETA AÑADIDA
-    distributionChart.update();
-  }
-  if (balanceChart){
-    const data = []; let bal = 10000;
-    // Corregido para que el gráfico empiece desde el balance inicial
-    const reversedTrades = t.slice().reverse();
-    for (let i=0;i<reversedTrades.length;i++){ bal += reversedTrades[i].result||0; data.push(bal); }
-    balanceChart.data.datasets[0].data = [10000, ...data];
-    balanceChart.data.labels = ['Inicio', ...Array.from({length: data.length}, (_,i)=>i+1)];
-    balanceChart.update();
-  }
-  updateRecentTrades(t);
-}
+    function updateChallengeTrackerUI(progress) {
+      const p = progress || {};
+      const profitPercent = p.profitPercent || 0;
+      const target = p.profitTargetPercent || 10;
+      const progressPercent = target > 0 ? (profitPercent / target) * 100 : 0;
+      $('#challenge-profit').textContent = `${profitPercent.toFixed(2)}%`;
+      $('#challenge-drawdown').textContent = `${p.drawdownPercent?.toFixed(2) || 0.00}%`;
+      $('#challenge-trades').textContent = p.tradeCount || 0;
+      $('#challenge-win-rate').textContent = `${p.winRate?.toFixed(1) || 0}%`;
+      $('#challenge-progress-value').textContent = `${progressPercent.toFixed(1)}%`;
+      const progressBar = $('#challenge-progress-bar');
+      if (progressBar) progressBar.style.width = `${Math.min(100, progressPercent)}%`;
+      const ddElement = $('#challenge-drawdown').closest('.metric-card');
+      if (ddElement) {
+        const isViolated = (p.drawdownPercent || 0) >= (p.maxLossPercent || 10);
+        ddElement.style.backgroundColor = isViolated ? 'rgba(239, 68, 68, .4)' : '';
+      }
+    }
+    function recalcFromTrades(trades){
+      const t = trades||[];
+      const wins = t.filter(x=>x.result>0), losses = t.filter(x=>x.result<0);
+      const total = t.length;
+      const totalWins = wins.reduce((s,x)=>s+x.result,0);
+      const totalLoss = Math.abs(losses.reduce((s,x)=>s+x.result,0));
+      const winRate = total? (wins.length/total)*100 : 0;
+      const pf = totalLoss? totalWins/totalLoss : 0;
+      const rr = (wins.length && losses.length)? (totalWins/wins.length)/(totalLoss/losses.length) : 0;
+      $('#total-trades').textContent = total;
+      $('#total-trades-2').textContent = total;
+      $('#win-trades').textContent = wins.length;
+      $('#win-rate').textContent = `${winRate.toFixed(1)}%`;
+      $('#profit-factor').textContent = pf.toFixed(2);
+      $('#risk-reward').textContent = rr.toFixed(2);
+      $('#total-profit').textContent = `$${(totalWins-totalLoss).toFixed(2)}`;
+      if (distributionChart){
+        distributionChart.data.datasets[0].data = [wins.length, losses.length, t.filter(x=>x.result===0).length];
+        distributionChart.data.datasets[0].label = 'Operaciones';
+        distributionChart.update();
+      }
+      if (balanceChart){
+        const data = []; let bal = 10000;
+        const reversedTrades = t.slice().reverse();
+        for (let i=0;i<reversedTrades.length;i++){ bal += reversedTrades[i].result||0; data.push(bal); }
+        balanceChart.data.datasets[0].data = [10000, ...data];
+        balanceChart.data.labels = ['Inicio', ...Array.from({length: data.length}, (_,i)=>i+1)];
+        balanceChart.update();
+      }
+      updateRecentTrades(t);
+    }
     document.addEventListener('DOMContentLoaded', ()=>{
       setDate();
       initCharts();
@@ -876,35 +861,29 @@ function recalcFromTrades(trades){
       $$('.nav a').forEach(a=>a.addEventListener('click', e=>{
         e.preventDefault(); const id = a.dataset.target; if (id) setActiveSection(id);
       }));
-     $$('.nav button.nav-link').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = btn.getAttribute('aria-controls');
-        const panel = document.getElementById(id);
-        const isOpen = btn.getAttribute('aria-expanded') === 'true';
-
-        // Primero, cierra TODOS los submenús
-        $$('.nav button.nav-link').forEach(otherBtn => {
-          otherBtn.setAttribute('aria-expanded', 'false');
+      $$('.nav button.nav-link').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.getAttribute('aria-controls');
+          const panel = document.getElementById(id);
+          const isOpen = btn.getAttribute('aria-expanded') === 'true';
+          $$('.nav button.nav-link').forEach(otherBtn => {
+            otherBtn.setAttribute('aria-expanded', 'false');
+          });
+          $$('.submenu').forEach(otherPanel => {
+            otherPanel.classList.remove('open');
+          });
+          if (!isOpen) {
+            btn.setAttribute('aria-expanded', 'true');
+            panel.classList.add('open');
+          }
+          persistAccordionState();
         });
-        $$('.submenu').forEach(otherPanel => {
-          otherPanel.classList.remove('open');
-        });
-
-        // Luego, abre solo el que se clickeó (si estaba cerrado)
-        if (!isOpen) {
-          btn.setAttribute('aria-expanded', 'true');
-          panel.classList.add('open');
-        }
-
-        persistAccordionState();
       });
-    });
       $$('[data-close]').forEach(x=>x.addEventListener('click', closeAllModals));
       window.addEventListener('click', e=>{ if (e.target.classList && e.target.classList.contains('modal')) closeAllModals(); });
       
       $('#analytics-strategy-filter')?.addEventListener('change', () => {
-        const allTrades = window.__currentTrades || [];
-        (window.updateAllCalculations || (()=>{}))(allTrades);
+        (window.updateAllCalculations || (()=>{}))();
       });
       
       $('#edit-challenge')?.addEventListener('click', () => {
