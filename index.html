@@ -258,6 +258,49 @@
       </div>
     </section>
     
+    <section id="reportes" class="section">
+      <div class="card" style="grid-column: 1 / -1;">
+        <div class="card-header">
+          <div class="card-title">Generador de Reportes</div>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; align-items: flex-end;">
+          <div class="form-group">
+            <label for="report-start-date">Fecha de Inicio</label>
+            <input type="date" id="report-start-date" class="form-control">
+          </div>
+          <div class="form-group">
+            <label for="report-end-date">Fecha de Fin</label>
+            <input type="date" id="report-end-date" class="form-control">
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn primary" id="generate-report-btn" style="flex-grow: 1;">Generar</button>
+            <button class="btn secondary" id="download-csv-btn" title="Descargar CSV"><i class="fa-solid fa-download"></i></button>
+          </div>
+        </div>
+      </div>
+      <div id="report-results" class="hidden" style="grid-column: 1 / -1; display:contents;">
+        <div class="card" style="grid-column: span 3;"><div class="metric-card"><div id="report-total-profit" class="metric-val">$0.00</div><div class="metric-lab">Beneficio Neto</div></div></div>
+        <div class="card" style="grid-column: span 3;"><div class="metric-card"><div id="report-total-trades" class="metric-val">0</div><div class="metric-lab">Operaciones</div></div></div>
+        <div class="card" style="grid-column: span 3;"><div class="metric-card"><div id="report-win-rate" class="metric-val">0%</div><div class="metric-lab">Tasa de Acierto</div></div></div>
+        <div class="card" style="grid-column: span 3;"><div class="metric-card"><div id="report-profit-factor" class="metric-val">0.00</div><div class="metric-lab">Profit Factor</div></div></div>
+        <div class="card" style="grid-column: 1 / -1;">
+          <div class="card-header"><div class="card-title">Detalle de Operaciones</div></div>
+          <div style="overflow-x:auto;">
+            <table style="width:100%; border-collapse:collapse;">
+              <thead>
+                <tr style="border-bottom: 1px solid var(--border);">
+                  <th style="padding:10px; text-align:left; color:var(--muted);">Fecha</th>
+                  <th style="padding:10px; text-align:left; color:var(--muted);">Par</th>
+                  <th style="padding:10px; text-align:left; color:var(--muted);">Tipo</th>
+                  <th style="padding:10px; text-align:right; color:var(--muted);">Resultado ($)</th>
+                </tr>
+              </thead>
+              <tbody id="report-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
     <section id="cuentas" class="section">
         <div class="card" style="grid-column:1/-1">
             <div class="card-header">
@@ -320,8 +363,34 @@
       </div>
     </section>
     
-    <section id="seguimiento" class="section"><div class="card" style="grid-column:1/-1"><div class="card-title">Seguimiento</div></div></section>
-    
+    <section id="seguimiento" class="section">
+        <div class="card" style="grid-column: span 6;">
+            <div class="card-header"><div class="card-title">Metas Semanales</div></div>
+            <div class="form-group">
+                <label>Objetivo de Beneficio ($)</label>
+                <input type="number" class="form-control" placeholder="Ej: 1500">
+            </div>
+            <div class="form-group">
+                <label>Progreso Actual</label>
+                <div style="height:10px;background:#334155;border-radius:6px;overflow:hidden; margin-top: 4px;"><div style="height:100%;width:45%;background:var(--success)"></div></div>
+            </div>
+        </div>
+        <div class="card" style="grid-column: span 6;">
+            <div class="card-header"><div class="card-title">Checklist del Trader</div></div>
+            <div class="form-group">
+                <label style="display:flex; align-items:center; gap: 8px;"><input type="checkbox" style="width: 18px; height: 18px;"> Revisé el calendario económico</label>
+                <label style="display:flex; align-items:center; gap: 8px; margin-top: 8px;"><input type="checkbox" style="width: 18px; height: 18px;"> Seguí mi plan de trading al 100%</label>
+                <label style="display:flex; align-items:center; gap: 8px; margin-top: 8px;"><input type="checkbox" style="width: 18px; height: 18px;"> No operé por venganza (revenge trading)</label>
+            </div>
+        </div>
+        <div class="card" style="grid-column: 1 / -1;">
+            <div class="card-header"><div class="card-title">Notas de la Sesión</div></div>
+            <textarea class="form-control" placeholder="¿Cómo te sentiste hoy? ¿Qué aprendiste?"></textarea>
+            <div style="text-align: right; margin-top: 10px;">
+                <button class="btn primary">Guardar Nota</button>
+            </div>
+        </div>
+    </section>
     <section id="estrategias" class="section">
       <div class="card" style="grid-column:1/-1">
         <div class="card-header">
@@ -359,9 +428,8 @@
             <table style="width:100%; border-collapse:collapse">
               <thead style="color:var(--muted)">
                 <tr>
-                  <th style="text-align:left;padding:8px;border-bottom:1px solid var(--border)">UID</th>
-                  <th style="text-align:left;padding:8px;border-bottom:1px solid var(--border)">Nombre</th>
                   <th style="text-align:left;padding:8px;border-bottom:1px solid var(--border)">Email</th>
+                  <th style="text-align:left;padding:8px;border-bottom:1px solid var(--border)">Nombre</th>
                   <th style="text-align:left;padding:8px;border-bottom:1px solid var(--border)">Rol</th>
                   <th style="text-align:left;padding:8px;border-bottom:1px solid var(--border)">Acciones</th>
                 </tr>
@@ -386,7 +454,7 @@
         </div>
       </div>
     </section>
-  </main>
+    </main>
 
   <button class="fab" id="floating-add-trade-btn" aria-label="Agregar operación"><i class="fa-solid fa-plus"></i></button>
 
@@ -912,14 +980,65 @@
         (window.updateAllCalculations || (()=>{}))();
       });
 
-      $('#edit-challenge')?.addEventListener('click', () => openModalById('challenge-settings-modal'));
+      $('#edit-challenge')?.addEventListener('click', () => {
+        const settings = window.__currentSettings || {};
+        $('#challenge-balance').value = settings.initialBalance || 100000;
+        $('#challenge-target').value = settings.profitTarget || 10;
+        $('#challenge-max-loss').value = settings.maxLoss || 10;
+        $('#challenge-daily-loss').value = settings.dailyLoss || 5;
+        openModalById('challenge-settings-modal');
+      });
+
       $('#save-general-settings-btn')?.addEventListener('click', () => {
           const settings = {
               initialBalance: parseFloat($('#settings-initial-balance').value) || 10000
           };
-          window.saveGeneralSettings(settings);
+          (window.saveGeneralSettings || (()=>{}))(settings);
       });
       
+      // Lógica para el generador de reportes
+      $('#generate-report-btn')?.addEventListener('click', () => {
+        const startDate = $('#report-start-date').value;
+        const endDate = $('#report-end-date').value;
+        if (!startDate || !endDate) {
+          alert('Por favor, selecciona una fecha de inicio y de fin.');
+          return;
+        }
+
+        const allTrades = window.__currentTrades || [];
+        const filteredTrades = allTrades.filter(t => t.dateStr >= startDate && t.dateStr <= endDate);
+
+        const wins = filteredTrades.filter(x => x.result > 0);
+        const losses = filteredTrades.filter(x => x.result < 0);
+        const totalProfit = filteredTrades.reduce((sum, t) => sum + t.result, 0);
+        const winRate = filteredTrades.length ? (wins.length / filteredTrades.length) * 100 : 0;
+        const totalWins = wins.reduce((s, x) => s + x.result, 0);
+        const totalLoss = Math.abs(losses.reduce((s, x) => s + x.result, 0));
+        const profitFactor = totalLoss ? totalWins / totalLoss : 0;
+
+        $('#report-total-profit').textContent = `$${totalProfit.toFixed(2)}`;
+        $('#report-total-trades').textContent = filteredTrades.length;
+        $('#report-win-rate').textContent = `${winRate.toFixed(1)}%`;
+        $('#report-profit-factor').textContent = profitFactor.toFixed(2);
+        
+        const reportTbody = $('#report-table-body');
+        if(reportTbody){
+          reportTbody.innerHTML = filteredTrades.map(t => {
+            const resultColor = (t.result || 0) >= 0 ? 'var(--success)' : 'var(--danger)';
+            return `
+              <tr style="border-bottom: 1px solid var(--border);">
+                <td style="padding:10px;">${t.dateStr}</td>
+                <td style="padding:10px;">${t.pair}</td>
+                <td style="padding:10px;">${t.type.toUpperCase()}</td>
+                <td style="padding:10px; text-align:right; color:${resultColor};">$${t.result.toFixed(2)}</td>
+              </tr>
+            `;
+          }).join('');
+        }
+
+        $('#report-results').classList.remove('hidden');
+      });
+
       updateAccountsUI([]);
       recalcFromTrades([]);
       renderTradesTable([]);
@@ -1256,24 +1375,58 @@
         }
     });
 
+    async function updateUserRole(uid, newRole) {
+        console.log(`Intentando cambiar rol para UID: ${uid} a ${newRole}`);
+        alert('Esta funcionalidad requiere una Cloud Function en el backend para asignar roles de forma segura.');
+        // Para que esto funcione, necesitarías llamar a una Cloud Function.
+        // Ejemplo:
+        // const setRoleFunction = httpsCallable(functions, 'setRole');
+        // try {
+        //   await setRoleFunction({ uid: uid, role: newRole });
+        //   alert('Rol actualizado con éxito.');
+        //   loadUsersTable();
+        // } catch (error) {
+        //   alert('Error al actualizar el rol.');
+        //   console.error(error);
+        // }
+    }
+
     async function loadUsersTable(){
       if (!auth.currentUser) return;
       const token = await auth.currentUser.getIdTokenResult(true);
       if ((token.claims.role || 'user') !== 'admin') return;
       const tbody = $('#admin-users-tbody'); if (!tbody) return;
-      tbody.innerHTML = '<tr><td colspan="5">Cargando…</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="4">Cargando…</td></tr>';
       const snap = await getDocs(collection(db, 'users'));
       const rows = [];
       snap.forEach(d=>{
         const u = d.data();
         rows.push(`<tr>
-          <td>${d.id}</td><td>${u.displayName||'—'}</td><td>${u.email||'—'}</td>
-          <td>${u.role||'user'}</td>
-          <td><button class="btn secondary btn-open-user" data-uid="${d.id}">Abrir</button></td>
+          <td style="padding:8px;border-bottom:1px solid var(--border)">${u.email||'—'}</td>
+          <td style="padding:8px;border-bottom:1px solid var(--border)">${u.displayName||'—'}</td>
+          <td style="padding:8px;border-bottom:1px solid var(--border)">
+            <select class="form-control admin-role-select" data-uid="${d.id}" style="padding: 6px;">
+              <option value="user" ${u.role === 'user' ? 'selected' : ''}>Usuario</option>
+              <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option>
+            </select>
+          </td>
+          <td style="padding:8px;border-bottom:1px solid var(--border)">
+            <button class="btn secondary btn-open-user" data-uid="${d.id}">Ver Detalles</button>
+          </td>
         </tr>`);
       });
-      tbody.innerHTML = rows.join('') || '<tr><td colspan="5">Sin usuarios.</td></tr>';
+      tbody.innerHTML = rows.join('') || '<tr><td colspan="4">Sin usuarios.</td></tr>';
+      
       document.querySelectorAll('.btn-open-user').forEach(btn=> btn.addEventListener('click', ()=> openUserDetail(btn.dataset.uid)) );
+      document.querySelectorAll('.admin-role-select').forEach(select => select.addEventListener('change', (e) => {
+        const uid = e.target.dataset.uid;
+        const newRole = e.target.value;
+        if(confirm(`¿Seguro que quieres cambiar el rol de este usuario a "${newRole}"?`)) {
+            updateUserRole(uid, newRole);
+        } else {
+            loadUsersTable(); // Recargar para revertir el cambio visual
+        }
+      }));
     }
     async function openUserDetail(uid){
       $('#admin-user-detail').textContent = `Usuario: ${uid}`;
