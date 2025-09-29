@@ -1,4 +1,4 @@
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8"/>
@@ -7,10 +7,10 @@
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  
+
   <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
-<link href='https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css' rel='stylesheet'>
-  
+  <link href='https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css' rel='stylesheet'>
+
   <style>
     :root{
       --primary:#0f172a; --secondary:#1e293b; --accent:#d4af37;
@@ -252,15 +252,15 @@
       </div>
     </section>
 
- <section id="calendario" class="section">
-  <div class="card" style="grid-column:1/-1">
-    <div class="card-header">
-      <div class="card-title">Calendario de Operaciones</div>
-    </div>
-    <div id='calendar-container' style="min-height: 600px;">
+    <section id="calendario" class="section">
+      <div class="card" style="grid-column:1/-1">
+        <div class="card-header">
+          <div class="card-title">Calendario de Operaciones</div>
+        </div>
+        <div id='calendar-container' style="min-height: 600px;">
+          </div>
       </div>
-  </div>
-</section>
+    </section>
     
     <section id="cuentas" class="section">
         <div class="card" style="grid-column:1/-1">
@@ -588,6 +588,8 @@
     }
 
     let equityCurveChart = null;
+    let calendar = null;
+
     function renderAnalytics(trades) {
       const t = trades || [];
       const wins = t.filter(x => x.result > 0);
@@ -636,9 +638,52 @@
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          scales: { y: { beginAtZero: false } } // Allow negative Y-axis
+          scales: { y: { beginAtZero: false } }
         }
       });
+    }
+
+    function renderCalendar(trades) {
+      const calendarEl = document.getElementById('calendar-container');
+      if (!calendarEl) return;
+      const dailySummary = {};
+      trades.forEach(trade => {
+        const date = trade.dateStr;
+        if (!dailySummary[date]) {
+          dailySummary[date] = { profit: 0, count: 0 };
+        }
+        dailySummary[date].profit += trade.result;
+        dailySummary[date].count++;
+      });
+      const calendarEvents = Object.keys(dailySummary).map(date => {
+        const day = dailySummary[date];
+        const isWin = day.profit > 0;
+        const sign = isWin ? '+' : '';
+        return {
+          start: date,
+          title: `${sign}$${day.profit.toFixed(2)} (${day.count} ops)`,
+          backgroundColor: isWin ? 'var(--success)' : 'var(--danger)',
+          borderColor: isWin ? 'var(--success)' : 'var(--danger)',
+        };
+      });
+      if (calendar) {
+        calendar.destroy();
+      }
+      calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        locale: 'es',
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek'
+        },
+        events: calendarEvents,
+        eventClick: function(info) {
+          const date = info.event.start.toLocaleDateString('es-ES', { day:'2-digit', month:'long', year:'numeric' });
+          alert(`Resumen para ${date}:\n\n${info.event.title}`);
+        }
+      });
+      calendar.render();
     }
 
     function recalcFromTrades(trades){
@@ -684,10 +729,8 @@
           btn.setAttribute('aria-expanded', String(!isOpen)); panel.classList.toggle('open', !isOpen); persistAccordionState();
         });
       });
-
       $$('[data-close]').forEach(x=>x.addEventListener('click', closeAllModals));
       window.addEventListener('click', e=>{ if (e.target.classList && e.target.classList.contains('modal')) closeAllModals(); });
-
       updateAccountsUI(window.__local.accounts);
       recalcFromTrades(window.__local.tradingData.trades);
     });
@@ -761,6 +804,7 @@
         (window.recalcFromTrades || (()=>{}))(trades);
         (window.renderTradesTable || (()=>{}))(trades);
         (window.renderAnalytics || (()=>{}))(trades);
+        (window.renderCalendar || (()=>{}))(trades);
       });
       const aRef = collection(db, 'users', uid, 'accounts');
       unsubAccounts = onSnapshot(aRef, snap=>{
@@ -912,7 +956,8 @@
         (window.recalcFromTrades || (()=>{}))([]);
         (window.updateAccountsUI || (()=>{}))([]);
         (window.renderTradesTable || (()=>{}))([]);
-        (window.renderAnalytics || (()=>{}))([]); // Limpiar analíticas al salir
+        (window.renderAnalytics || (()=>{}))([]);
+        (window.renderCalendar || (()=>{}))([]);
         document.body.classList.remove('is-admin');
         $('.user-name') && ($('.user-name').textContent = 'Invitado');
         $('#btn-login')?.classList.remove('hidden'); $('#btn-logout')?.classList.add('hidden');
