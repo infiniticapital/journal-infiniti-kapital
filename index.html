@@ -123,6 +123,7 @@
     .btn{border:0; border-radius:10px; padding:10px 14px; cursor:pointer}
     .btn.primary{background:var(--accent); color:#111}
     .btn.secondary{background:#334155; color:#fff}
+    .btn-link{background:none; color:var(--accent); padding:0; text-decoration:underline; cursor:pointer;}
 
     .drawer-backdrop{display:none; position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:25}
     @media (max-width: 1024px){
@@ -477,6 +478,18 @@
     </div>
   </div>
 
+  <div id="ai-response-modal" class="modal">
+    <div class="modal-content modal-lg">
+      <div class="modal-header">
+        <h2><i class="fa-solid fa-brain" style="margin-right: 8px;"></i> Evaluación de Estrategia con IA</h2>
+        <button class="close-modal" data-close>&times;</button>
+      </div>
+      <div class="modal-body" id="ai-response-body" style="white-space: pre-wrap; line-height: 1.6;">
+        Generando evaluación...
+      </div>
+    </div>
+  </div>
+
   <div id="add-trade-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="trade-title">
       <div class="modal-content">
         <div class="modal-header">
@@ -605,12 +618,15 @@
         </div>
         <div class="modal-footer" style="justify-content:space-between">
           <div>
-            <button class="btn secondary" id="auth-toggle-mode">Crear cuenta</button>
+            <button class="btn-link" id="forgot-password-btn">¿Olvidaste tu contraseña?</button>
           </div>
           <div>
             <button class="btn secondary" data-close>Cancelar</button>
             <button class="btn primary" id="auth-submit">Entrar</button>
           </div>
+        </div>
+        <div style="text-align: center; margin-top: 15px;">
+            <button class="btn-link" id="auth-toggle-mode">Crear cuenta</button>
         </div>
       </div>
   </div>
@@ -868,6 +884,7 @@
           <div class="card-header">
             <div class="card-title">${s.name || 'Estrategia sin nombre'}</div>
             <div>
+              <button class="btn-icon btn-evaluate-ai" data-id="${s.id}" title="Evaluar con IA"><i class="fa-solid fa-brain"></i></button>
               <button class="btn-icon btn-edit-strategy" data-id="${s.id}" title="Editar Estrategia"><i class="fa-solid fa-pen"></i></button>
               <button class="btn-icon btn-delete-strategy" data-id="${s.id}" title="Eliminar Estrategia"><i class="fa-solid fa-trash"></i></button>
             </div>
@@ -945,7 +962,6 @@
         $('#weekly-risk').textContent = `${(Math.abs(weeklyLoss) / initialBalance * 100).toFixed(1)}%`;
         $('#monthly-risk').textContent = `${(Math.abs(monthlyLoss) / initialBalance * 100).toFixed(1)}%`;
         
-        // Radar Chart Logic (escala de 0 a 5)
         const wins = trades.filter(x => x.result > 0);
         const losses = trades.filter(x => x.result < 0);
         const winRate = trades.length ? (wins.length / trades.length) * 100 : 0;
@@ -954,12 +970,12 @@
         const totalProfit = totalWins - totalLoss;
         const avgRR = (wins.length && losses.length) ? (totalWins / wins.length) / (totalLoss / losses.length) : 0;
         
-        const aciertoScore = Math.min(5, winRate / 15); // 75% winrate = 5
-        const rrScore = Math.min(5, avgRR * 2); // R/R de 2.5 = 5
-        const beneficioScore = Math.min(5, (totalProfit / initialBalance * 100) / 4); // 20% de beneficio = 5
+        const aciertoScore = Math.min(5, winRate / 15);
+        const rrScore = Math.min(5, avgRR * 2);
+        const beneficioScore = Math.min(5, (totalProfit / initialBalance * 100) / 4);
 
         if(riskChart) {
-            riskChart.data.datasets[0].data = [3, 4, aciertoScore, rrScore, 3, beneficioScore]; // DD, Gestión y Consistencia son placeholders
+            riskChart.data.datasets[0].data = [3, 4, aciertoScore, rrScore, 3, beneficioScore];
             riskChart.update();
         }
     }
@@ -1107,7 +1123,6 @@
         $('#report-results').classList.remove('hidden');
       });
 
-      // Reset UI state
       const emptyTrades = [];
       updateAccountsUI([]);
       recalcFromTrades(emptyTrades);
@@ -1124,7 +1139,8 @@
     import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
     import {
       getAuth, onAuthStateChanged, signInWithEmailAndPassword,
-      createUserWithEmailAndPassword, signOut, updateProfile
+      createUserWithEmailAndPassword, signOut, updateProfile,
+      sendPasswordResetEmail
     } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
     import {
       getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs, query, orderBy, onSnapshot, serverTimestamp, updateDoc, deleteDoc
@@ -1151,6 +1167,7 @@
       $('#auth-title').textContent = mode==='login' ? 'Iniciar Sesión' : 'Crear Cuenta';
       $('#auth-toggle-mode').textContent = mode==='login' ? 'Crear cuenta' : 'Ya tengo cuenta';
       $('#auth-name-wrap').style.display = mode==='register' ? 'block' : 'none';
+      $('#auth-submit').textContent = mode ==='login' ? 'Entrar' : 'Registrar';
       $('#auth-error').classList.add('hidden');
     }
     $('#auth-toggle-mode')?.addEventListener('click', ()=> setAuthMode(authMode==='login' ? 'register' : 'login'));
@@ -1176,6 +1193,21 @@
     $('#btn-login')?.addEventListener('click', ()=> openModalById('auth-modal'));
     $('#btn-open-auth')?.addEventListener('click', ()=> openModalById('auth-modal'));
     $('#btn-logout')?.addEventListener('click', ()=> signOut(auth));
+
+    $('#forgot-password-btn')?.addEventListener('click', async () => {
+        const email = $('#auth-email').value.trim();
+        if (!email) {
+            alert('Por favor, ingresa tu correo electrónico en el campo de email para restablecer la contraseña.');
+            return;
+        }
+        try {
+            await sendPasswordResetEmail(auth, email);
+            alert('Se ha enviado un enlace para restablecer tu contraseña a tu correo electrónico.');
+            closeAllModals();
+        } catch (error) {
+            alert('Error al enviar el correo: ' + error.message);
+        }
+    });
 
     let unsubTrades=null, unsubAccounts=null, unsubStrategies=null, unsubSettings = null, unsubGeneralSettings = null;
     
@@ -1321,41 +1353,6 @@
         await setDoc(settingsRef, settings, { merge: true });
     }
 
-    $('#save-account-btn')?.addEventListener('click', async ()=>{
-      const data = { id: $('#editing-account-id').value, name: $('#account-name').value.trim(), balance: parseFloat($('#account-balance').value) || 0, type: $('#account-type').value };
-      if (!data.name) return alert('El nombre de la cuenta es obligatorio.');
-      await saveAccount(data); closeAllModals();
-    });
-    $('#save-trade-btn')?.addEventListener('click', async ()=>{
-      const data = {
-        id: $('#editing-trade-id').value, pair: $('#trade-pair-input').value, type: $('#trade-type-input').value,
-        result: parseFloat($('#trade-result-input').value) || 0, risk: parseFloat($('#trade-risk-input').value) || 0,
-        reward: parseFloat($('#trade-reward-input').value) || 0, inChallenge: $('#trade-challenge-input').value === 'yes',
-        strategyId: $('#trade-strategy-input').value
-      };
-      await saveTrade(data); closeAllModals();
-    });
-    $('#save-strategy-btn')?.addEventListener('click', async () => {
-        const data = {
-            id: $('#editing-strategy-id').value,
-            name: $('#strategy-name').value.trim(),
-            desc: $('#strategy-desc').value.trim()
-        };
-        if (!data.name) return alert('El nombre de la estrategia es obligatorio.');
-        await saveStrategy(data); closeAllModals();
-    });
-    $('#save-challenge-settings-btn')?.addEventListener('click', async () => {
-      const settings = {
-        initialBalance: parseFloat($('#challenge-balance').value) || 100000,
-        profitTarget: parseFloat($('#challenge-target').value) || 10,
-        maxLoss: parseFloat($('#challenge-max-loss').value) || 10,
-        dailyLoss: parseFloat($('#challenge-daily-loss').value) || 5,
-      };
-      await saveChallengeSettings(settings);
-      closeAllModals();
-      alert('Ajustes del Challenge guardados.');
-    });
-
     $('main')?.addEventListener('click', (e) => {
       const editAccountBtn = e.target.closest('.btn-edit-account');
       if (editAccountBtn) {
@@ -1391,6 +1388,13 @@
       }
       const deleteStrategyBtn = e.target.closest('.btn-delete-strategy');
       if (deleteStrategyBtn) { deleteStrategy(deleteStrategyBtn.dataset.id); }
+      const evaluateAiBtn = e.target.closest('.btn-evaluate-ai');
+      if (evaluateAiBtn) {
+          const strategy = window.__currentStrategies?.find(s => s.id === evaluateAiBtn.dataset.id);
+          if (strategy) {
+            evaluateStrategyWithAI(strategy);
+          }
+      }
     });
     
     function openNewTradeModal() {
@@ -1403,6 +1407,53 @@
     $('#add-trade-btn')?.addEventListener('click', openNewTradeModal);
     $('#floating-add-trade-btn')?.addEventListener('click', openNewTradeModal);
     $('#quick-add-trade')?.addEventListener('click', (e)=>{ e.preventDefault(); openNewTradeModal(); });
+
+    async function evaluateStrategyWithAI(strategy) {
+        const modalBody = $('#ai-response-body');
+        modalBody.textContent = 'Generando evaluación...';
+        openModalById('ai-response-modal');
+
+        const prompt = `
+            Eres un coach de trading profesional y analista de estrategias cuantitativas.
+            Evalúa la siguiente estrategia de trading de forma crítica y constructiva.
+
+            Nombre de la Estrategia: "${strategy.name}"
+            Descripción: "${strategy.desc}"
+
+            Por favor, provee un análisis en los siguientes puntos:
+            1.  **Fortalezas Potenciales:** ¿Cuáles son los puntos fuertes teóricos de esta estrategia?
+            2.  **Debilidades y Riesgos:** ¿Qué podría salir mal? ¿Cuáles son los riesgos ocultos o las condiciones de mercado donde podría fallar?
+            3.  **Recomendaciones de Mejora:** ¿Qué parámetros o filtros se podrían añadir para hacerla más robusta? (Ej: Añadir un filtro de volatilidad, un indicador de confirmación, etc.).
+        `;
+
+        // --- ADVERTENCIA DE SEGURIDAD ---
+        // La siguiente línea es un EJEMPLO. NO expongas tu API Key de Gemini en el código del cliente.
+        // Debes crear una Firebase Cloud Function que reciba el prompt y llame a la API de Gemini de forma segura desde el servidor.
+        
+        try {
+            // Simulación de llamada a la API con un retraso
+            await new Promise(resolve => setTimeout(resolve, 1500)); 
+            
+            // Respuesta de ejemplo. Reemplaza esto con la llamada real desde tu backend.
+            const sampleResponse = `**Análisis de la Estrategia: "${strategy.name}"**\n\n` +
+            `**1. Fortalezas Potenciales:**\n` +
+            `- Claridad: La estrategia parece bien definida, lo cual es clave para la consistencia.\n` +
+            `- Adaptabilidad: Podría funcionar bien en mercados con tendencia si se aplica correctamente.\n\n` +
+            `**2. Debilidades y Riesgos:**\n` +
+            `- Mercados Laterales: Esta estrategia podría generar muchas señales falsas en mercados sin una dirección clara (rangos).\n` +
+            `- Subjetividad: La "confirmación" mencionada podría ser subjetiva. Es crucial definirla con reglas 100% objetivas.\n\n` +
+            `**3. Recomendaciones de Mejora:**\n` +
+            `- Filtro de Tendencia: Considera añadir un filtro como una Media Móvil Exponencial (EMA) de 200 períodos. Solo tomar compras si el precio está por encima y ventas si está por debajo.\n` +
+            `- Indicador de Volumen: Añadir un filtro de volumen puede ayudar a confirmar la fuerza de una ruptura.\n` +
+            `- Backtesting: Es fundamental realizar un backtesting riguroso para validar su efectividad estadística.`;
+            
+            modalBody.textContent = sampleResponse;
+
+        } catch (error) {
+            modalBody.textContent = 'Hubo un error al contactar el servicio de IA. Por favor, inténtalo de nuevo más tarde.';
+            console.error("Error en la evaluación con IA:", error);
+        }
+    }
 
     onAuthStateChanged(auth, async (user) => {
         if (user) {
