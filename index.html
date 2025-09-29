@@ -109,10 +109,11 @@
     .modal-header h2{margin:0; color:var(--accent)}
     .close-modal{background:none;border:0;color:var(--muted);font-size:22px;cursor:pointer}
     .close-modal:hover{color:#fff}
-    .form-group{margin:10px 0}
+    .form-group{margin-bottom:12px}
+    .form-group label{display:block; margin-bottom: 4px; font-size: 14px; color: var(--muted);}
     .form-control, select, textarea{
       width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--border);
-      background:rgba(15,23,42,.6); color:var(--text); font-family: inherit;
+      background:rgba(15,23,42,.6); color:var(--text); font-family: inherit; font-size: 1rem;
     }
     textarea{min-height: 80px;}
     .modal-footer{display:flex; justify-content:flex-end; gap:8px; margin-top:10px}
@@ -389,6 +390,12 @@
         <div class="form-group"><label>Tipo</label>
           <select id="trade-type-input" class="form-control"><option value="buy">Compra</option><option value="sell">Venta</option></select></div>
         <div class="form-group"><label>Resultado ($)</label><input id="trade-result-input" type="number" class="form-control" placeholder="Ej: 250.50" step="0.01" /></div>
+        <div class="form-group">
+          <label for="trade-strategy-input">Estrategia</label>
+          <select id="trade-strategy-input" class="form-control">
+            <option value="">Ninguna</option>
+          </select>
+        </div>
         <div class="form-group"><label>Riesgo (% del capital)</label><input id="trade-risk-input" type="number" class="form-control" placeholder="Ej: 1.0" step="0.1" min="0.1" max="10" /></div>
         <div class="form-group"><label>Beneficio Esperado (%)</label><input id="trade-reward-input" type="number" class="form-control" placeholder="Ej: 3.0" step="0.1" min="0.1" /></div>
         <div class="form-group"><label>Pertenece al Challenge</label>
@@ -757,6 +764,20 @@
       });
     }
 
+    function updateStrategiesDropdown(strategies) {
+      const select = $('#trade-strategy-input');
+      if (!select) return;
+      const currentVal = select.value;
+      select.innerHTML = '<option value="">Ninguna</option>';
+      (strategies || []).forEach(s => {
+        const option = document.createElement('option');
+        option.value = s.id;
+        option.textContent = s.name;
+        select.appendChild(option);
+      });
+      select.value = currentVal;
+    }
+
     function recalcFromTrades(trades){
       const t = trades||[];
       const wins = t.filter(x=>x.result>0), losses = t.filter(x=>x.result<0);
@@ -894,13 +915,15 @@
         const strategies = snap.docs.map(d=>({id:d.id,...d.data()}));
         window.__currentStrategies = strategies;
         (window.renderStrategiesUI || (()=>{}))(strategies);
+        (window.updateStrategiesDropdown || (()=>{}))(strategies);
       });
     }
 
-    async function saveTrade({ id, pair, type, result, risk, reward, inChallenge }){
+    async function saveTrade({ id, pair, type, result, risk, reward, inChallenge, strategyId }){
       const user = auth.currentUser; if (!user) return;
       const data = {
-        pair, type, result: Number(result||0), risk: Number(risk||0), reward: Number(reward||0), inChallenge
+        pair, type, result: Number(result||0), risk: Number(risk||0), reward: Number(reward||0), inChallenge,
+        strategyId: strategyId || ""
       };
       if (id) {
         await updateDoc(doc(db, 'users', user.uid, 'trades', id), data);
@@ -963,7 +986,8 @@
       const data = {
         id: $('#editing-trade-id').value, pair: $('#trade-pair-input').value, type: $('#trade-type-input').value,
         result: parseFloat($('#trade-result-input').value) || 0, risk: parseFloat($('#trade-risk-input').value) || 0,
-        reward: parseFloat($('#trade-reward-input').value) || 0, inChallenge: $('#trade-challenge-input').value === 'yes'
+        reward: parseFloat($('#trade-reward-input').value) || 0, inChallenge: $('#trade-challenge-input').value === 'yes',
+        strategyId: $('#trade-strategy-input').value
       };
       await saveTrade(data); closeAllModals();
     });
@@ -996,7 +1020,10 @@
         if (trade) {
           $('#trade-title').textContent = 'Editar Operación'; $('#trade-pair-input').value = trade.pair; $('#trade-type-input').value = trade.type;
           $('#trade-result-input').value = trade.result; $('#trade-risk-input').value = trade.risk; $('#trade-reward-input').value = trade.reward;
-          $('#trade-challenge-input').value = trade.inChallenge ? 'yes' : 'no'; $('#editing-trade-id').value = trade.id; openModalById('add-trade-modal');
+          $('#trade-challenge-input').value = trade.inChallenge ? 'yes' : 'no'; 
+          $('#trade-strategy-input').value = trade.strategyId || "";
+          $('#editing-trade-id').value = trade.id; 
+          openModalById('add-trade-modal');
         }
       }
       const deleteTradeBtn = e.target.closest('.btn-delete-trade');
@@ -1018,6 +1045,7 @@
         $('#trade-title').textContent = 'Agregar Operación'; $('#editing-trade-id').value = '';
         $('#trade-pair-input').value = 'EURUSD'; $('#trade-type-input').value = 'buy'; $('#trade-result-input').value = '';
         $('#trade-risk-input').value = ''; $('#trade-reward-input').value = ''; $('#trade-challenge-input').value = 'yes';
+        $('#trade-strategy-input').value = "";
         openModalById('add-trade-modal');
     }
     $('#add-trade-btn')?.addEventListener('click', openNewTradeModal);
@@ -1039,6 +1067,7 @@
         (window.recalcFromTrades || (()=>{}))([]); (window.updateAccountsUI || (()=>{}))([]);
         (window.renderTradesTable || (()=>{}))([]); (window.renderAnalytics || (()=>{}))([]);
         (window.renderCalendar || (()=>{}))([]); (window.renderStrategiesUI || (()=>{}))([]);
+        (window.updateStrategiesDropdown || (()=>{}))([]);
         document.body.classList.remove('is-admin');
         $('.user-name') && ($('.user-name').textContent = 'Invitado');
         $('#btn-login')?.classList.remove('hidden'); $('#btn-logout')?.classList.add('hidden');
@@ -1051,8 +1080,36 @@
       }
     });
     
-    async function loadUsersTable(){ /* ... */ }
-    async function openUserDetail(uid){ /* ... */ }
+    async function loadUsersTable(){
+      if (!auth.currentUser) return;
+      const token = await auth.currentUser.getIdTokenResult(true);
+      if ((token.claims.role || 'user') !== 'admin') return;
+      const tbody = $('#admin-users-tbody'); if (!tbody) return;
+      tbody.innerHTML = '<tr><td colspan="5">Cargando…</td></tr>';
+      const snap = await getDocs(collection(db, 'users'));
+      const rows = [];
+      snap.forEach(d=>{
+        const u = d.data();
+        rows.push(`<tr>
+          <td>${d.id}</td><td>${u.displayName||'—'}</td><td>${u.email||'—'}</td>
+          <td>${u.role||'user'}</td>
+          <td><button class="btn secondary btn-open-user" data-uid="${d.id}">Abrir</button></td>
+        </tr>`);
+      });
+      tbody.innerHTML = rows.join('') || '<tr><td colspan="5">Sin usuarios.</td></tr>';
+      document.querySelectorAll('.btn-open-user').forEach(btn=> btn.addEventListener('click', ()=> openUserDetail(btn.dataset.uid)) );
+    }
+    async function openUserDetail(uid){
+      $('#admin-user-detail').textContent = `Usuario: ${uid}`;
+      $('#admin-user-accounts').textContent = 'Cargando…';
+      $('#admin-user-trades').textContent   = 'Cargando…';
+      const accSnap = await getDocs(collection(db, 'users', uid, 'accounts'));
+      const trdSnap = await getDocs(query(collection(db, 'users', uid, 'trades'), orderBy('createdAt','desc')));
+      const accHtml = []; accSnap.forEach(d=>{ const a=d.data(); accHtml.push(`<div><b>${a.name||'Cuenta'}</b> · $${(a.balance||0).toFixed(2)}</div>`); });
+      $('#admin-user-accounts').innerHTML = accHtml.join('') || '<span>Sin cuentas</span>';
+      const trdHtml = []; trdSnap.forEach(d=>{ const t=d.data(); trdHtml.push(`<div>${t.dateStr||''} · ${t.pair||'—'} · ${t.result||0}</div>`); });
+      $('#admin-user-trades').innerHTML = trdHtml.join('') || '<span>Sin trades</span>';
+    }
     $('#btn-refresh-users')?.addEventListener('click', loadUsersTable);
 
   </script>
