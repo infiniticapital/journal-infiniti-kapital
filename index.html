@@ -431,7 +431,7 @@
       </div>
     </section>
     
-    <section id="admin" class="section only-admin">
+    <section id="admin" class="section">
       <div class="card" style="grid-column: 1/-1;">
         <div class="card-header">
           <div class="card-title">Panel de Administración</div>
@@ -677,7 +677,6 @@
       });
     })();
     
-    // --- FUNCIÓN CORREGIDA Y DEFINITIVA PARA CAMBIAR DE VISTA ---
     function setActiveSection(id) {
         document.querySelectorAll('main > .section').forEach(section => {
             section.classList.remove('active');
@@ -1215,7 +1214,6 @@
         } else {
           const createUser = httpsCallable(functions, 'createUserWithInvite');
           await createUser({ email, password, displayName: name, inviteCode });
-          // Iniciar sesión automáticamente después de un registro exitoso
           await signInWithEmailAndPassword(auth, email, pass);
         }
         closeAllModals();
@@ -1493,9 +1491,19 @@
         }
     });
 
+    // ***** CORRECCIÓN CLAVE: Función actualizada para llamar al backend *****
     async function updateUserRole(uid, newRole) {
-        console.log(`Intentando cambiar rol para UID: ${uid} a ${newRole}`);
-        alert('Esta funcionalidad requiere una Cloud Function en el backend para asignar roles de forma segura.');
+      console.log(`Intentando cambiar rol para UID: ${uid} a ${newRole}`);
+      try {
+        const setRoleFunction = httpsCallable(functions, 'setAdminRole');
+        await setRoleFunction({ uid: uid, role: newRole });
+        alert(`Rol del usuario actualizado a "${newRole}" correctamente.`);
+        await loadUsersTable(); // Recargar la tabla para reflejar el cambio
+      } catch (error) {
+        alert('Error al actualizar el rol: ' + error.message);
+        console.error('Error al cambiar el rol:', error);
+        await loadUsersTable(); // Recargar para revertir el cambio visual en el dropdown
+      }
     }
 
     async function loadAdminPanel() {
@@ -1542,7 +1550,7 @@
           <td style="padding:8px;border-bottom:1px solid var(--border)">${u.displayName||'—'}</td>
           <td style="padding:8px;border-bottom:1px solid var(--border)">
             <select class="form-control admin-role-select" data-uid="${d.id}" style="padding: 6px;">
-              <option value="user" ${u.role === 'user' ? 'selected' : ''}>Usuario</option>
+              <option value="user" ${u.role === 'user' || !u.role ? 'selected' : ''}>Usuario</option>
               <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option>
             </select>
           </td>
