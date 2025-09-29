@@ -73,8 +73,15 @@
     .card-title{font-size:1.1rem;font-weight:700}
     .btn-icon{background:none;border:0;color:var(--accent);cursor:pointer; font-size: 16px;}
 
-    .section{display:none; grid-column:1/-1; grid-template-columns:repeat(12,1fr); gap:18px}
-    .section.active{display:grid}
+    main > .section{
+        display:none; 
+        grid-column:1/-1; 
+        grid-template-columns:repeat(12,1fr); 
+        gap:18px;
+    }
+    main > .section.active{
+        display:grid;
+    }
     .welcome{grid-column:span 8}
     .metrics{grid-column:span 4}
     .factor,.rr,.wins{grid-column:span 4}
@@ -664,18 +671,26 @@
     })();
     
     function setActiveSection(id) {
-      $$('.section').forEach(s => s.classList.remove('active'));
-      const tgt = document.getElementById(id); 
-      if (tgt) {
-        tgt.classList.add('active');
-      }
-      $$('.nav a').forEach(a => a.classList.toggle('active', a.dataset.target === id));
-      if (id === 'calendario' && window.calendar) {
-        setTimeout(() => {
-          window.calendar.updateSize();
-        }, 50); 
-      }
+        document.querySelectorAll('main > .section').forEach(section => {
+            section.classList.remove('active');
+        });
+
+        const targetSection = document.getElementById(id);
+        if (targetSection) {
+            targetSection.classList.add('active');
+        }
+
+        document.querySelectorAll('.nav a').forEach(a => {
+            a.classList.toggle('active', a.dataset.target === id);
+        });
+        
+        if (id === 'calendario' && window.calendar) {
+            setTimeout(() => {
+                window.calendar.updateSize();
+            }, 50);
+        }
     }
+    
     function restoreAccordionState(){
       const state = JSON.parse(sessionStorage.getItem('nav-acc-state') || '{}');
       Object.entries(state).forEach(([id,open])=>{
@@ -1186,7 +1201,7 @@
       const inviteCode = $('#auth-invite').value.trim();
       const err   = $('#auth-error');
       
-      const INVITATION_CODE = "INFINITI-2025"; // <-- Cambia este código secreto
+      const INVITATION_CODE = "INFINITI-2025"; // <-- ¡Cambia este código secreto por el que prefieras!
 
       try{
         err.classList.add('hidden');
