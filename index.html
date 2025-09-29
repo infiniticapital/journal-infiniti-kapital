@@ -702,39 +702,21 @@
     $('#btn-refresh-users')?.addEventListener('click', loadUsersTable);
 
     // ---- Sesión ----
-onAuthStateChanged(auth, async (user)=>{
-  if (user){
-    const token = await user.getIdTokenResult(true);
-    const role  = token.claims.role || 'user';
-    document.body.classList.toggle('is-admin', role==='admin');
-    $('.user-name') && ($('.user-name').textContent = user.displayName || user.email);
-    $('#btn-login')?.classList.add('hidden'); $('#btn-logout')?.classList.remove('hidden');
-    $('#welcome-message').textContent = "Tu sesión está activa. Tus operaciones se guardarán en la nube.";
-    bindSelfRealtime(user.uid);
-    if (role==='admin') await loadUsersTable();
-  } else {
-    // ---- INICIO DE LA CORRECCIÓN ----
-
-    // 1. Apagar los oyentes en tiempo real para evitar errores de permiso
-    unsubTrades && unsubTrades();
-    unsubAccounts && unsubAccounts();
-
-    // 2. Limpiar los datos de la interfaz
-    (window.recalcFromTrades || (()=>{}))([]);
-    (window.updateAccountsUI || (()=>{}))([]);
-
-    // ---- FIN DE LA CORRECCIÓN ----
-
-    document.body.classList.remove('is-admin');
-    $('.user-name') && ($('.user-name').textContent = 'Invitado');
-    $('#btn-login')?.classList.remove('hidden'); $('#btn-logout')?.classList.add('hidden');
-    $('#welcome-message').textContent = "Inicia sesión para guardar tus operaciones en la nube.";
-    $('#admin-users-tbody') && ($('#admin-users-tbody').innerHTML='');
-    $('#admin-user-detail') && ($('#admin-user-detail').textContent='Selecciona un usuario…');
-    $('#admin-user-accounts') && ($('#admin-user-accounts').textContent='—');
-    $('#admin-user-trades') && ($('#admin-user-trades').textContent='—');
-  }
-});
+    onAuthStateChanged(auth, async (user)=>{
+      if (user){
+        const token = await user.getIdTokenResult(true);
+        const role  = token.claims.role || 'user';
+        document.body.classList.toggle('is-admin', role==='admin');
+        $('.user-name') && ($('.user-name').textContent = user.displayName || user.email);
+        $('#btn-login')?.classList.add('hidden'); $('#btn-logout')?.classList.remove('hidden');
+        $('#welcome-message').textContent = "Tu sesión está activa. Tus operaciones se guardarán en la nube.";
+        bindSelfRealtime(user.uid);
+        if (role==='admin') await loadUsersTable();
+      } else {
+        unsubTrades && unsubTrades();
+        unsubAccounts && unsubAccounts();
+        (window.recalcFromTrades || (()=>{}))([]);
+        (window.updateAccountsUI || (()=>{}))([]);
         document.body.classList.remove('is-admin');
         $('.user-name') && ($('.user-name').textContent = 'Invitado');
         $('#btn-login')?.classList.remove('hidden'); $('#btn-logout')?.classList.add('hidden');
