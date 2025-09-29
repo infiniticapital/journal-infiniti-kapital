@@ -331,21 +331,21 @@
       </div>
     </section>
 
-    <section id="configuracion" class="section"><div class="card" style="grid-column:1/<section id="configuracion" class="section">
-  <div class="card" style="grid-column:1/-1">
-    <div class="card-header">
-      <div class="card-title">Configuración General</div>
-    </div>
-    <div class="form-group">
-        <label>Saldo Inicial por Defecto ($)</label>
-        <input id="settings-initial-balance" type="number" class="form-control" placeholder="10000" />
-        <small style="color: var(--muted); display: block; margin-top: 4px;">Este valor se usará como punto de partida para el gráfico de Saldo en el Dashboard.</small>
-    </div>
-    <div style="text-align: right; margin-top: 20px;">
-        <button class="btn primary" id="save-general-settings-btn">Guardar Configuración</button>
-    </div>
-  </div>
-</section>1"><div class="card-title">Configuración</div><p style="color:var(--muted)">Preferencias...</p></div></section>
+    <section id="configuracion" class="section">
+      <div class="card" style="grid-column:1/-1">
+        <div class="card-header">
+          <div class="card-title">Configuración General</div>
+        </div>
+        <div class="form-group">
+            <label>Saldo Inicial por Defecto ($)</label>
+            <input id="settings-initial-balance" type="number" class="form-control" placeholder="10000" />
+            <small style="color: var(--muted); display: block; margin-top: 4px;">Este valor se usará como punto de partida para el gráfico de Saldo en el Dashboard.</small>
+        </div>
+        <div style="text-align: right; margin-top: 20px;">
+            <button class="btn primary" id="save-general-settings-btn">Guardar Configuración</button>
+        </div>
+      </div>
+    </section>
     
     <section id="admin" class="section only-admin">
       <div class="card" style="grid-column:1/-1">
@@ -551,23 +551,20 @@
         el.addEventListener('click', ()=>{ if (window.matchMedia('(max-width:860px)').matches) close(); });
       });
     })();
-    // PEGA ESTA FUNCIÓN EN SU LUGAR
-function setActiveSection(id) {
-  $$('.section').forEach(s => s.classList.remove('active'));
-  const tgt = document.getElementById(id); 
-  if (tgt) {
-    tgt.classList.add('active');
-  }
-
-  $$('.nav a').forEach(a => a.classList.toggle('active', a.dataset.target === id));
-
-  // Si la sección que activamos es el calendario, le pedimos que se redibuje
-  if (id === 'calendario' && window.calendar) {
-    setTimeout(() => {
-      window.calendar.updateSize();
-    }, 50); // Aumentamos un poco el tiempo para asegurar que funcione
-  }
-}
+    
+    function setActiveSection(id) {
+      $$('.section').forEach(s => s.classList.remove('active'));
+      const tgt = document.getElementById(id); 
+      if (tgt) {
+        tgt.classList.add('active');
+      }
+      $$('.nav a').forEach(a => a.classList.toggle('active', a.dataset.target === id));
+      if (id === 'calendario' && window.calendar) {
+        setTimeout(() => {
+          window.calendar.updateSize();
+        }, 50);
+      }
+    }
     function restoreAccordionState(){
       const state = JSON.parse(sessionStorage.getItem('nav-acc-state') || '{}');
       Object.entries(state).forEach(([id,open])=>{
@@ -841,81 +838,87 @@ function setActiveSection(id) {
         ddElement.style.backgroundColor = isViolated ? 'rgba(239, 68, 68, .4)' : '';
       }
     }
-  // REEMPLAZA LA FUNCIÓN COMPLETA
-function recalcFromTrades(trades){
-  const t = trades||[];
-  const wins = t.filter(x=>x.result>0), losses = t.filter(x=>x.result<0);
-  const total = t.length;
-  const totalWins = wins.reduce((s,x)=>s+x.result,0);
-  const totalLoss = Math.abs(losses.reduce((s,x)=>s+x.result,0));
-  const winRate = total? (wins.length/total)*100 : 0;
-  const pf = totalLoss? totalWins/totalLoss : 0;
-  const rr = (wins.length && losses.length)? (totalWins/wins.length)/(totalLoss/losses.length) : 0;
+  
+    function recalcFromTrades(trades){
+      const t = trades||[];
+      const wins = t.filter(x=>x.result>0), losses = t.filter(x=>x.result<0);
+      const total = t.length;
+      const totalWins = wins.reduce((s,x)=>s+x.result,0);
+      const totalLoss = Math.abs(losses.reduce((s,x)=>s+x.result,0));
+      const winRate = total? (wins.length/total)*100 : 0;
+      const pf = totalLoss? totalWins/totalLoss : 0;
+      const rr = (wins.length && losses.length)? (totalWins/wins.length)/(totalLoss/losses.length) : 0;
 
-  $('#total-trades').textContent = total;
-  $('#total-trades-2').textContent = total;
-  $('#win-trades').textContent = wins.length;
-  $('#win-rate').textContent = `${winRate.toFixed(1)}%`;
-  $('#profit-factor').textContent = pf.toFixed(2);
-  $('#risk-reward').textContent = rr.toFixed(2);
-  $('#total-profit').textContent = `$${(totalWins-totalLoss).toFixed(2)}`;
+      $('#total-trades').textContent = total;
+      $('#total-trades-2').textContent = total;
+      $('#win-trades').textContent = wins.length;
+      $('#win-rate').textContent = `${winRate.toFixed(1)}%`;
+      $('#profit-factor').textContent = pf.toFixed(2);
+      $('#risk-reward').textContent = rr.toFixed(2);
+      $('#total-profit').textContent = `$${(totalWins-totalLoss).toFixed(2)}`;
 
-  if (distributionChart){
-    distributionChart.data.datasets[0].data = [wins.length, losses.length, t.filter(x=>x.result===0).length];
-    distributionChart.data.datasets[0].label = 'Operaciones';
-    distributionChart.update();
-  }
-  if (balanceChart){
-    const data = []; 
-    const settings = window.__currentGeneralSettings || { initialBalance: 10000 };
-    let bal = settings.initialBalance;
-    data.push(bal); // Empezar con el balance inicial
-    t.forEach(trade => { // Usar forEach para mantener el orden cronológico original
-        bal += trade.result || 0;
+      if (distributionChart){
+        distributionChart.data.datasets[0].data = [wins.length, losses.length, t.filter(x=>x.result===0).length];
+        distributionChart.data.datasets[0].label = 'Operaciones';
+        distributionChart.update();
+      }
+      if (balanceChart){
+        const data = []; 
+        const settings = window.__currentGeneralSettings || { initialBalance: 10000 };
+        let bal = settings.initialBalance;
         data.push(bal);
-    });
-    balanceChart.data.datasets[0].data = data;
-    balanceChart.data.labels = ['Inicio', ...Array.from({length: t.length}, (_,i)=>i+1)];
-    balanceChart.update();
-  }
-  updateRecentTrades(t);
-}    document.addEventListener('DOMContentLoaded', ()=>{
+        t.forEach(trade => {
+            bal += trade.result || 0;
+            data.push(bal);
+        });
+        balanceChart.data.datasets[0].data = data;
+        balanceChart.data.labels = ['Inicio', ...Array.from({length: t.length}, (_,i)=>i+1)];
+        balanceChart.update();
+      }
+      updateRecentTrades(t);
+    }
+    document.addEventListener('DOMContentLoaded', ()=>{
       setDate();
       initCharts();
       restoreAccordionState();
       $$('.nav a').forEach(a=>a.addEventListener('click', e=>{
         e.preventDefault(); const id = a.dataset.target; if (id) setActiveSection(id);
       }));
-      // PEGA ESTE BLOQUE EN SU LUGAR
-$$('.nav button.nav-link').forEach(clickedBtn => {
-  clickedBtn.addEventListener('click', () => {
-    const targetPanelId = clickedBtn.getAttribute('aria-controls');
-    const targetPanel = document.getElementById(targetPanelId);
-    const isAlreadyOpen = targetPanel.classList.contains('open');
+      
+      $$('.nav button.nav-link').forEach(clickedBtn => {
+        clickedBtn.addEventListener('click', () => {
+          const targetPanelId = clickedBtn.getAttribute('aria-controls');
+          const targetPanel = document.getElementById(targetPanelId);
+          const isAlreadyOpen = targetPanel.classList.contains('open');
 
-    // Primero, cierra todos los paneles que estén abiertos
-    $$('.submenu.open').forEach(openPanel => {
-      openPanel.classList.remove('open');
-      const correspondingBtn = document.querySelector(`[aria-controls="${openPanel.id}"]`);
-      if(correspondingBtn) correspondingBtn.setAttribute('aria-expanded', 'false');
-    });
+          $$('.submenu.open').forEach(openPanel => {
+            openPanel.classList.remove('open');
+            const correspondingBtn = document.querySelector(`[aria-controls="${openPanel.id}"]`);
+            if(correspondingBtn) correspondingBtn.setAttribute('aria-expanded', 'false');
+          });
 
-    // Si el panel que clickeamos no estaba ya abierto, lo abrimos.
-    if (!isAlreadyOpen) {
-      targetPanel.classList.add('open');
-      clickedBtn.setAttribute('aria-expanded', 'true');
-    }
+          if (!isAlreadyOpen) {
+            targetPanel.classList.add('open');
+            clickedBtn.setAttribute('aria-expanded', 'true');
+          }
 
-    persistAccordionState();
-  });
-});
+          persistAccordionState();
+        });
+      });
       $$('[data-close]').forEach(x=>x.addEventListener('click', closeAllModals));
       window.addEventListener('click', e=>{ if (e.target.classList && e.target.classList.contains('modal')) closeAllModals(); });
       
       $('#analytics-strategy-filter')?.addEventListener('change', () => {
         (window.updateAllCalculations || (()=>{}))();
       });
-  $('#edit-challenge
+
+      $('#edit-challenge')?.addEventListener('click', () => openModalById('challenge-settings-modal'));
+      $('#save-general-settings-btn')?.addEventListener('click', () => {
+          const settings = {
+              initialBalance: parseFloat($('#settings-initial-balance').value) || 10000
+          };
+          window.saveGeneralSettings(settings);
+      });
       
       updateAccountsUI([]);
       recalcFromTrades([]);
@@ -985,7 +988,7 @@ $$('.nav button.nav-link').forEach(clickedBtn => {
     $('#btn-open-auth')?.addEventListener('click', ()=> openModalById('auth-modal'));
     $('#btn-logout')?.addEventListener('click', ()=> signOut(auth));
 
-let unsubTrades=null, unsubAccounts=null, unsubStrategies=null, unsubSettings = null, unsubGeneralSettings = null;
+    let unsubTrades=null, unsubAccounts=null, unsubStrategies=null, unsubSettings = null, unsubGeneralSettings = null;
     
     window.updateAllCalculations = () => {
       const allTrades = window.__currentTrades || [];
@@ -1038,13 +1041,13 @@ let unsubTrades=null, unsubAccounts=null, unsubStrategies=null, unsubSettings = 
         window.__currentSettings = snap.data() || {};
         updateAllCalculations();
       });
- const generalSettingsRef = doc(db, 'users', uid, 'settings', 'general');
-unsubGeneralSettings = onSnapshot(generalSettingsRef, snap => {
-  const settings = snap.data() || {};
-  window.__currentGeneralSettings = settings;
-  $('#settings-initial-balance').value = settings.initialBalance || 10000;
-  updateAllCalculations(); // Actualizar todos los cálculos con los nuevos ajustes
-});      
+      const generalSettingsRef = doc(db, 'users', uid, 'settings', 'general');
+      unsubGeneralSettings = onSnapshot(generalSettingsRef, snap => {
+        const settings = snap.data() || {};
+        window.__currentGeneralSettings = settings;
+        $('#settings-initial-balance').value = settings.initialBalance || 10000;
+        updateAllCalculations();
+      });      
       const aRef = collection(db, 'users', uid, 'accounts');
       unsubAccounts = onSnapshot(aRef, snap=>{
         const accounts = snap.docs.map(d=>({id:d.id,...d.data()}));
@@ -1097,13 +1100,13 @@ unsubGeneralSettings = onSnapshot(generalSettingsRef, snap => {
         }
     }
     async function saveGeneralSettings(settings) {
-    const user = auth.currentUser;
-    if (!user) return;
-    const settingsRef = doc(db, 'users', user.uid, 'settings', 'general');
-    await setDoc(settingsRef, settings, { merge: true });
-    alert('Configuración guardada.');
-}
-window.saveGeneralSettings = saveGeneralSettings; // Exponerla
+        const user = auth.currentUser;
+        if (!user) return;
+        const settingsRef = doc(db, 'users', user.uid, 'settings', 'general');
+        await setDoc(settingsRef, settings, { merge: true });
+        alert('Configuración guardada.');
+    }
+    window.saveGeneralSettings = saveGeneralSettings;
 
     async function deleteAccount(id) {
       const user = auth.currentUser; if (!user || !id) return;
@@ -1122,6 +1125,11 @@ window.saveGeneralSettings = saveGeneralSettings; // Exponerla
         if (confirm('¿Estás seguro de que quieres eliminar esta estrategia?')) {
             await deleteDoc(doc(db, 'users', user.uid, 'strategies', id));
         }
+    }
+    async function saveChallengeSettings(settings) {
+        const user = auth.currentUser; if (!user) return;
+        const settingsRef = doc(db, 'users', user.uid, 'settings', 'challenge');
+        await setDoc(settingsRef, settings, { merge: true });
     }
 
     $('#save-account-btn')?.addEventListener('click', async ()=>{
@@ -1208,47 +1216,46 @@ window.saveGeneralSettings = saveGeneralSettings; // Exponerla
     $('#quick-add-trade')?.addEventListener('click', (e)=>{ e.preventDefault(); openNewTradeModal(); });
 
     onAuthStateChanged(auth, async (user) => {
-    if (user) {
-        const token = await user.getIdTokenResult(true);
-        const role = token.claims.role || 'user';
-        document.body.classList.toggle('is-admin', role === 'admin');
-        $('.user-name') && ($('.user-name').textContent = user.displayName || user.email);
-        $('#btn-login')?.classList.add('hidden');
-        $('#btn-logout')?.classList.remove('hidden');
-        $('#btn-open-auth')?.classList.add('hidden');
-        $('#welcome-message').textContent = "Tu sesión está activa. Tus operaciones se guardarán en la nube.";
-        bindSelfRealtime(user.uid);
-        if (role === 'admin') await loadUsersTable();
-    } else {
-        // Se cancelan las suscripciones en tiempo real al cerrar sesión
-        unsubTrades && unsubTrades();
-        unsubAccounts && unsubAccounts();
-        unsubStrategies && unsubStrategies();
-        unsubSettings && unsubSettings();
-        unsubGeneralSettings && unsubGeneralSettings(); // <-- LÍNEA AÑADIDA
+        if (user) {
+            const token = await user.getIdTokenResult(true);
+            const role = token.claims.role || 'user';
+            document.body.classList.toggle('is-admin', role === 'admin');
+            $('.user-name') && ($('.user-name').textContent = user.displayName || user.email);
+            $('#btn-login')?.classList.add('hidden');
+            $('#btn-logout')?.classList.remove('hidden');
+            $('#btn-open-auth')?.classList.add('hidden');
+            $('#welcome-message').textContent = "Tu sesión está activa. Tus operaciones se guardarán en la nube.";
+            bindSelfRealtime(user.uid);
+            if (role === 'admin') await loadUsersTable();
+        } else {
+            unsubTrades && unsubTrades();
+            unsubAccounts && unsubAccounts();
+            unsubStrategies && unsubStrategies();
+            unsubSettings && unsubSettings();
+            unsubGeneralSettings && unsubGeneralSettings();
 
-        // Se resetea la interfaz de usuario a su estado inicial
-        (window.recalcFromTrades || (() => {}))([]);
-        (window.updateAccountsUI || (() => {}))([]);
-        (window.renderTradesTable || (() => {}))([]);
-        (window.renderAnalytics || (() => {}))([]);
-        (window.renderCalendar || (() => {}))([]);
-        (window.renderStrategiesUI || (() => {}))([]);
-        (window.updateStrategiesDropdown || (() => {}))([]);
-        (window.populateAnalyticsFilter || (() => {}))([]);
-        (window.updateChallengeTrackerUI || (() => {}))(null);
-        document.body.classList.remove('is-admin');
-        $('.user-name') && ($('.user-name').textContent = 'Invitado');
-        $('#btn-login')?.classList.remove('hidden');
-        $('#btn-logout')?.classList.add('hidden');
-        $('#btn-open-auth')?.classList.remove('hidden');
-        $('#welcome-message').textContent = "Inicia sesión para guardar tus operaciones en la nube.";
-        if ($('#admin-users-tbody')) $('#admin-users-tbody').innerHTML = '';
-        if ($('#admin-user-detail')) $('#admin-user-detail').textContent = 'Selecciona un usuario…';
-        if ($('#admin-user-accounts')) $('#admin-user-accounts').textContent = '—';
-        if ($('#admin-user-trades')) $('#admin-user-trades').textContent = '—';
-    }
-});
+            (window.recalcFromTrades || (() => {}))([]);
+            (window.updateAccountsUI || (() => {}))([]);
+            (window.renderTradesTable || (() => {}))([]);
+            (window.renderAnalytics || (() => {}))([]);
+            (window.renderCalendar || (() => {}))([]);
+            (window.renderStrategiesUI || (() => {}))([]);
+            (window.updateStrategiesDropdown || (() => {}))([]);
+            (window.populateAnalyticsFilter || (() => {}))([]);
+            (window.updateChallengeTrackerUI || (() => {}))(null);
+            document.body.classList.remove('is-admin');
+            $('.user-name') && ($('.user-name').textContent = 'Invitado');
+            $('#btn-login')?.classList.remove('hidden');
+            $('#btn-logout')?.classList.add('hidden');
+            $('#btn-open-auth')?.classList.remove('hidden');
+            $('#welcome-message').textContent = "Inicia sesión para guardar tus operaciones en la nube.";
+            if ($('#admin-users-tbody')) $('#admin-users-tbody').innerHTML = '';
+            if ($('#admin-user-detail')) $('#admin-user-detail').textContent = 'Selecciona un usuario…';
+            if ($('#admin-user-accounts')) $('#admin-user-accounts').textContent = '—';
+            if ($('#admin-user-trades')) $('#admin-user-trades').textContent = '—';
+        }
+    });
+
     async function loadUsersTable(){
       if (!auth.currentUser) return;
       const token = await auth.currentUser.getIdTokenResult(true);
