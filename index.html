@@ -23,6 +23,7 @@
       background:linear-gradient(135deg,var(--primary),var(--secondary));
       display:grid; grid-template-columns:260px 1fr; grid-template-rows:64px 1fr;
       grid-template-areas:"sidebar header" "sidebar main";
+      font-family: sans-serif;
     }
     header{
       grid-area:header; display:flex; align-items:center; justify-content:space-between;
@@ -49,6 +50,7 @@
       width:100%; display:flex; align-items:center; gap:12px;
       padding:12px; border-radius:10px; color:var(--muted);
       text-decoration:none; background:none; border:0; cursor:pointer;
+      font-size: 15px;
     }
     .nav a:hover,.nav a.active,.nav button.nav-link[aria-expanded="true"]{
       color:var(--accent); background:rgba(212,175,55,.12);
@@ -56,7 +58,7 @@
     .nav .icon{width:22px; text-align:center}
 
     .submenu{display:grid; gap:6px; padding:6px 0 6px 34px; max-height:0; overflow:hidden; transition:max-height .25s ease}
-    .submenu a{padding:10px 12px}
+    .submenu a{padding:10px 12px; font-size: 14px;}
     .nav button.nav-link{justify-content:space-between}
     .caret{transform:rotate(-90deg); transition:transform .2s}
     .nav button.nav-link[aria-expanded="true"] .caret{transform:rotate(0deg)}
@@ -201,43 +203,225 @@
 
   <main id="app">
     <section id="dashboard" class="section active">
-        </section>
+      <div class="card welcome">
+        <div class="card-header"><div class="card-title">Bienvenido</div></div>
+        <p id="welcome-message" style="color:var(--muted)">Inicia sesión para guardar tus operaciones en la nube.</p>
+        <button class="btn primary" style="margin-top:10px" id="btn-open-auth"><i class="fa-solid fa-right-to-bracket"></i> Acceder</button>
+      </div>
+      <div class="card metrics">
+        <div class="card-header"><div class="card-title">Resumen</div></div>
+        <div class="metric-card"><div class="metric-val" id="total-profit">$0.00</div><div class="metric-lab">Beneficio Total</div></div>
+        <div class="metric-card" style="margin-top:10px"><div class="metric-val" id="win-rate">0%</div><div class="metric-lab">Tasa de Acierto</div></div>
+      </div>
+      <div class="card factor"><div class="card-header"><div class="card-title">Factor</div></div><div class="metric-card"><div class="metric-val" id="profit-factor">0.00</div><div class="metric-lab">Operaciones: <span id="total-trades">0</span></div></div></div>
+      <div class="card rr"><div class="card-header"><div class="card-title">R/B</div></div><div class="metric-card"><div class="metric-val" id="risk-reward">0.00</div><div class="metric-lab">Promedio</div></div></div>
+      <div class="card wins"><div class="card-header"><div class="card-title">Ganadoras</div></div><div class="metric-card"><div class="metric-val" id="win-trades">0</div><div class="metric-lab">de <span id="total-trades-2">0</span></div></div></div>
+      <div class="card dist">
+        <div class="card-header"><div class="card-title">Distribución</div><button class="btn-icon" id="refresh-distribution"><i class="fa-solid fa-rotate"></i></button></div>
+        <div class="chart"><canvas id="distributionChart"></canvas></div>
+      </div>
+      <div class="card recent">
+        <div class="card-header"><div class="card-title">Recientes</div><button class="btn-icon" id="add-trade-btn"><i class="fa-solid fa-plus"></i></button></div>
+        <div id="recent-trades-container" style="color:var(--muted)">Sin registros.</div>
+      </div>
+      <div class="card balance">
+        <div class="card-header"><div class="card-title">Saldo</div><button class="btn-icon"><i class="fa-solid fa-expand"></i></button></div>
+        <div class="chart"><canvas id="balanceChart"></canvas></div>
+      </div>
+      <div class="card risk">
+        <div class="card-header"><div class="card-title">Riesgo</div><button class="btn-icon" id="export-risk"><i class="fa-solid fa-file-export"></i></button></div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+          <div class="metric-card"><div class="metric-val" id="daily-risk">0.0%</div><div class="metric-lab">Diario</div></div>
+          <div class="metric-card"><div class="metric-val" id="weekly-risk">0.0%</div><div class="metric-lab">Semanal</div></div>
+          <div class="metric-card"><div class="metric-val" id="monthly-risk">0.0%</div><div class="metric-lab">Mensual</div></div>
+        </div>
+        <div class="chart"><canvas id="riskChart"></canvas></div>
+      </div>
+      <div class="card news"><div class="card-header"><div class="card-title">Calendario Económico</div></div><p style="color:var(--muted)">Próximos eventos...</p></div>
+      <div class="card challenge"><div class="card-header"><div class="card-title">FTMO Challenge</div><button class="btn-icon" id="edit-challenge"><i class="fa-solid fa-pen"></i></button></div>
+        <div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <span>Progreso</span><span id="challenge-progress-value">0%</span>
+          </div>
+          <div style="height:10px;background:#334155;border-radius:6px;overflow:hidden"><div id="challenge-progress-bar" style="height:100%;width:0%;background:var(--success)"></div></div>
+          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:10px">
+            <div class="metric-card"><div class="metric-val" id="challenge-profit">+0.0%</div><div class="metric-lab">Beneficio</div></div>
+            <div class="metric-card"><div class="metric-val" id="challenge-drawdown">0.0%</div><div class="metric-lab">Drawdown</div></div>
+            <div class="metric-card"><div class="metric-val" id="challenge-trades">0</div><div class="metric-lab">Operaciones</div></div>
+            <div class="metric-card"><div class="metric-val" id="challenge-win-rate">0%</div><div class="metric-lab">Acierto</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <section id="calendario" class="section">
-        </section>
+      <div class="card" style="grid-column:1/-1">
+        <div class="card-header">
+          <div class="card-title">Calendario de Operaciones</div>
+        </div>
+        <div id='calendar-container' style="min-height: 600px;"></div>
+      </div>
+    </section>
     
     <section id="cuentas" class="section">
-        </section>
+        <div class="card" style="grid-column:1/-1">
+            <div class="card-header">
+                <div class="card-title">Gestión de Cuentas</div>
+            </div>
+            <div id="accounts-container"></div>
+        </div>
+    </section>
     
     <section id="operaciones" class="section">
-        </section>
+      <div class="card" style="grid-column:1/-1">
+        <div class="card-header">
+          <div class="card-title">Historial de Operaciones</div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table style="width:100%; border-collapse:collapse;">
+            <thead>
+              <tr style="border-bottom: 1px solid var(--border);">
+                <th style="padding:10px; text-align:left; color:var(--muted);">Fecha</th>
+                <th style="padding:10px; text-align:left; color:var(--muted);">Par</th>
+                <th style="padding:10px; text-align:left; color:var(--muted);">Tipo</th>
+                <th style="padding:10px; text-align:right; color:var(--muted);">Resultado ($)</th>
+                <th style="padding:10px; text-align:center; color:var(--muted);">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="trades-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
 
     <section id="analiticas" class="section">
-        </section>
+      <div class="card" style="grid-column: span 3;">
+        <div class="card-header"><div class="card-title">Beneficio Neto</div></div>
+        <div class="metric-card"><div class="metric-val" id="analytics-total-profit">$0.00</div></div>
+      </div>
+      <div class="card" style="grid-column: span 3;">
+        <div class="card-header"><div class="card-title">Tasa de Acierto</div></div>
+        <div class="metric-card"><div class="metric-val" id="analytics-win-rate">0%</div></div>
+      </div>
+      <div class="card" style="grid-column: span 3;">
+        <div class="card-header"><div class="card-title">Profit Factor</div></div>
+        <div class="metric-card"><div class="metric-val" id="analytics-profit-factor">0.00</div></div>
+      </div>
+      <div class="card" style="grid-column: span 3;">
+        <div class="card-header"><div class="card-title">R/B Promedio</div></div>
+        <div class="metric-card"><div class="metric-val" id="analytics-rr">0.00</div></div>
+      </div>
+      <div class="card" style="grid-column: 1 / -1;">
+        <div class="card-header"><div class="card-title">Curva de Capital</div></div>
+        <div class="chart" style="height: 400px;">
+          <canvas id="equityCurveChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <section id="seguimiento" class="section"><div class="card" style="grid-column:1/-1"><div class="card-title">Seguimiento</div></div></section>
     
     <section id="estrategias" class="section">
       <div class="card" style="grid-column:1/-1">
         <div class="card-header">
             <div class="card-title">Gestión de Estrategias</div>
         </div>
-        <div id="strategies-container">
-            </div>
+        <div id="strategies-container"></div>
       </div>
     </section>
 
-    <section id="seguimiento" class="section"><div class="card" style="grid-column:1/-1"><div class="card-title">Seguimiento</div></div></section>
     <section id="configuracion" class="section"><div class="card" style="grid-column:1/-1"><div class="card-title">Configuración</div><p style="color:var(--muted)">Preferencias...</p></div></section>
+    
     <section id="admin" class="section only-admin">
-        </section>
+      <div class="card" style="grid-column:1/-1">
+        <div class="card-header">
+          <div class="card-title">Panel de Administración</div>
+          <div><button class="btn primary" id="btn-refresh-users"><i class="fa-solid fa-rotate"></i> Actualizar</button></div>
+        </div>
+        <div class="card" style="margin-bottom:14px">
+          <div class="card-title" style="margin-bottom:8px">Usuarios</div>
+          <div style="overflow:auto">
+            <table style="width:100%; border-collapse:collapse">
+              <thead style="color:var(--muted)">
+                <tr>
+                  <th style="text-align:left;padding:8px;border-bottom:1px solid var(--border)">UID</th>
+                  <th style="text-align:left;padding:8px;border-bottom:1px solid var(--border)">Nombre</th>
+                  <th style="text-align:left;padding:8px;border-bottom:1px solid var(--border)">Email</th>
+                  <th style="text-align:left;padding:8px;border-bottom:1px solid var(--border)">Rol</th>
+                  <th style="text-align:left;padding:8px;border-bottom:1px solid var(--border)">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="admin-users-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title" style="margin-bottom:8px">Detalle de Usuario</div>
+          <div id="admin-user-detail" style="color:var(--muted)">Selecciona un usuario…</div>
+          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:12px">
+            <div class="card">
+              <div class="card-title">Cuentas</div>
+              <div id="admin-user-accounts" style="color:var(--muted)">—</div>
+            </div>
+            <div class="card">
+              <div class="card-title">Trades</div>
+              <div id="admin-user-trades" style="color:var(--muted)">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <button class="fab" id="floating-add-trade-btn" aria-label="Agregar operación"><i class="fa-solid fa-plus"></i></button>
 
   <div id="add-trade-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="trade-title">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="trade-title">Agregar Operación</h2>
+        <button class="close-modal" data-close>&times;</button>
       </div>
+      <div class="modal-body">
+        <div class="form-group"><label>Par</label>
+          <select id="trade-pair-input" class="form-control">
+            <option value="EURUSD">EUR/USD</option><option value="GBPUSD">GBP/USD</option><option value="USDJPY">USD/JPY</option>
+          </select></div>
+        <div class="form-group"><label>Tipo</label>
+          <select id="trade-type-input" class="form-control"><option value="buy">Compra</option><option value="sell">Venta</option></select></div>
+        <div class="form-group"><label>Resultado ($)</label><input id="trade-result-input" type="number" class="form-control" placeholder="Ej: 250.50" step="0.01" /></div>
+        <div class="form-group"><label>Riesgo (% del capital)</label><input id="trade-risk-input" type="number" class="form-control" placeholder="Ej: 1.0" step="0.1" min="0.1" max="10" /></div>
+        <div class="form-group"><label>Beneficio Esperado (%)</label><input id="trade-reward-input" type="number" class="form-control" placeholder="Ej: 3.0" step="0.1" min="0.1" /></div>
+        <div class="form-group"><label>Pertenece al Challenge</label>
+          <select id="trade-challenge-input" class="form-control"><option value="yes">Sí</option><option value="no">No</option></select></div>
+        <input type="hidden" id="editing-trade-id" />
+      </div>
+      <div class="modal-footer">
+        <button class="btn secondary" data-close>Cancelar</button>
+        <button class="btn primary" id="save-trade-btn">Guardar Operación</button>
+      </div>
+    </div>
+  </div>
 
   <div id="add-account-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="acc-title">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="acc-title">Agregar Nueva Cuenta</h2>
+        <button class="close-modal" data-close>&times;</button>
       </div>
+      <div class="modal-body">
+        <div class="form-group"><label>Nombre</label><input id="account-name" class="form-control" placeholder="Ej: Cuenta Principal" /></div>
+        <div class="form-group"><label>Saldo ($)</label><input id="account-balance" type="number" class="form-control" placeholder="Ej: 10000.00" step="0.01" /></div>
+        <div class="form-group"><label>Tipo</label>
+          <select id="account-type" class="form-control"><option value="principal">Principal</option><option value="challenge">Challenge</option><option value="personal">Personal</option></select>
+        </div>
+        <input type="hidden" id="editing-account-id" />
+      </div>
+      <div class="modal-footer">
+        <button class="btn secondary" data-close>Cancelar</button>
+        <button class="btn primary" id="save-account-btn">Guardar Cuenta</button>
+      </div>
+    </div>
+  </div>
   
   <div id="add-strategy-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="strategy-title">
     <div class="modal-content">
@@ -264,33 +448,273 @@
   </div>
 
   <div id="auth-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="auth-title">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="auth-title">Acceso</h2>
+        <button class="close-modal" data-close>&times;</button>
       </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Email</label>
+          <input id="auth-email" type="email" class="form-control" placeholder="tu@correo.com" />
+        </div>
+        <div class="form-group">
+          <label>Contraseña</label>
+          <input id="auth-pass" type="password" class="form-control" placeholder="••••••••" />
+        </div>
+        <div class="form-group" id="auth-name-wrap" style="display:none">
+          <label>Nombre</label>
+          <input id="auth-name" class="form-control" placeholder="Tu nombre" />
+        </div>
+        <div id="auth-error" class="hidden" style="margin-top:8px;color:var(--danger)"></div>
+      </div>
+      <div class="modal-footer" style="justify-content:space-between">
+        <div>
+          <button class="btn secondary" id="auth-toggle-mode">Crear cuenta</button>
+        </div>
+        <div>
+          <button class="btn secondary" data-close>Cancelar</button>
+          <button class="btn primary" id="auth-submit">Entrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script>
     const $ = s => document.querySelector(s);
     const $$ = s => document.querySelectorAll(s);
 
-    function setDate(){ /* ... */ }
+    function setDate(){ $('#current-date').textContent = new Date().toLocaleDateString('es-ES',{weekday:'long',day:'2-digit',month:'long',year:'numeric'}) }
+
     let distributionChart, balanceChart, riskChart;
-    function initCharts(){ /* ... */ }
-    (function(){ /* ... */ })();
-    function setActiveSection(id){ /* ... */ }
-    function restoreAccordionState(){ /* ... */ }
-    function persistAccordionState(){ /* ... */ }
-    function openModalById(id){ /* ... */ }
-    function closeAllModals(){ /* ... */ }
-    window.__local = { /* ... */ };
-    function updateRecentTrades(trades){ /* ... */ }
-    function updateAccountsUI(accounts) { /* ... */ }
-    function renderTradesTable(trades) { /* ... */ }
+    function initCharts(){
+      const d = $('#distributionChart'); if (d) distributionChart = new Chart(d.getContext('2d'),{type:'bar', data:{labels:['Win','Loss','BE'],datasets:[{data:[0,0,0],backgroundColor:['rgba(16,185,129,.7)','rgba(239,68,68,.7)','rgba(156,163,175,.7)']}]}, options:{responsive:true,maintainAspectRatio:false}});
+      const b = $('#balanceChart'); if (b) balanceChart = new Chart(b.getContext('2d'),{type:'line', data:{labels:['D1','D2','D3','D4','D5','D6','Hoy'],datasets:[{data:[10000,10000,10000,10000,10000,10000,10000],borderColor:'rgba(212,175,55,1)',backgroundColor:'rgba(212,175,55,.15)',fill:true,tension:.3}]} , options:{responsive:true,maintainAspectRatio:false}});
+      const r = $('#riskChart'); if (r) riskChart = new Chart(r.getContext('2d'),{type:'radar', data:{labels:['Gestión','Consistencia','Acierto','R/B','DD','Beneficio'],datasets:[{data:[0,0,0,0,0,0],backgroundColor:'rgba(212,175,55,.2)',borderColor:'rgba(212,175,55,1)'}]}, options:{responsive:true,maintainAspectRatio:false}});
+    }
+
+    (function(){
+      const burger = document.getElementById('burger');
+      const backdrop = document.getElementById('drawerBackdrop');
+      const open = ()=>{ document.body.classList.add('sidebar-open'); burger?.setAttribute('aria-expanded','true'); document.body.style.overflow='hidden'; };
+      const close= ()=>{ document.body.classList.remove('sidebar-open'); burger?.setAttribute('aria-expanded','false'); document.body.style.overflow=''; };
+      const toggle=()=> document.body.classList.contains('sidebar-open') ? close() : open();
+      burger?.addEventListener('click', toggle);
+      backdrop?.addEventListener('click', close);
+      window.addEventListener('keydown', e=>{ if(e.key==='Escape') close(); });
+      document.querySelectorAll('.nav a,[data-target]').forEach(el=>{
+        el.addEventListener('click', ()=>{ if (window.matchMedia('(max-width:860px)').matches) close(); });
+      });
+    })();
+
+    function setActiveSection(id){
+      $$('.section').forEach(s=>s.classList.remove('active'));
+      const tgt = document.getElementById(id); if (tgt) tgt.classList.add('active');
+      $$('.nav a').forEach(a=>a.classList.toggle('active', a.dataset.target===id));
+    }
+    function restoreAccordionState(){
+      const state = JSON.parse(sessionStorage.getItem('nav-acc-state') || '{}');
+      Object.entries(state).forEach(([id,open])=>{
+        const panel = document.getElementById(id);
+        const btn = document.querySelector('[aria-controls="'+id+'"]');
+        if (panel && btn){ panel.classList.toggle('open', !!open); btn.setAttribute('aria-expanded', !!open); }
+      });
+    }
+    function persistAccordionState(){
+      const state = {}; $$('.submenu').forEach(p => { state[p.id] = p.classList.contains('open'); });
+      sessionStorage.setItem('nav-acc-state', JSON.stringify(state));
+    }
+
+    function openModalById(id){ document.getElementById(id)?.classList.add('show'); document.body.style.overflow='hidden'; }
+    function closeAllModals(){ $$('.modal').forEach(m=>m.classList.remove('show')); document.body.style.overflow=''; }
+
+    window.__local = {
+      tradingData:{ totalProfit:0, winRate:0, profitFactor:0, riskRewardRatio:0, winTrades:0, totalTrades:0,
+        dailyRisk:0, weeklyRisk:0, monthlyRisk:0, challenge:{progress:0,profit:0,drawdown:0,trades:0,winRate:0}, trades:[] },
+      accounts:[],
+      strategies:[]
+    };
+
+    function updateRecentTrades(trades){
+      const el = $('#recent-trades-container');
+      if (!el) return;
+      if (!trades || !trades.length){ el.textContent='Sin registros.'; return; }
+      el.innerHTML = trades.slice(0,4).map(t=>{
+        const sign = (t.result||0)>=0?'+':'-';
+        const col  = (t.result||0)>=0? 'var(--success)' : 'var(--danger)';
+        return `<div>${t.pair} · ${String(t.type||'').toUpperCase()} · <b style="color:${col}">${sign}$${Math.abs(t.result||0).toFixed(2)}</b> · ${t.dateStr||''}</div>`;
+      }).join('');
+    }
+
+    function updateAccountsUI(accounts) {
+      const el = $('#accounts-container');
+      if (!el) return;
+      el.innerHTML = ''; 
+      const addAccountButton = document.createElement('div');
+      addAccountButton.className = 'btn primary';
+      addAccountButton.style = "display:inline-flex; align-items:center; gap:8px; margin-bottom: 20px; cursor: pointer;";
+      addAccountButton.innerHTML = `<i class="fa-solid fa-plus"></i> Agregar Cuenta`;
+      addAccountButton.onclick = () => {
+        $('#acc-title').textContent = 'Agregar Nueva Cuenta';
+        $('#account-name').value = '';
+        $('#account-balance').value = '';
+        $('#account-type').value = 'principal';
+        $('#editing-account-id').value = '';
+        openModalById('add-account-modal');
+      };
+      el.appendChild(addAccountButton);
+      if (!accounts || accounts.length === 0) {
+        const noAccountsMessage = document.createElement('p');
+        noAccountsMessage.textContent = 'Aún no tienes cuentas. ¡Agrega una para empezar!';
+        noAccountsMessage.style.color = 'var(--muted)';
+        el.appendChild(noAccountsMessage);
+        return;
+      }
+      (accounts || []).forEach(a => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.style.marginTop = '10px';
+        card.innerHTML = `
+          <div class="card-header">
+            <div class="card-title">${a.name || 'Cuenta sin nombre'}</div>
+            <div>
+              <button class="btn-icon btn-edit-account" data-id="${a.id}" title="Editar Cuenta">✏️</button>
+              <button class="btn-icon btn-delete-account" data-id="${a.id}" title="Eliminar Cuenta">🗑️</button>
+            </div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-val">$${(a.balance || 0).toFixed(2)}</div>
+            <div class="metric-lab">${a.type || 'Tipo no definido'}</div>
+          </div>
+        `;
+        el.appendChild(card);
+      });
+    }
+
+    function renderTradesTable(trades) {
+      const tbody = $('#trades-table-body');
+      if (!tbody) return;
+      if (!trades || trades.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="padding:20px; text-align:center; color:var(--muted);">No hay operaciones registradas.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = trades.map(t => {
+        const resultColor = (t.result || 0) >= 0 ? 'var(--success)' : 'var(--danger)';
+        const sign = (t.result || 0) >= 0 ? '+' : '';
+        return `
+          <tr style="border-bottom: 1px solid var(--border);">
+            <td style="padding:10px;">${t.dateStr || 'N/A'}</td>
+            <td style="padding:10px;">${t.pair || 'N/A'}</td>
+            <td style="padding:10px;">${(t.type || '').toUpperCase()}</td>
+            <td style="padding:10px; text-align:right; font-weight:bold; color:${resultColor};">${sign}$${(t.result || 0).toFixed(2)}</td>
+            <td style="padding:10px; text-align:center;">
+              <button class="btn-icon btn-edit-trade" data-id="${t.id}" title="Editar Operación">✏️</button>
+              <button class="btn-icon btn-delete-trade" data-id="${t.id}" title="Eliminar Operación">🗑️</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
     let equityCurveChart = null;
     let calendar = null;
-    function renderAnalytics(trades) { /* ... */ }
-    function renderEquityCurve(trades) { /* ... */ }
-    function renderCalendar(trades) { /* ... */ }
-    function recalcFromTrades(trades){ /* ... */ }
 
-    // NUEVA FUNCIÓN PARA RENDERIZAR ESTRATEGIAS
+    function renderAnalytics(trades) {
+      const t = trades || [];
+      const wins = t.filter(x => x.result > 0);
+      const losses = t.filter(x => x.result < 0);
+      const total = t.length;
+      const totalWins = wins.reduce((s, x) => s + x.result, 0);
+      const totalLoss = Math.abs(losses.reduce((s, x) => s + x.result, 0));
+      const totalProfit = totalWins - totalLoss;
+      const winRate = total ? (wins.length / total) * 100 : 0;
+      const profitFactor = totalLoss ? totalWins / totalLoss : 0;
+      const avgRR = (wins.length && losses.length) ? (totalWins / wins.length) / (totalLoss / losses.length) : 0;
+
+      $('#analytics-total-profit').textContent = `$${totalProfit.toFixed(2)}`;
+      $('#analytics-win-rate').textContent = `${winRate.toFixed(1)}%`;
+      $('#analytics-profit-factor').textContent = profitFactor.toFixed(2);
+      $('#analytics-rr').textContent = avgRR.toFixed(2);
+
+      renderEquityCurve(t);
+    }
+
+    function renderEquityCurve(trades) {
+      const ctx = document.getElementById('equityCurveChart')?.getContext('2d');
+      if (!ctx) return;
+      let cumulativeProfit = 0;
+      const equityData = trades.slice().reverse().map(trade => {
+        cumulativeProfit += trade.result;
+        return cumulativeProfit;
+      });
+      const labels = Array.from({ length: trades.length }, (_, i) => i + 1);
+      if (equityCurveChart) {
+        equityCurveChart.destroy();
+      }
+      equityCurveChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Beneficio Acumulado ($)',
+            data: equityData,
+            borderColor: 'rgba(212, 175, 55, 1)',
+            backgroundColor: 'rgba(212, 175, 55, 0.15)',
+            fill: true,
+            tension: 0.1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { y: { beginAtZero: false } }
+        }
+      });
+    }
+
+    function renderCalendar(trades) {
+      const calendarEl = document.getElementById('calendar-container');
+      if (!calendarEl) return;
+      const dailySummary = {};
+      trades.forEach(trade => {
+        const date = trade.dateStr;
+        if (!dailySummary[date]) {
+          dailySummary[date] = { profit: 0, count: 0 };
+        }
+        dailySummary[date].profit += trade.result;
+        dailySummary[date].count++;
+      });
+      const calendarEvents = Object.keys(dailySummary).map(date => {
+        const day = dailySummary[date];
+        const isWin = day.profit > 0;
+        const sign = isWin ? '+' : '';
+        return {
+          start: date,
+          title: `${sign}$${day.profit.toFixed(2)} (${day.count} ops)`,
+          backgroundColor: isWin ? 'var(--success)' : 'var(--danger)',
+          borderColor: isWin ? 'var(--success)' : 'var(--danger)',
+        };
+      });
+      if (calendar) {
+        calendar.destroy();
+      }
+      calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        locale: 'es',
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek'
+        },
+        events: calendarEvents,
+        eventClick: function(info) {
+          const date = info.event.start.toLocaleDateString('es-ES', { day:'2-digit', month:'long', year:'numeric' });
+          alert(`Resumen para ${date}:\n\n${info.event.title}`);
+        }
+      });
+      calendar.render();
+    }
+
     function renderStrategiesUI(strategies) {
       const el = $('#strategies-container');
       if (!el) return;
@@ -331,6 +755,36 @@
         `;
         el.appendChild(card);
       });
+    }
+
+    function recalcFromTrades(trades){
+      const t = trades||[];
+      const wins = t.filter(x=>x.result>0), losses = t.filter(x=>x.result<0);
+      const total = t.length;
+      const totalWins = wins.reduce((s,x)=>s+x.result,0);
+      const totalLoss = Math.abs(losses.reduce((s,x)=>s+x.result,0));
+      const winRate = total? (wins.length/total)*100 : 0;
+      const pf = totalLoss? totalWins/totalLoss : 0;
+      const rr = (wins.length && losses.length)? (totalWins/wins.length)/(totalLoss/losses.length) : 0;
+
+      $('#total-trades').textContent = total;
+      $('#total-trades-2').textContent = total;
+      $('#win-trades').textContent = wins.length;
+      $('#win-rate').textContent = `${winRate.toFixed(1)}%`;
+      $('#profit-factor').textContent = pf.toFixed(2);
+      $('#risk-reward').textContent = rr.toFixed(2);
+      $('#total-profit').textContent = `$${(totalWins-totalLoss).toFixed(2)}`;
+
+      if (distributionChart){
+        distributionChart.data.datasets[0].data = [wins.length, losses.length, t.filter(x=>x.result===0).length];
+        distributionChart.update();
+      }
+      if (balanceChart){
+        const data = []; let bal = 10000;
+        for (let i=0;i<7;i++){ if (i<t.length) bal += t[t.length-1-i]?.result||0; data.unshift(bal) }
+        balanceChart.data.datasets[0].data = data; balanceChart.update();
+      }
+      updateRecentTrades(t);
     }
 
     document.addEventListener('DOMContentLoaded', ()=>{
@@ -384,10 +838,38 @@
     const db   = getFirestore(app);
     const $ = s => document.querySelector(s);
     
-    // --- LÓGICA DE SESIÓN (AUTH) ---
-    // ...
+    let authMode = 'login';
+    function setAuthMode(mode){
+      authMode = mode;
+      $('#auth-title').textContent = mode==='login' ? 'Iniciar Sesión' : 'Crear Cuenta';
+      $('#auth-toggle-mode').textContent = mode==='login' ? 'Crear cuenta' : 'Ya tengo cuenta';
+      $('#auth-name-wrap').style.display = mode==='register' ? 'block' : 'none';
+      $('#auth-error').classList.add('hidden');
+    }
+    $('#auth-toggle-mode')?.addEventListener('click', ()=> setAuthMode(authMode==='login' ? 'register' : 'login'));
+    $('#auth-submit')?.addEventListener('click', async ()=>{
+      const email = $('#auth-email').value.trim();
+      const pass  = $('#auth-pass').value.trim();
+      const name  = $('#auth-name').value.trim() || 'Trader';
+      const err   = $('#auth-error');
+      try{
+        err.classList.add('hidden');
+        if (authMode==='login'){
+          await signInWithEmailAndPassword(auth, email, pass);
+        } else {
+          const cred = await createUserWithEmailAndPassword(auth, email, pass);
+          await updateProfile(cred.user, { displayName: name });
+          await setDoc(doc(db, 'users', cred.user.uid), {
+            displayName: name, email, role: 'user', createdAt: serverTimestamp()
+          });
+        }
+        closeAllModals();
+      }catch(e){ err.textContent = e.message; err.classList.remove('hidden'); }
+    });
+    $('#btn-login')?.addEventListener('click', ()=> openModalById('auth-modal'));
+    $('#btn-open-auth')?.addEventListener('click', ()=> openModalById('auth-modal'));
+    $('#btn-logout')?.addEventListener('click', ()=> signOut(auth));
 
-    // --- LECTURA DE DATOS EN TIEMPO REAL ---
     let unsubTrades=null, unsubAccounts=null, unsubStrategies=null;
     function bindSelfRealtime(uid){
       unsubTrades && unsubTrades(); unsubAccounts && unsubAccounts(); unsubStrategies && unsubStrategies();
@@ -415,10 +897,34 @@
       });
     }
 
-    // --- GUARDAR Y ACTUALIZAR DATOS ---
+    async function saveTrade({ id, pair, type, result, risk, reward, inChallenge }){
+      const user = auth.currentUser; if (!user) return;
+      const data = {
+        pair, type, result: Number(result||0), risk: Number(risk||0), reward: Number(reward||0), inChallenge
+      };
+      if (id) {
+        await updateDoc(doc(db, 'users', user.uid, 'trades', id), data);
+      } else {
+        const now = new Date();
+        data.dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+        data.createdAt = serverTimestamp();
+        await addDoc(collection(db, 'users', user.uid, 'trades'), data);
+      }
+    }
+
+    async function saveAccount({ id, name, balance, type }){
+      const user = auth.currentUser; if (!user) return;
+      const data = { name, balance: Number(balance||0), type };
+      if (id) {
+        await updateDoc(doc(db, 'users', user.uid, 'accounts', id), data);
+      } else {
+        data.createdAt = serverTimestamp();
+        await addDoc(collection(db, 'users', user.uid, 'accounts'), data);
+      }
+    }
+    
     async function saveStrategy({ id, name, desc }) {
-        const user = auth.currentUser;
-        if (!user) return;
+        const user = auth.currentUser; if (!user) return;
         const data = { name, desc };
         if (id) {
             await updateDoc(doc(db, 'users', user.uid, 'strategies', id), data);
@@ -427,19 +933,41 @@
             await addDoc(collection(db, 'users', user.uid, 'strategies'), data);
         }
     }
-    // ... saveTrade y saveAccount sin cambios ...
 
-    // --- ELIMINAR DATOS ---
+    async function deleteAccount(id) {
+      const user = auth.currentUser; if (!user || !id) return;
+      if (confirm('¿Estás seguro de que quieres eliminar esta cuenta?')) {
+        await deleteDoc(doc(db, 'users', user.uid, 'accounts', id));
+      }
+    }
+    async function deleteTrade(id) {
+      const user = auth.currentUser; if (!user || !id) return;
+      if (confirm('¿Estás seguro de que quieres eliminar esta operación?')) {
+        await deleteDoc(doc(db, 'users', user.uid, 'trades', id));
+      }
+    }
     async function deleteStrategy(id) {
-        const user = auth.currentUser;
-        if (!user || !id) return;
+        const user = auth.currentUser; if (!user || !id) return;
         if (confirm('¿Estás seguro de que quieres eliminar esta estrategia?')) {
             await deleteDoc(doc(db, 'users', user.uid, 'strategies', id));
         }
     }
-    // ... deleteTrade y deleteAccount sin cambios ...
 
-    // --- MANEJO DE EVENTOS ---
+    $('#save-account-btn')?.addEventListener('click', async ()=>{
+      const data = { id: $('#editing-account-id').value, name: $('#account-name').value.trim(), balance: parseFloat($('#account-balance').value) || 0, type: $('#account-type').value };
+      if (!data.name) return alert('El nombre de la cuenta es obligatorio.');
+      await saveAccount(data); closeAllModals();
+    });
+
+    $('#save-trade-btn')?.addEventListener('click', async ()=>{
+      const data = {
+        id: $('#editing-trade-id').value, pair: $('#trade-pair-input').value, type: $('#trade-type-input').value,
+        result: parseFloat($('#trade-result-input').value) || 0, risk: parseFloat($('#trade-risk-input').value) || 0,
+        reward: parseFloat($('#trade-reward-input').value) || 0, inChallenge: $('#trade-challenge-input').value === 'yes'
+      };
+      await saveTrade(data); closeAllModals();
+    });
+    
     $('#save-strategy-btn')?.addEventListener('click', async () => {
         const data = {
             id: $('#editing-strategy-id').value,
@@ -447,55 +975,86 @@
             desc: $('#strategy-desc').value.trim()
         };
         if (!data.name) return alert('El nombre de la estrategia es obligatorio.');
-        await saveStrategy(data);
-        closeAllModals();
+        await saveStrategy(data); closeAllModals();
     });
-    // ... saveAccount y saveTrade listeners sin cambios ...
 
     $('main')?.addEventListener('click', (e) => {
-        // ... Lógica para Cuentas y Operaciones sin cambios ...
+      const editAccountBtn = e.target.closest('.btn-edit-account');
+      if (editAccountBtn) {
+        const account = window.__currentAccounts?.find(a => a.id === editAccountBtn.dataset.id);
+        if (account) {
+          $('#acc-title').textContent = 'Editar Cuenta'; $('#account-name').value = account.name; $('#account-balance').value = account.balance;
+          $('#account-type').value = account.type; $('#editing-account-id').value = account.id; openModalById('add-account-modal');
+        }
+      }
+      const deleteAccountBtn = e.target.closest('.btn-delete-account');
+      if (deleteAccountBtn) { deleteAccount(deleteAccountBtn.dataset.id); }
 
-        // Lógica para Estrategias
-        const editStrategyBtn = e.target.closest('.btn-edit-strategy');
-        if (editStrategyBtn) {
-            const strategyId = editStrategyBtn.dataset.id;
-            const strategy = window.__currentStrategies?.find(s => s.id === strategyId);
-            if (strategy) {
-                $('#strategy-title').textContent = 'Editar Estrategia';
-                $('#strategy-name').value = strategy.name;
-                $('#strategy-desc').value = strategy.desc;
-                $('#editing-strategy-id').value = strategyId;
-                openModalById('add-strategy-modal');
-            }
+      const editTradeBtn = e.target.closest('.btn-edit-trade');
+      if (editTradeBtn) {
+        const trade = window.__currentTrades?.find(t => t.id === editTradeBtn.dataset.id);
+        if (trade) {
+          $('#trade-title').textContent = 'Editar Operación'; $('#trade-pair-input').value = trade.pair; $('#trade-type-input').value = trade.type;
+          $('#trade-result-input').value = trade.result; $('#trade-risk-input').value = trade.risk; $('#trade-reward-input').value = trade.reward;
+          $('#trade-challenge-input').value = trade.inChallenge ? 'yes' : 'no'; $('#editing-trade-id').value = trade.id; openModalById('add-trade-modal');
         }
-        const deleteStrategyBtn = e.target.closest('.btn-delete-strategy');
-        if (deleteStrategyBtn) {
-            deleteStrategy(deleteStrategyBtn.dataset.id);
+      }
+      const deleteTradeBtn = e.target.closest('.btn-delete-trade');
+      if (deleteTradeBtn) { deleteTrade(deleteTradeBtn.dataset.id); }
+      
+      const editStrategyBtn = e.target.closest('.btn-edit-strategy');
+      if (editStrategyBtn) {
+        const strategy = window.__currentStrategies?.find(s => s.id === editStrategyBtn.dataset.id);
+        if (strategy) {
+            $('#strategy-title').textContent = 'Editar Estrategia'; $('#strategy-name').value = strategy.name;
+            $('#strategy-desc').value = strategy.desc; $('#editing-strategy-id').value = strategy.id; openModalById('add-strategy-modal');
         }
+      }
+      const deleteStrategyBtn = e.target.closest('.btn-delete-strategy');
+      if (deleteStrategyBtn) { deleteStrategy(deleteStrategyBtn.dataset.id); }
     });
     
-    // ... openNewTradeModal sin cambios ...
+    function openNewTradeModal() {
+        $('#trade-title').textContent = 'Agregar Operación'; $('#editing-trade-id').value = '';
+        $('#trade-pair-input').value = 'EURUSD'; $('#trade-type-input').value = 'buy'; $('#trade-result-input').value = '';
+        $('#trade-risk-input').value = ''; $('#trade-reward-input').value = ''; $('#trade-challenge-input').value = 'yes';
+        openModalById('add-trade-modal');
+    }
+    $('#add-trade-btn')?.addEventListener('click', openNewTradeModal);
+    $('#floating-add-trade-btn')?.addEventListener('click', openNewTradeModal);
+    $('#quick-add-trade')?.addEventListener('click', (e)=>{ e.preventDefault(); openNewTradeModal(); });
 
-    // --- GESTOR DE ESTADO DE SESIÓN ---
     onAuthStateChanged(auth, async (user)=>{
       if (user){
-        // ... (código de inicio de sesión sin cambios)
+        const token = await user.getIdTokenResult(true); const role = token.claims.role || 'user';
+        document.body.classList.toggle('is-admin', role==='admin');
+        $('.user-name') && ($('.user-name').textContent = user.displayName || user.email);
+        $('#btn-login')?.classList.add('hidden'); $('#btn-logout')?.classList.remove('hidden');
+        $('#btn-open-auth')?.classList.add('hidden');
+        $('#welcome-message').textContent = "Tu sesión está activa. Tus operaciones se guardarán en la nube.";
         bindSelfRealtime(user.uid);
+        if (role==='admin') await loadUsersTable();
       } else {
-        unsubTrades && unsubTrades();
-        unsubAccounts && unsubAccounts();
-        unsubStrategies && unsubStrategies(); // Desconectar listener de estrategias
-        (window.recalcFromTrades || (()=>{}))([]);
-        (window.updateAccountsUI || (()=>{}))([]);
-        (window.renderTradesTable || (()=>{}))([]);
-        (window.renderAnalytics || (()=>{}))([]);
-        (window.renderCalendar || (()=>{}))([]);
-        (window.renderStrategiesUI || (()=>{}))([]); // Limpiar UI de estrategias
-        // ... (resto del código de cierre de sesión sin cambios)
+        unsubTrades && unsubTrades(); unsubAccounts && unsubAccounts(); unsubStrategies && unsubStrategies();
+        (window.recalcFromTrades || (()=>{}))([]); (window.updateAccountsUI || (()=>{}))([]);
+        (window.renderTradesTable || (()=>{}))([]); (window.renderAnalytics || (()=>{}))([]);
+        (window.renderCalendar || (()=>{}))([]); (window.renderStrategiesUI || (()=>{}))([]);
+        document.body.classList.remove('is-admin');
+        $('.user-name') && ($('.user-name').textContent = 'Invitado');
+        $('#btn-login')?.classList.remove('hidden'); $('#btn-logout')?.classList.add('hidden');
+        $('#btn-open-auth')?.classList.remove('hidden');
+        $('#welcome-message').textContent = "Inicia sesión para guardar tus operaciones en la nube.";
+        if($('#admin-users-tbody')) $('#admin-users-tbody').innerHTML='';
+        if($('#admin-user-detail')) $('#admin-user-detail').textContent='Selecciona un usuario…';
+        if($('#admin-user-accounts')) $('#admin-user-accounts').textContent='—';
+        if($('#admin-user-trades')) $('#admin-user-trades').textContent='—';
       }
     });
     
-    // ... PANEL DE ADMIN sin cambios ...
+    async function loadUsersTable(){ /* ... */ }
+    async function openUserDetail(uid){ /* ... */ }
+    $('#btn-refresh-users')?.addEventListener('click', loadUsersTable);
+
   </script>
 </body>
 </html>
