@@ -76,8 +76,8 @@
     main > .section{
         display:none; 
         grid-column:1/-1; 
-        grid-template-columns:repeat(12,1fr); 
-        gap:18px;
+        grid-template-columns:inherit; 
+        gap:inherit;
     }
     main > .section.active{
         display:grid;
@@ -441,7 +441,7 @@
           <div class="card-title" style="margin-bottom:8px">Usuarios</div>
           <div style="overflow:auto">
             <table style="width:100%; border-collapse:collapse">
-              <thead style="color:var(--muted)">
+              <thead>
                 <tr>
                   <th style="text-align:left;padding:8px;border-bottom:1px solid var(--border)">Email</th>
                   <th style="text-align:left;padding:8px;border-bottom:1px solid var(--border)">Nombre</th>
@@ -478,9 +478,8 @@
       </div>
     </section>
   </main>
-
+  
   <button class="fab" id="floating-add-trade-btn" aria-label="Agregar operación"><i class="fa-solid fa-plus"></i></button>
-
   <div id="balance-chart-modal" class="modal">
     <div class="modal-content modal-lg">
         <div class="modal-header">
@@ -678,7 +677,7 @@
       });
     })();
     
-    // --- FUNCIÓN CORREGIDA PARA CAMBIAR DE VISTA ---
+    // --- FUNCIÓN CORREGIDA Y DEFINITIVA PARA CAMBIAR DE VISTA ---
     function setActiveSection(id) {
         document.querySelectorAll('main > .section').forEach(section => {
             section.classList.remove('active');
@@ -687,14 +686,12 @@
         if (targetSection) {
             targetSection.classList.add('active');
         }
-        document.querySelectorAll('.nav a.nav-item').forEach(a => {
-            a.classList.toggle('active', a.dataset.target === id);
+        document.querySelectorAll('.nav > a.nav-item').forEach(link => {
+            link.classList.toggle('active', link.dataset.target === id);
         });
         
         if (id === 'calendario' && window.calendar) {
-            setTimeout(() => {
-                window.calendar.updateSize();
-            }, 50);
+            setTimeout(() => { window.calendar.updateSize() }, 50);
         }
     }
     
@@ -1057,8 +1054,11 @@
       setDate();
       initCharts();
       restoreAccordionState();
+
       $$('.nav a[data-target], .submenu a[data-target]').forEach(a=>a.addEventListener('click', e=>{
-        e.preventDefault(); const id = a.dataset.target; if (id) setActiveSection(id);
+        e.preventDefault(); 
+        const id = a.dataset.target; 
+        if (id) setActiveSection(id);
       }));
       
       $$('.nav button.nav-link').forEach(clickedBtn => {
@@ -1160,7 +1160,7 @@
       updateChallengeTrackerUI(null);
     });
   </script>
-
+  
   <script type="module">
     import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
     import {
