@@ -451,6 +451,36 @@
         </div>
       </div>
   </div>
+  <div id="challenge-settings-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="challenge-title">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="challenge-title">Configurar Challenge</h2>
+        <button class="close-modal" data-close>&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Saldo Inicial ($)</label>
+          <input id="challenge-balance" type="number" class="form-control" placeholder="100000" />
+        </div>
+        <div class="form-group">
+          <label>Objetivo de Beneficio (%)</label>
+          <input id="challenge-target" type="number" class="form-control" placeholder="10" />
+        </div>
+        <div class="form-group">
+          <label>Límite de Pérdida Máxima (%)</label>
+          <input id="challenge-max-loss" type="number" class="form-control" placeholder="10" />
+        </div>
+        <div class="form-group">
+          <label>Límite de Pérdida Diaria (%)</label>
+          <input id="challenge-daily-loss" type="number" class="form-control" placeholder="5" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn secondary" data-close>Cancelar</button>
+        <button class="btn primary" id="save-challenge-settings-btn">Guardar Ajustes</button>
+      </div>
+    </div>
+  </div>
   <div id="auth-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="auth-title">
       <div class="modal-content">
         <div class="modal-header">
@@ -623,10 +653,12 @@
       const winRate = total ? (wins.length / total) * 100 : 0;
       const profitFactor = totalLoss ? totalWins / totalLoss : 0;
       const avgRR = (wins.length && losses.length) ? (totalWins / wins.length) / (totalLoss / losses.length) : 0;
+
       $('#analytics-total-profit').textContent = `$${totalProfit.toFixed(2)}`;
       $('#analytics-win-rate').textContent = `${winRate.toFixed(1)}%`;
       $('#analytics-profit-factor').textContent = profitFactor.toFixed(2);
       $('#analytics-rr').textContent = avgRR.toFixed(2);
+
       renderEquityCurve(t);
     }
     function renderEquityCurve(trades) {
@@ -767,6 +799,26 @@
         select.appendChild(option);
       });
     }
+    function updateChallengeTrackerUI(progress) {
+      const p = progress || {};
+      const target = p.profitTargetPercent || 10;
+      const progressPercent = target > 0 ? (p.profitPercent / target) * 100 : 0;
+      
+      $('#challenge-profit').textContent = `${p.profitPercent?.toFixed(2) || 0.00}%`;
+      $('#challenge-drawdown').textContent = `${p.drawdownPercent?.toFixed(2) || 0.00}%`;
+      $('#challenge-trades').textContent = p.tradeCount || 0;
+      $('#challenge-win-rate').textContent = `${p.winRate?.toFixed(1) || 0}%`;
+      $('#challenge-progress-value').textContent = `${progressPercent?.toFixed(1) || 0}%`;
+      
+      const progressBar = $('#challenge-progress-bar');
+      if (progressBar) progressBar.style.width = `${Math.min(100, progressPercent)}%`;
+
+      const ddElement = $('#challenge-drawdown').closest('.metric-card');
+      if (ddElement) {
+        const isViolated = (p.drawdownPercent || 0) >= (p.maxLossPercent || 10);
+        ddElement.style.backgroundColor = isViolated ? 'rgba(239, 68, 68, .4)' : '';
+      }
+    }
     function recalcFromTrades(trades){
       const t = trades||[];
       const wins = t.filter(x=>x.result>0), losses = t.filter(x=>x.result<0);
@@ -812,12 +864,17 @@
       window.addEventListener('click', e=>{ if (e.target.classList && e.target.classList.contains('modal')) closeAllModals(); });
       
       $('#analytics-strategy-filter')?.addEventListener('change', () => {
-        const selectedStrategyId = $('#analytics-strategy-filter').value;
         const allTrades = window.__currentTrades || [];
-        const filteredTrades = selectedStrategyId
-          ? allTrades.filter(t => t.strategyId === selectedStrategyId)
-          : allTrades;
-        (window.renderAnalytics || (()=>{}))(filteredTrades);
+        (window.updateAllCalculations || (()=>{}))(allTrades);
+      });
+      
+      $('#edit-challenge')?.addEventListener('click', () => {
+        const settings = window.__currentSettings || {};
+        $('#challenge-balance').value = settings.initialBalance || 100000;
+        $('#challenge-target').value = settings.profitTarget || 10;
+        $('#challenge-max-loss').value = settings.maxLoss || 10;
+        $('#challenge-daily-loss').value = settings.dailyLoss || 5;
+        openModalById('challenge-settings-modal');
       });
       
       updateAccountsUI([]);
@@ -827,6 +884,7 @@
       renderCalendar([]);
       renderStrategiesUI([]);
       populateAnalyticsFilter([]);
+      updateChallengeTrackerUI(null);
     });
   </script>
 
@@ -837,7 +895,7 @@
       createUserWithEmailAndPassword, signOut, updateProfile
     } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
     import {
-      getFirestore, doc, setDoc, collection, addDoc, getDocs, query, orderBy, onSnapshot, serverTimestamp, updateDoc, deleteDoc
+      getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs, query, orderBy, onSnapshot, serverTimestamp, updateDoc, deleteDoc
     } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
     const firebaseConfig = {
@@ -887,23 +945,58 @@
     $('#btn-open-auth')?.addEventListener('click', ()=> openModalById('auth-modal'));
     $('#btn-logout')?.addEventListener('click', ()=> signOut(auth));
 
-    let unsubTrades=null, unsubAccounts=null, unsubStrategies=null;
+    let unsubTrades=null, unsubAccounts=null, unsubStrategies=null, unsubSettings = null;
+    
+    window.updateAllCalculations = () => {
+      const allTrades = window.__currentTrades || [];
+      const settings = window.__currentSettings || {};
+      const selectedStrategyId = $('#analytics-strategy-filter').value;
+      const filteredTrades = selectedStrategyId ? allTrades.filter(t => t.strategyId === selectedStrategyId) : allTrades;
+      
+      (window.recalcFromTrades || (()=>{}))(allTrades);
+      (window.renderTradesTable || (()=>{}))(allTrades);
+      (window.renderAnalytics || (()=>{}))(filteredTrades);
+      (window.renderCalendar || (()=>{}))(allTrades);
+      (window.updateChallengeTrackerUI || (()=>{}))(calculateChallengeProgress(allTrades, settings));
+    }
+    
+    function calculateChallengeProgress(trades, settings) {
+      if (!settings || !settings.initialBalance) return {};
+      const initialBalance = settings.initialBalance;
+      let peakEquity = initialBalance;
+      let currentEquity = initialBalance;
+      let maxDrawdown = 0;
+      const challengeTrades = (trades || []).filter(t => t.inChallenge);
+      challengeTrades.forEach(trade => {
+        currentEquity += trade.result;
+        peakEquity = Math.max(peakEquity, currentEquity);
+        const drawdown = peakEquity - currentEquity;
+        maxDrawdown = Math.max(maxDrawdown, drawdown);
+      });
+      const totalProfit = currentEquity - initialBalance;
+      const profitPercent = (totalProfit / initialBalance) * 100;
+      const drawdownPercent = (maxDrawdown / initialBalance) * 100;
+      const wins = challengeTrades.filter(t => t.result > 0).length;
+      const winRate = challengeTrades.length ? (wins / challengeTrades.length) * 100 : 0;
+      return {
+        profitPercent, drawdownPercent, tradeCount: challengeTrades.length, winRate,
+        profitTargetPercent: settings.profitTarget, maxLossPercent: settings.maxLoss
+      };
+    }
+
     function bindSelfRealtime(uid){
-      unsubTrades && unsubTrades(); unsubAccounts && unsubAccounts(); unsubStrategies && unsubStrategies();
+      unsubTrades && unsubTrades(); unsubAccounts && unsubAccounts(); unsubStrategies && unsubStrategies(); unsubSettings && unsubSettings();
 
       const tRef = collection(db, 'users', uid, 'trades');
-      unsubTrades = onSnapshot(query(tRef, orderBy('createdAt','desc')), snap=>{
+      unsubTrades = onSnapshot(query(tRef, orderBy('createdAt','asc')), snap=>{
         const trades = snap.docs.map(d=>({id:d.id,...d.data()}));
         window.__currentTrades = trades;
-        
-        // Disparar los cálculos con los datos filtrados actualmente
-        const selectedStrategyId = $('#analytics-strategy-filter').value;
-        const filteredTrades = selectedStrategyId ? trades.filter(t => t.strategyId === selectedStrategyId) : trades;
-        
-        (window.recalcFromTrades || (()=>{}))(trades); // El dashboard siempre muestra el total
-        (window.renderTradesTable || (()=>{}))(trades);
-        (window.renderAnalytics || (()=>{}))(filteredTrades); // Analíticas respeta el filtro
-        (window.renderCalendar || (()=>{}))(trades);
+        updateAllCalculations();
+      });
+      const settingsRef = doc(db, 'users', uid, 'settings', 'challenge');
+      unsubSettings = onSnapshot(settingsRef, snap => {
+        window.__currentSettings = snap.data() || {};
+        updateAllCalculations();
       });
       const aRef = collection(db, 'users', uid, 'accounts');
       unsubAccounts = onSnapshot(aRef, snap=>{
@@ -936,7 +1029,6 @@
         await addDoc(collection(db, 'users', user.uid, 'trades'), data);
       }
     }
-
     async function saveAccount({ id, name, balance, type }){
       const user = auth.currentUser; if (!user) return;
       const data = { name, balance: Number(balance||0), type };
@@ -947,7 +1039,6 @@
         await addDoc(collection(db, 'users', user.uid, 'accounts'), data);
       }
     }
-    
     async function saveStrategy({ id, name, desc }) {
         const user = auth.currentUser; if (!user) return;
         const data = { name, desc };
@@ -957,6 +1048,11 @@
             data.createdAt = serverTimestamp();
             await addDoc(collection(db, 'users', user.uid, 'strategies'), data);
         }
+    }
+    async function saveChallengeSettings(settings) {
+      const user = auth.currentUser; if (!user) return;
+      const settingsRef = doc(db, 'users', user.uid, 'settings', 'challenge');
+      await setDoc(settingsRef, settings, { merge: true });
     }
 
     async function deleteAccount(id) {
@@ -983,7 +1079,6 @@
       if (!data.name) return alert('El nombre de la cuenta es obligatorio.');
       await saveAccount(data); closeAllModals();
     });
-
     $('#save-trade-btn')?.addEventListener('click', async ()=>{
       const data = {
         id: $('#editing-trade-id').value, pair: $('#trade-pair-input').value, type: $('#trade-type-input').value,
@@ -993,7 +1088,6 @@
       };
       await saveTrade(data); closeAllModals();
     });
-    
     $('#save-strategy-btn')?.addEventListener('click', async () => {
         const data = {
             id: $('#editing-strategy-id').value,
@@ -1002,6 +1096,17 @@
         };
         if (!data.name) return alert('El nombre de la estrategia es obligatorio.');
         await saveStrategy(data); closeAllModals();
+    });
+    $('#save-challenge-settings-btn')?.addEventListener('click', async () => {
+      const settings = {
+        initialBalance: parseFloat($('#challenge-balance').value) || 100000,
+        profitTarget: parseFloat($('#challenge-target').value) || 10,
+        maxLoss: parseFloat($('#challenge-max-loss').value) || 10,
+        dailyLoss: parseFloat($('#challenge-daily-loss').value) || 5,
+      };
+      await saveChallengeSettings(settings);
+      closeAllModals();
+      alert('Ajustes del Challenge guardados.');
     });
 
     $('main')?.addEventListener('click', (e) => {
@@ -1015,7 +1120,6 @@
       }
       const deleteAccountBtn = e.target.closest('.btn-delete-account');
       if (deleteAccountBtn) { deleteAccount(deleteAccountBtn.dataset.id); }
-
       const editTradeBtn = e.target.closest('.btn-edit-trade');
       if (editTradeBtn) {
         const trade = window.__currentTrades?.find(t => t.id === editTradeBtn.dataset.id);
@@ -1030,7 +1134,6 @@
       }
       const deleteTradeBtn = e.target.closest('.btn-delete-trade');
       if (deleteTradeBtn) { deleteTrade(deleteTradeBtn.dataset.id); }
-      
       const editStrategyBtn = e.target.closest('.btn-edit-strategy');
       if (editStrategyBtn) {
         const strategy = window.__currentStrategies?.find(s => s.id === editStrategyBtn.dataset.id);
@@ -1065,12 +1168,13 @@
         bindSelfRealtime(user.uid);
         if (role==='admin') await loadUsersTable();
       } else {
-        unsubTrades && unsubTrades(); unsubAccounts && unsubAccounts(); unsubStrategies && unsubStrategies();
+        unsubTrades && unsubTrades(); unsubAccounts && unsubAccounts(); unsubStrategies && unsubStrategies(); unsubSettings && unsubSettings();
         (window.recalcFromTrades || (()=>{}))([]); (window.updateAccountsUI || (()=>{}))([]);
         (window.renderTradesTable || (()=>{}))([]); (window.renderAnalytics || (()=>{}))([]);
         (window.renderCalendar || (()=>{}))([]); (window.renderStrategiesUI || (()=>{}))([]);
         (window.updateStrategiesDropdown || (()=>{}))([]);
         (window.populateAnalyticsFilter || (()=>{}))([]);
+        (window.updateChallengeTrackerUI || (()=>{}))(null);
         document.body.classList.remove('is-admin');
         $('.user-name') && ($('.user-name').textContent = 'Invitado');
         $('#btn-login')?.classList.remove('hidden'); $('#btn-logout')?.classList.add('hidden');
