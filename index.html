@@ -268,7 +268,29 @@
         </div>
     </section>
     
-    <section id="operaciones" class="section"><div class="card" style="grid-column:1/-1"><div class="card-title">Historial</div><div class="chart"><canvas id="operacionesChart"></canvas></div></div></section>
+    <section id="operaciones" class="section">
+      <div class="card" style="grid-column:1/-1">
+        <div class="card-header">
+          <div class="card-title">Historial de Operaciones</div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table style="width:100%; border-collapse:collapse;">
+            <thead>
+              <tr style="border-bottom: 1px solid var(--border);">
+                <th style="padding:10px; text-align:left; color:var(--muted);">Fecha</th>
+                <th style="padding:10px; text-align:left; color:var(--muted);">Par</th>
+                <th style="padding:10px; text-align:left; color:var(--muted);">Tipo</th>
+                <th style="padding:10px; text-align:right; color:var(--muted);">Resultado ($)</th>
+                <th style="padding:10px; text-align:center; color:var(--muted);">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="trades-table-body">
+              </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
     <section id="analiticas" class="section"><div class="card" style="grid-column:1/-1"><div class="card-title">Analíticas</div><div class="chart"><canvas id="analiticasChart"></canvas></div></div></section>
     <section id="seguimiento" class="section"><div class="card" style="grid-column:1/-1"><div class="card-title">Seguimiento</div><div class="chart"><canvas id="seguimientoChart"></canvas></div></div></section>
     <section id="estrategias" class="section"><div class="card" style="grid-column:1/-1"><div class="card-title">Estrategias</div></section>
@@ -336,7 +358,8 @@
         <div class="form-group"><label>Riesgo (% del capital)</label><input id="trade-risk-input" type="number" class="form-control" placeholder="Ej: 1.0" step="0.1" min="0.1" max="10" /></div>
         <div class="form-group"><label>Beneficio Esperado (%)</label><input id="trade-reward-input" type="number" class="form-control" placeholder="Ej: 3.0" step="0.1" min="0.1" /></div>
         <div class="form-group"><label>Pertenece al Challenge</label>
-          <select id="trade-challenge" class="form-control"><option value="yes">Sí</option><option value="no">No</option></select></div>
+          <select id="trade-challenge-input" class="form-control"><option value="yes">Sí</option><option value="no">No</option></select></div>
+        <input type="hidden" id="editing-trade-id" />
       </div>
       <div class="modal-footer">
         <button class="btn secondary" data-close>Cancelar</button>
@@ -473,9 +496,7 @@
     function updateAccountsUI(accounts) {
       const el = $('#accounts-container');
       if (!el) return;
-
       el.innerHTML = ''; 
-
       const addAccountButton = document.createElement('div');
       addAccountButton.className = 'btn primary';
       addAccountButton.style = "display:inline-flex; align-items:center; gap:8px; margin-bottom: 20px; cursor: pointer;";
@@ -489,7 +510,6 @@
         openModalById('add-account-modal');
       };
       el.appendChild(addAccountButton);
-
       if (!accounts || accounts.length === 0) {
         const noAccountsMessage = document.createElement('p');
         noAccountsMessage.textContent = 'Aún no tienes cuentas. ¡Agrega una para empezar!';
@@ -497,7 +517,6 @@
         el.appendChild(noAccountsMessage);
         return;
       }
-
       (accounts || []).forEach(a => {
         const card = document.createElement('div');
         card.className = 'card';
@@ -517,6 +536,32 @@
         `;
         el.appendChild(card);
       });
+    }
+
+    function renderTradesTable(trades) {
+      const tbody = $('#trades-table-body');
+      if (!tbody) return;
+
+      if (!trades || trades.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="padding:20px; text-align:center; color:var(--muted);">No hay operaciones registradas.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = trades.map(t => {
+        const resultColor = (t.result || 0) >= 0 ? 'var(--success)' : 'var(--danger)';
+        const sign = (t.result || 0) >= 0 ? '+' : '';
+        return `
+          <tr style="border-bottom: 1px solid var(--border);">
+            <td style="padding:10px;">${t.dateStr || 'N/A'}</td>
+            <td style="padding:10px;">${t.pair || 'N/A'}</td>
+            <td style="padding:10px;">${(t.type || '').toUpperCase()}</td>
+            <td style="padding:10px; text-align:right; font-weight:bold; color:${resultColor};">${sign}$${(t.result || 0).toFixed(2)}</td>
+            <td style="padding:10px; text-align:center;">
+              <button class="btn-icon btn-edit-trade" data-id="${t.id}" title="Editar Operación">✏️</button>
+              <button class="btn-icon btn-delete-trade" data-id="${t.id}" title="Eliminar Operación">🗑️</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
     }
 
     function recalcFromTrades(trades){
@@ -566,8 +611,6 @@
       $('#add-trade-btn')?.addEventListener('click', ()=>openModalById('add-trade-modal'));
       $('#floating-add-trade-btn')?.addEventListener('click', ()=>openModalById('add-trade-modal'));
       $('#quick-add-trade')?.addEventListener('click', (e)=>{ e.preventDefault(); openModalById('add-trade-modal'); });
-      // NOTE: The 'add-account-btn' is now handled inside updateAccountsUI
-      $('#btn-open-auth')?.addEventListener('click', ()=>openModalById('auth-modal'));
       $$('[data-close]').forEach(x=>x.addEventListener('click', closeAllModals));
       window.addEventListener('click', e=>{ if (e.target.classList && e.target.classList.contains('modal')) closeAllModals(); });
 
@@ -586,7 +629,6 @@
       getFirestore, doc, setDoc, collection, addDoc, getDocs, query, orderBy, onSnapshot, serverTimestamp, updateDoc, deleteDoc
     } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
-    // --- 1. CONFIGURACIÓN ---
     const firebaseConfig = {
       apiKey: "AIzaSyCuS-0g97JluGH6FTF5JBmwaW7d5aJ3WWw",
       authDomain: "journal-infiniti-kapital.firebaseapp.com",
@@ -602,9 +644,8 @@
     const db   = getFirestore(app);
 
     const $ = s => document.querySelector(s);
-    const $$ = s => document.querySelectorAll(s);
-
-    // --- 2. LÓGICA DE SESIÓN (AUTH) ---
+    
+    // --- LÓGICA DE SESIÓN (AUTH) ---
     let authMode = 'login';
     function setAuthMode(mode){
       authMode = mode;
@@ -634,9 +675,11 @@
       }catch(e){ err.textContent = e.message; err.classList.remove('hidden'); }
     });
     $('#btn-login')?.addEventListener('click', ()=> openModalById('auth-modal'));
+    $('#btn-open-auth')?.addEventListener('click', ()=> openModalById('auth-modal'));
     $('#btn-logout')?.addEventListener('click', ()=> signOut(auth));
 
-    // --- 3. LECTURA DE DATOS EN TIEMPO REAL ---
+
+    // --- LECTURA DE DATOS EN TIEMPO REAL ---
     let unsubTrades=null, unsubAccounts=null;
     function bindSelfRealtime(uid){
       unsubTrades && unsubTrades(); unsubAccounts && unsubAccounts();
@@ -646,6 +689,7 @@
         const trades = snap.docs.map(d=>({id:d.id,...d.data()}));
         window.__currentTrades = trades;
         (window.recalcFromTrades || (()=>{}))(trades);
+        (window.renderTradesTable || (()=>{}))(trades);
       });
 
       const aRef = collection(db, 'users', uid, 'accounts');
@@ -656,53 +700,59 @@
       });
     }
 
-    // --- 4. GUARDAR Y ACTUALIZAR DATOS (CREATE/UPDATE) ---
+    // --- GUARDAR Y ACTUALIZAR DATOS (CREATE/UPDATE) ---
     async function saveTrade({ id, pair, type, result, risk, reward, inChallenge }){
-      const now = new Date();
-      const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
       const user = auth.currentUser;
       if (!user) return;
       
       const data = {
-        pair, type, result: Number(result||0), risk: Number(risk||0), reward: Number(reward||0),
-        inChallenge: !!inChallenge, dateStr, createdAt: serverTimestamp()
+        pair, type, 
+        result: Number(result||0), 
+        risk: Number(risk||0), 
+        reward: Number(reward||0),
+        inChallenge
       };
       
-      await addDoc(collection(db, 'users', user.uid, 'trades'), data);
+      if (id) {
+        const tradeRef = doc(db, 'users', user.uid, 'trades', id);
+        await updateDoc(tradeRef, data);
+      } else {
+        const now = new Date();
+        data.dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+        data.createdAt = serverTimestamp();
+        await addDoc(collection(db, 'users', user.uid, 'trades'), data);
+      }
     }
 
     async function saveAccount({ id, name, balance, type }){
       const user = auth.currentUser;
       if (!user) return;
-      
       const data = { name, balance: Number(balance||0), type };
-
       if (id) {
-        const accountRef = doc(db, 'users', user.uid, 'accounts', id);
-        await updateDoc(accountRef, data);
+        await updateDoc(doc(db, 'users', user.uid, 'accounts', id), data);
       } else {
         data.createdAt = serverTimestamp();
         await addDoc(collection(db, 'users', user.uid, 'accounts'), data);
       }
     }
 
-    // --- 5. ELIMINAR DATOS (DELETE) ---
+    // --- ELIMINAR DATOS (DELETE) ---
     async function deleteAccount(id) {
       const user = auth.currentUser;
       if (!user || !id) return;
-      
-      if (confirm('¿Estás seguro de que quieres eliminar esta cuenta? Esta acción no se puede deshacer.')) {
-        try {
-          const accountRef = doc(db, 'users', user.uid, 'accounts', id);
-          await deleteDoc(accountRef);
-        } catch (e) {
-          console.error("Error eliminando cuenta:", e);
-          alert('No se pudo eliminar la cuenta.');
-        }
+      if (confirm('¿Estás seguro de que quieres eliminar esta cuenta?')) {
+        await deleteDoc(doc(db, 'users', user.uid, 'accounts', id));
+      }
+    }
+    async function deleteTrade(id) {
+      const user = auth.currentUser;
+      if (!user || !id) return;
+      if (confirm('¿Estás seguro de que quieres eliminar esta operación?')) {
+        await deleteDoc(doc(db, 'users', user.uid, 'trades', id));
       }
     }
 
-    // --- 6. MANEJO DE EVENTOS DE LA INTERFAZ ---
+    // --- MANEJO DE EVENTOS DE LA INTERFAZ ---
     $('#save-account-btn')?.addEventListener('click', async ()=>{
       const data = {
         id: $('#editing-account-id').value,
@@ -716,29 +766,24 @@
     });
 
     $('#save-trade-btn')?.addEventListener('click', async ()=>{
-        const data = {
-            pair: $('#trade-pair-input').value,
-            type: $('#trade-type-input').value,
-            result: parseFloat($('#trade-result-input').value) || 0,
-            risk: parseFloat($('#trade-risk-input').value) || 0,
-            reward: parseFloat($('#trade-reward-input').value) || 0,
-            inChallenge: $('#trade-challenge').value === 'yes'
-        };
-        await saveTrade(data);
-        closeAllModals();
-        // Limpiar formulario de trade
-        $('#trade-result-input').value = '';
-        $('#trade-risk-input').value = '';
-        $('#trade-reward-input').value = '';
+      const data = {
+        id: $('#editing-trade-id').value,
+        pair: $('#trade-pair-input').value,
+        type: $('#trade-type-input').value,
+        result: parseFloat($('#trade-result-input').value) || 0,
+        risk: parseFloat($('#trade-risk-input').value) || 0,
+        reward: parseFloat($('#trade-reward-input').value) || 0,
+        inChallenge: $('#trade-challenge-input').value === 'yes'
+      };
+      await saveTrade(data);
+      closeAllModals();
     });
 
-    // Usamos 'main' como padre estático para delegar eventos
     $('main')?.addEventListener('click', (e) => {
-      const editBtn = e.target.closest('.btn-edit-account');
-      const deleteBtn = e.target.closest('.btn-delete-account');
-
-      if (editBtn) {
-        const accountId = editBtn.dataset.id;
+      // Lógica para Cuentas
+      const editAccountBtn = e.target.closest('.btn-edit-account');
+      if (editAccountBtn) {
+        const accountId = editAccountBtn.dataset.id;
         const account = window.__currentAccounts?.find(a => a.id === accountId);
         if (account) {
           $('#acc-title').textContent = 'Editar Cuenta';
@@ -749,14 +794,53 @@
           openModalById('add-account-modal');
         }
       }
+      const deleteAccountBtn = e.target.closest('.btn-delete-account');
+      if (deleteAccountBtn) {
+        deleteAccount(deleteAccountBtn.dataset.id);
+      }
 
-      if (deleteBtn) {
-        const accountId = deleteBtn.dataset.id;
-        deleteAccount(accountId);
+      // Lógica para Operaciones
+      const editTradeBtn = e.target.closest('.btn-edit-trade');
+      if (editTradeBtn) {
+        const tradeId = editTradeBtn.dataset.id;
+        const trade = window.__currentTrades?.find(t => t.id === tradeId);
+        if (trade) {
+          $('#trade-title').textContent = 'Editar Operación';
+          $('#trade-pair-input').value = trade.pair;
+          $('#trade-type-input').value = trade.type;
+          $('#trade-result-input').value = trade.result;
+          $('#trade-risk-input').value = trade.risk;
+          $('#trade-reward-input').value = trade.reward;
+          $('#trade-challenge-input').value = trade.inChallenge ? 'yes' : 'no';
+          $('#editing-trade-id').value = tradeId;
+          openModalById('add-trade-modal');
+        }
+      }
+      const deleteTradeBtn = e.target.closest('.btn-delete-trade');
+      if (deleteTradeBtn) {
+        deleteTrade(deleteTradeBtn.dataset.id);
       }
     });
+    
+    // Abrir modal para NUEVO trade
+    function openNewTradeModal() {
+        $('#trade-title').textContent = 'Agregar Operación';
+        $('#editing-trade-id').value = ''; // Limpiar ID de edición
+        // Limpiar formulario
+        $('#trade-pair-input').value = 'EURUSD';
+        $('#trade-type-input').value = 'buy';
+        $('#trade-result-input').value = '';
+        $('#trade-risk-input').value = '';
+        $('#trade-reward-input').value = '';
+        $('#trade-challenge-input').value = 'yes';
+        openModalById('add-trade-modal');
+    }
+    $('#add-trade-btn')?.addEventListener('click', openNewTradeModal);
+    $('#floating-add-trade-btn')?.addEventListener('click', openNewTradeModal);
+    $('#quick-add-trade')?.addEventListener('click', (e)=>{ e.preventDefault(); openNewTradeModal(); });
 
-    // --- 7. GESTOR DE ESTADO DE SESIÓN ---
+
+    // --- GESTOR DE ESTADO DE SESIÓN ---
     onAuthStateChanged(auth, async (user)=>{
       if (user){
         const token = await user.getIdTokenResult(true);
@@ -773,6 +857,7 @@
         unsubAccounts && unsubAccounts();
         (window.recalcFromTrades || (()=>{}))([]);
         (window.updateAccountsUI || (()=>{}))([]);
+        (window.renderTradesTable || (()=>{}))([]); // Limpiar tabla de trades al salir
         document.body.classList.remove('is-admin');
         $('.user-name') && ($('.user-name').textContent = 'Invitado');
         $('#btn-login')?.classList.remove('hidden'); $('#btn-logout')?.classList.add('hidden');
@@ -785,7 +870,7 @@
       }
     });
     
-    // --- 8. PANEL DE ADMIN ---
+    // --- PANEL DE ADMIN ---
     async function loadUsersTable(){
       if (!auth.currentUser) return;
       const token = await auth.currentUser.getIdTokenResult(true);
