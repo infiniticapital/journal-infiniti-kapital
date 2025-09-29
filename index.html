@@ -123,7 +123,7 @@
     .btn{border:0; border-radius:10px; padding:10px 14px; cursor:pointer}
     .btn.primary{background:var(--accent); color:#111}
     .btn.secondary{background:#334155; color:#fff}
-    .btn-link{background:none; color:var(--accent); padding:0; text-decoration:underline; cursor:pointer;}
+    .btn-link{background:none; border:none; color:var(--accent); padding:0; text-decoration:underline; cursor:pointer;}
 
     .drawer-backdrop{display:none; position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:25}
     @media (max-width: 1024px){
@@ -610,9 +610,13 @@
             <label>Contraseña</label>
             <input id="auth-pass" type="password" class="form-control" placeholder="••••••••" />
           </div>
-          <div class="form-group" id="auth-name-wrap" style="display:none">
+          <div class="form-group hidden" id="auth-name-wrap">
             <label>Nombre</label>
             <input id="auth-name" class="form-control" placeholder="Tu nombre" />
+          </div>
+          <div class="form-group hidden" id="auth-invite-wrap">
+              <label>Código de Invitación</label>
+              <input id="auth-invite" class="form-control" placeholder="Código secreto" />
           </div>
           <div id="auth-error" class="hidden" style="margin-top:8px;color:var(--danger)"></div>
         </div>
@@ -938,7 +942,7 @@
     }
     
     function calculateRiskMetrics(trades, initialBalance) {
-        if (!trades || trades.length === 0) {
+        if (!initialBalance || initialBalance === 0) {
             $('#daily-risk').textContent = '0.0%';
             $('#weekly-risk').textContent = '0.0%';
             $('#monthly-risk').textContent = '0.0%';
@@ -1145,6 +1149,7 @@
     import {
       getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs, query, orderBy, onSnapshot, serverTimestamp, updateDoc, deleteDoc
     } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js';
 
     const firebaseConfig = {
       apiKey: "AIzaSyCuS-0g97JluGH6FTF5JBmwaW7d5aJ3WWw",
@@ -1159,6 +1164,7 @@
     const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db   = getFirestore(app);
+    const functions = getFunctions(app);
     const $ = s => document.querySelector(s);
     
     let authMode = 'login';
@@ -1166,8 +1172,10 @@
       authMode = mode;
       $('#auth-title').textContent = mode==='login' ? 'Iniciar Sesión' : 'Crear Cuenta';
       $('#auth-toggle-mode').textContent = mode==='login' ? 'Crear cuenta' : 'Ya tengo cuenta';
-      $('#auth-name-wrap').style.display = mode==='register' ? 'block' : 'none';
+      $('#auth-name-wrap').classList.toggle('hidden', mode !== 'register');
+      $('#auth-invite-wrap').classList.toggle('hidden', mode !== 'register');
       $('#auth-submit').textContent = mode ==='login' ? 'Entrar' : 'Registrar';
+      $('#forgot-password-btn').classList.toggle('hidden', mode !== 'login');
       $('#auth-error').classList.add('hidden');
     }
     $('#auth-toggle-mode')?.addEventListener('click', ()=> setAuthMode(authMode==='login' ? 'register' : 'login'));
@@ -1175,12 +1183,21 @@
       const email = $('#auth-email').value.trim();
       const pass  = $('#auth-pass').value.trim();
       const name  = $('#auth-name').value.trim() || 'Trader';
+      const inviteCode = $('#auth-invite').value.trim();
       const err   = $('#auth-error');
+      
+      const INVITATION_CODE = "INFINITI-2025"; // <-- Cambia este código secreto
+
       try{
         err.classList.add('hidden');
         if (authMode==='login'){
           await signInWithEmailAndPassword(auth, email, pass);
         } else {
+          if (inviteCode !== INVITATION_CODE) {
+              err.textContent = "Código de invitación incorrecto.";
+              err.classList.remove('hidden');
+              return;
+          }
           const cred = await createUserWithEmailAndPassword(auth, email, pass);
           await updateProfile(cred.user, { displayName: name });
           await setDoc(doc(db, 'users', cred.user.uid), {
@@ -1410,47 +1427,15 @@
 
     async function evaluateStrategyWithAI(strategy) {
         const modalBody = $('#ai-response-body');
-        modalBody.textContent = 'Generando evaluación...';
+        modalBody.textContent = 'Contactando a la IA de Gemini...';
         openModalById('ai-response-modal');
 
-        const prompt = `
-            Eres un coach de trading profesional y analista de estrategias cuantitativas.
-            Evalúa la siguiente estrategia de trading de forma crítica y constructiva.
-
-            Nombre de la Estrategia: "${strategy.name}"
-            Descripción: "${strategy.desc}"
-
-            Por favor, provee un análisis en los siguientes puntos:
-            1.  **Fortalezas Potenciales:** ¿Cuáles son los puntos fuertes teóricos de esta estrategia?
-            2.  **Debilidades y Riesgos:** ¿Qué podría salir mal? ¿Cuáles son los riesgos ocultos o las condiciones de mercado donde podría fallar?
-            3.  **Recomendaciones de Mejora:** ¿Qué parámetros o filtros se podrían añadir para hacerla más robusta? (Ej: Añadir un filtro de volatilidad, un indicador de confirmación, etc.).
-        `;
-
-        // --- ADVERTENCIA DE SEGURIDAD ---
-        // La siguiente línea es un EJEMPLO. NO expongas tu API Key de Gemini en el código del cliente.
-        // Debes crear una Firebase Cloud Function que reciba el prompt y llame a la API de Gemini de forma segura desde el servidor.
-        
         try {
-            // Simulación de llamada a la API con un retraso
-            await new Promise(resolve => setTimeout(resolve, 1500)); 
-            
-            // Respuesta de ejemplo. Reemplaza esto con la llamada real desde tu backend.
-            const sampleResponse = `**Análisis de la Estrategia: "${strategy.name}"**\n\n` +
-            `**1. Fortalezas Potenciales:**\n` +
-            `- Claridad: La estrategia parece bien definida, lo cual es clave para la consistencia.\n` +
-            `- Adaptabilidad: Podría funcionar bien en mercados con tendencia si se aplica correctamente.\n\n` +
-            `**2. Debilidades y Riesgos:**\n` +
-            `- Mercados Laterales: Esta estrategia podría generar muchas señales falsas en mercados sin una dirección clara (rangos).\n` +
-            `- Subjetividad: La "confirmación" mencionada podría ser subjetiva. Es crucial definirla con reglas 100% objetivas.\n\n` +
-            `**3. Recomendaciones de Mejora:**\n` +
-            `- Filtro de Tendencia: Considera añadir un filtro como una Media Móvil Exponencial (EMA) de 200 períodos. Solo tomar compras si el precio está por encima y ventas si está por debajo.\n` +
-            `- Indicador de Volumen: Añadir un filtro de volumen puede ayudar a confirmar la fuerza de una ruptura.\n` +
-            `- Backtesting: Es fundamental realizar un backtesting riguroso para validar su efectividad estadística.`;
-            
-            modalBody.textContent = sampleResponse;
-
+            const evaluateStrategyFunction = httpsCallable(functions, 'evaluateStrategy');
+            const result = await evaluateStrategyFunction({ name: strategy.name, desc: strategy.desc });
+            modalBody.textContent = result.data.text;
         } catch (error) {
-            modalBody.textContent = 'Hubo un error al contactar el servicio de IA. Por favor, inténtalo de nuevo más tarde.';
+            modalBody.textContent = 'Hubo un error al contactar el servicio de IA. Verifica que la Cloud Function esté desplegada correctamente.\n\nError: ' + error.message;
             console.error("Error en la evaluación con IA:", error);
         }
     }
