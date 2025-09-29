@@ -478,8 +478,8 @@
       </div>
     </section>
   </main>
-  
   <button class="fab" id="floating-add-trade-btn" aria-label="Agregar operación"><i class="fa-solid fa-plus"></i></button>
+
   <div id="balance-chart-modal" class="modal">
     <div class="modal-content modal-lg">
         <div class="modal-header">
@@ -1449,7 +1449,7 @@
             const result = await evaluateStrategyFunction({ name: strategy.name, desc: strategy.desc });
             modalBody.textContent = result.data.text;
         } catch (error) {
-            modalBody.textContent = 'Hubo un error al contactar el servicio de IA. Verifica que la Cloud Function esté desplegada correctamente.\n\nError: ' + error.message;
+            modalBody.textContent = 'Hubo un error al contactar el servicio de IA. Verifica que la Cloud Function esté desplegada correctamente y que las APIs necesarias estén habilitadas.\n\nError: ' + error.message;
             console.error("Error en la evaluación con IA:", error);
         }
     }
