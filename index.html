@@ -105,6 +105,9 @@
       background:var(--card-bg); border:1px solid var(--accent); border-radius:16px; padding:22px;
       box-shadow:0 20px 60px rgba(0,0,0,.5);
     }
+    .modal-content.modal-lg{
+      width: min(92vw, 900px);
+    }
     .modal-header{display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--accent); padding-bottom:10px; margin-bottom:14px}
     .modal-header h2{margin:0; color:var(--accent)}
     .close-modal{background:none;border:0;color:var(--muted);font-size:22px;cursor:pointer}
@@ -136,7 +139,7 @@
 
     .hidden{display:none!important}
     .only-admin{display:none}
-    .is-admin .only-admin{display:block}
+    body.is-admin .only-admin{display:block !important}
   </style>
 </head>
 <body>
@@ -220,7 +223,7 @@
         <div id="recent-trades-container" style="color:var(--muted)">Sin registros.</div>
       </div>
       <div class="card balance">
-        <div class="card-header"><div class="card-title">Saldo</div><button class="btn-icon"><i class="fa-solid fa-expand"></i></button></div>
+        <div class="card-header"><div class="card-title">Saldo</div><button class="btn-icon" id="expand-balance-chart"><i class="fa-solid fa-expand"></i></button></div>
         <div class="chart"><canvas id="balanceChart"></canvas></div>
       </div>
       <div class="card risk">
@@ -232,7 +235,9 @@
         </div>
         <div class="chart"><canvas id="riskChart"></canvas></div>
       </div>
-      <div class="card news"><div class="card-header"><div class="card-title">Calendario Económico</div></div><p style="color:var(--muted)">Próximos eventos...</p></div>
+      <div class="card news"><div class="card-header"><div class="card-title">Calendario Económico</div></div>
+        <iframe src="https://sslecal2.investing.com?columns=exc_flags,exc_currency,exc_importance,exc_actual,exc_forecast,exc_previous&features=datepicker,timezone&countries=25,32,6,37,72,22,17,39,14,48,10,35,43,5,36,110,11,26,12,4,13,42,41,29&calType=day&timeZone=8&lang=56" width="100%" height="400" frameborder="0" allowtransparency="true" marginwidth="0" marginheight="0"></iframe>
+      </div>
       <div class="card challenge"><div class="card-header"><div class="card-title">FTMO Challenge</div><button class="btn-icon" id="edit-challenge"><i class="fa-solid fa-pen"></i></button></div>
         <div>
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
@@ -301,6 +306,7 @@
         </div>
       </div>
     </section>
+
     <section id="cuentas" class="section">
         <div class="card" style="grid-column:1/-1">
             <div class="card-header">
@@ -391,6 +397,7 @@
             </div>
         </div>
     </section>
+    
     <section id="estrategias" class="section">
       <div class="card" style="grid-column:1/-1">
         <div class="card-header">
@@ -454,9 +461,21 @@
         </div>
       </div>
     </section>
-    </main>
+  </main>
 
   <button class="fab" id="floating-add-trade-btn" aria-label="Agregar operación"><i class="fa-solid fa-plus"></i></button>
+
+  <div id="balance-chart-modal" class="modal">
+    <div class="modal-content modal-lg">
+        <div class="modal-header">
+            <h2>Curva de Saldo</h2>
+            <button class="close-modal" data-close>&times;</button>
+        </div>
+        <div class="modal-body" style="height: 60vh;">
+            <canvas id="modalBalanceChart"></canvas>
+        </div>
+    </div>
+  </div>
 
   <div id="add-trade-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="trade-title">
       <div class="modal-content">
@@ -600,12 +619,16 @@
     const $ = s => document.querySelector(s);
     const $$ = s => document.querySelectorAll(s);
     function setDate(){ $('#current-date').textContent = new Date().toLocaleDateString('es-ES',{weekday:'long',day:'2-digit',month:'long',year:'numeric'}) }
-    let distributionChart, balanceChart, riskChart;
+    
+    let distributionChart, balanceChart, riskChart, modalBalanceChart;
+    
     function initCharts(){
-      const d = $('#distributionChart'); if (d) distributionChart = new Chart(d.getContext('2d'),{type:'bar', data:{labels:['Win','Loss','BE'],datasets:[{data:[0,0,0],backgroundColor:['rgba(16,185,129,.7)','rgba(239,68,68,.7)','rgba(156,163,175,.7)']}]}, options:{responsive:true,maintainAspectRatio:false}});
-      const b = $('#balanceChart'); if (b) balanceChart = new Chart(b.getContext('2d'),{type:'line', data:{labels:['D1','D2','D3','D4','D5','D6','Hoy'],datasets:[{data:[10000,10000,10000,10000,10000,10000,10000],borderColor:'rgba(212,175,55,1)',backgroundColor:'rgba(212,175,55,.15)',fill:true,tension:.3}]} , options:{responsive:true,maintainAspectRatio:false}});
-      const r = $('#riskChart'); if (r) riskChart = new Chart(r.getContext('2d'),{type:'radar', data:{labels:['Gestión','Consistencia','Acierto','R/B','DD','Beneficio'],datasets:[{data:[0,0,0,0,0,0],backgroundColor:'rgba(212,175,55,.2)',borderColor:'rgba(212,175,55,1)'}]}, options:{responsive:true,maintainAspectRatio:false}});
+      const d = $('#distributionChart'); if (d) distributionChart = new Chart(d.getContext('2d'),{type:'bar', data:{labels:['Win','Loss','BE'],datasets:[{label: 'Operaciones', data:[0,0,0],backgroundColor:['rgba(16,185,129,.7)','rgba(239,68,68,.7)','rgba(156,163,175,.7)']}]}, options:{responsive:true,maintainAspectRatio:false}});
+      const b = $('#balanceChart'); if (b) balanceChart = new Chart(b.getContext('2d'),{type:'line', data:{datasets:[{label: 'Saldo', data:[],borderColor:'rgba(212,175,55,1)',backgroundColor:'rgba(212,175,55,.15)',fill:true,tension:.3}]} , options:{responsive:true,maintainAspectRatio:false}});
+      const r = $('#riskChart'); if (r) riskChart = new Chart(r.getContext('2d'),{type:'radar', data:{labels:['Gestión','Consistencia','Acierto','R/B','DD','Beneficio'],datasets:[{label: 'Perfil de Riesgo', data:[0,0,0,0,0,0],backgroundColor:'rgba(212,175,55,.2)',borderColor:'rgba(212,175,55,1)'}]}, options:{responsive:true,maintainAspectRatio:false, scales:{r:{min:0, max:5, stepSize:1}}}});
+      const mB = $('#modalBalanceChart'); if(mB) modalBalanceChart = new Chart(mB.getContext('2d'), {type:'line', data:{datasets:[{label: 'Saldo', data:[],borderColor:'rgba(212,175,55,1)',backgroundColor:'rgba(212,175,55,.15)',fill:true,tension:.3}]}, options:{responsive:true, maintainAspectRatio:false}});
     }
+
     (function(){
       const burger = document.getElementById('burger');
       const backdrop = document.getElementById('drawerBackdrop');
@@ -615,7 +638,7 @@
       burger?.addEventListener('click', toggle);
       backdrop?.addEventListener('click', close);
       window.addEventListener('keydown', e=>{ if(e.key==='Escape') close(); });
-      document.querySelectorAll('.nav a,[data-target]').forEach(el=>{
+      document.querySelectorAll('.nav a[data-target], .submenu a[data-target]').forEach(el=>{
         el.addEventListener('click', ()=>{ if (window.matchMedia('(max-width:860px)').matches) close(); });
       });
     })();
@@ -630,7 +653,7 @@
       if (id === 'calendario' && window.calendar) {
         setTimeout(() => {
           window.calendar.updateSize();
-        }, 50);
+        }, 50); 
       }
     }
     function restoreAccordionState(){
@@ -647,20 +670,15 @@
     }
     function openModalById(id){ document.getElementById(id)?.classList.add('show'); document.body.style.overflow='hidden'; }
     function closeAllModals(){ $$('.modal').forEach(m=>m.classList.remove('show')); document.body.style.overflow=''; }
-    window.__local = {
-      tradingData:{ totalProfit:0, winRate:0, profitFactor:0, riskRewardRatio:0, winTrades:0, totalTrades:0,
-        dailyRisk:0, weeklyRisk:0, monthlyRisk:0, challenge:{progress:0,profit:0,drawdown:0,trades:0,winRate:0}, trades:[] },
-      accounts:[],
-      strategies:[]
-    };
+
     function updateRecentTrades(trades){
       const el = $('#recent-trades-container');
       if (!el) return;
       if (!trades || !trades.length){ el.textContent='Sin registros.'; return; }
-      el.innerHTML = trades.slice(0,4).map(t=>{
+      el.innerHTML = trades.slice(-4).reverse().map(t=>{
         const sign = (t.result||0)>=0?'+':'-';
         const col  = (t.result||0)>=0? 'var(--success)' : 'var(--danger)';
-        return `<div>${t.pair} · ${String(t.type||'').toUpperCase()} · <b style="color:${col}">${sign}$${Math.abs(t.result||0).toFixed(2)}</b> · ${t.dateStr||''}</div>`;
+        return `<div>${t.dateStr||''} · ${t.pair} · <b style="color:${col}">${sign}$${Math.abs(t.result||0).toFixed(2)}</b></div>`;
       }).join('');
     }
     function updateAccountsUI(accounts) {
@@ -695,8 +713,8 @@
           <div class="card-header">
             <div class="card-title">${a.name || 'Cuenta sin nombre'}</div>
             <div>
-              <button class="btn-icon btn-edit-account" data-id="${a.id}" title="Editar Cuenta">✏️</button>
-              <button class="btn-icon btn-delete-account" data-id="${a.id}" title="Eliminar Cuenta">🗑️</button>
+              <button class="btn-icon btn-edit-account" data-id="${a.id}" title="Editar Cuenta"><i class="fa-solid fa-pen"></i></button>
+              <button class="btn-icon btn-delete-account" data-id="${a.id}" title="Eliminar Cuenta"><i class="fa-solid fa-trash"></i></button>
             </div>
           </div>
           <div class="metric-card">
@@ -724,8 +742,8 @@
             <td style="padding:10px;">${(t.type || '').toUpperCase()}</td>
             <td style="padding:10px; text-align:right; font-weight:bold; color:${resultColor};">${sign}$${(t.result || 0).toFixed(2)}</td>
             <td style="padding:10px; text-align:center;">
-              <button class="btn-icon btn-edit-trade" data-id="${t.id}" title="Editar Operación">✏️</button>
-              <button class="btn-icon btn-delete-trade" data-id="${t.id}" title="Eliminar Operación">🗑️</button>
+              <button class="btn-icon btn-edit-trade" data-id="${t.id}" title="Editar Operación"><i class="fa-solid fa-pen"></i></button>
+              <button class="btn-icon btn-delete-trade" data-id="${t.id}" title="Eliminar Operación"><i class="fa-solid fa-trash"></i></button>
             </td>
           </tr>
         `;
@@ -786,7 +804,7 @@
       const calendarEl = document.getElementById('calendar-container');
       if (!calendarEl) return;
       const dailySummary = {};
-      trades.forEach(trade => {
+      (trades || []).forEach(trade => {
         const date = trade.dateStr;
         if (!dailySummary[date]) {
           dailySummary[date] = { profit: 0, count: 0 };
@@ -796,11 +814,10 @@
       });
       const calendarEvents = Object.keys(dailySummary).map(date => {
         const day = dailySummary[date];
-        const isWin = day.profit > 0;
-        const sign = isWin ? '+' : '';
+        const isWin = day.profit >= 0;
         return {
           start: date,
-          title: `${sign}$${day.profit.toFixed(2)} (${day.count} ops)`,
+          title: `${day.profit >= 0 ? '+' : ''}$${day.profit.toFixed(2)} (${day.count} ops)`,
           backgroundColor: isWin ? 'var(--success)' : 'var(--danger)',
           borderColor: isWin ? 'var(--success)' : 'var(--danger)',
         };
@@ -811,11 +828,7 @@
       calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
         locale: 'es',
-        headerToolbar: {
-          left: 'prev,next today',
-          center: 'title',
-          right: 'dayGridMonth,timeGridWeek'
-        },
+        headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
         events: calendarEvents,
         eventClick: function(info) {
           const date = info.event.start.toLocaleDateString('es-ES', { day:'2-digit', month:'long', year:'numeric' });
@@ -855,8 +868,8 @@
           <div class="card-header">
             <div class="card-title">${s.name || 'Estrategia sin nombre'}</div>
             <div>
-              <button class="btn-icon btn-edit-strategy" data-id="${s.id}" title="Editar Estrategia">✏️</button>
-              <button class="btn-icon btn-delete-strategy" data-id="${s.id}" title="Eliminar Estrategia">🗑️</button>
+              <button class="btn-icon btn-edit-strategy" data-id="${s.id}" title="Editar Estrategia"><i class="fa-solid fa-pen"></i></button>
+              <button class="btn-icon btn-delete-strategy" data-id="${s.id}" title="Eliminar Estrategia"><i class="fa-solid fa-trash"></i></button>
             </div>
           </div>
           <p style="color: var(--muted); white-space: pre-wrap;">${s.desc || 'Sin descripción.'}</p>
@@ -906,6 +919,50 @@
         ddElement.style.backgroundColor = isViolated ? 'rgba(239, 68, 68, .4)' : '';
       }
     }
+    
+    function calculateRiskMetrics(trades, initialBalance) {
+        if (!trades || trades.length === 0) {
+            $('#daily-risk').textContent = '0.0%';
+            $('#weekly-risk').textContent = '0.0%';
+            $('#monthly-risk').textContent = '0.0%';
+            if(riskChart) {
+                riskChart.data.datasets[0].data = [0,0,0,0,0,0];
+                riskChart.update();
+            }
+            return;
+        }
+
+        const now = new Date();
+        const today = now.toISOString().slice(0, 10);
+        const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay())).toISOString().slice(0, 10);
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+        
+        const dailyLoss = trades.filter(t => t.dateStr === today && t.result < 0).reduce((sum, t) => sum + t.result, 0);
+        const weeklyLoss = trades.filter(t => t.dateStr >= startOfWeek && t.result < 0).reduce((sum, t) => sum + t.result, 0);
+        const monthlyLoss = trades.filter(t => t.dateStr >= startOfMonth && t.result < 0).reduce((sum, t) => sum + t.result, 0);
+
+        $('#daily-risk').textContent = `${(Math.abs(dailyLoss) / initialBalance * 100).toFixed(1)}%`;
+        $('#weekly-risk').textContent = `${(Math.abs(weeklyLoss) / initialBalance * 100).toFixed(1)}%`;
+        $('#monthly-risk').textContent = `${(Math.abs(monthlyLoss) / initialBalance * 100).toFixed(1)}%`;
+        
+        // Radar Chart Logic (escala de 0 a 5)
+        const wins = trades.filter(x => x.result > 0);
+        const losses = trades.filter(x => x.result < 0);
+        const winRate = trades.length ? (wins.length / trades.length) * 100 : 0;
+        const totalWins = wins.reduce((s, x) => s + x.result, 0);
+        const totalLoss = Math.abs(losses.reduce((s, x) => s + x.result, 0));
+        const totalProfit = totalWins - totalLoss;
+        const avgRR = (wins.length && losses.length) ? (totalWins / wins.length) / (totalLoss / losses.length) : 0;
+        
+        const aciertoScore = Math.min(5, winRate / 15); // 75% winrate = 5
+        const rrScore = Math.min(5, avgRR * 2); // R/R de 2.5 = 5
+        const beneficioScore = Math.min(5, (totalProfit / initialBalance * 100) / 4); // 20% de beneficio = 5
+
+        if(riskChart) {
+            riskChart.data.datasets[0].data = [3, 4, aciertoScore, rrScore, 3, beneficioScore]; // DD, Gestión y Consistencia son placeholders
+            riskChart.update();
+        }
+    }
   
     function recalcFromTrades(trades){
       const t = trades||[];
@@ -927,29 +984,38 @@
 
       if (distributionChart){
         distributionChart.data.datasets[0].data = [wins.length, losses.length, t.filter(x=>x.result===0).length];
-        distributionChart.data.datasets[0].label = 'Operaciones';
         distributionChart.update();
       }
-      if (balanceChart){
+      const settings = window.__currentGeneralSettings || { initialBalance: 10000 };
+      if (balanceChart || modalBalanceChart){
         const data = []; 
-        const settings = window.__currentGeneralSettings || { initialBalance: 10000 };
         let bal = settings.initialBalance;
         data.push(bal);
         t.forEach(trade => {
             bal += trade.result || 0;
             data.push(bal);
         });
-        balanceChart.data.datasets[0].data = data;
-        balanceChart.data.labels = ['Inicio', ...Array.from({length: t.length}, (_,i)=>i+1)];
-        balanceChart.update();
+        const labels = ['Inicio', ...Array.from({length: t.length}, (_,i)=>i+1)];
+        if(balanceChart) {
+            balanceChart.data.datasets[0].data = data;
+            balanceChart.data.labels = labels;
+            balanceChart.update();
+        }
+        if(modalBalanceChart) {
+            modalBalanceChart.data.datasets[0].data = data;
+            modalBalanceChart.data.labels = labels;
+            modalBalanceChart.update();
+        }
       }
       updateRecentTrades(t);
+      calculateRiskMetrics(t, settings.initialBalance);
     }
+
     document.addEventListener('DOMContentLoaded', ()=>{
       setDate();
       initCharts();
       restoreAccordionState();
-      $$('.nav a').forEach(a=>a.addEventListener('click', e=>{
+      $$('.nav a[data-target], .submenu a[data-target]').forEach(a=>a.addEventListener('click', e=>{
         e.preventDefault(); const id = a.dataset.target; if (id) setActiveSection(id);
       }));
       
@@ -960,14 +1026,19 @@
           const isAlreadyOpen = targetPanel.classList.contains('open');
 
           $$('.submenu.open').forEach(openPanel => {
-            openPanel.classList.remove('open');
-            const correspondingBtn = document.querySelector(`[aria-controls="${openPanel.id}"]`);
-            if(correspondingBtn) correspondingBtn.setAttribute('aria-expanded', 'false');
+            if (openPanel.id !== targetPanelId) {
+                openPanel.classList.remove('open');
+                const correspondingBtn = document.querySelector(`[aria-controls="${openPanel.id}"]`);
+                if(correspondingBtn) correspondingBtn.setAttribute('aria-expanded', 'false');
+            }
           });
 
           if (!isAlreadyOpen) {
             targetPanel.classList.add('open');
             clickedBtn.setAttribute('aria-expanded', 'true');
+          } else {
+            targetPanel.classList.remove('open');
+            clickedBtn.setAttribute('aria-expanded', 'false');
           }
 
           persistAccordionState();
@@ -996,7 +1067,12 @@
           (window.saveGeneralSettings || (()=>{}))(settings);
       });
       
-      // Lógica para el generador de reportes
+      $('#refresh-distribution')?.addEventListener('click', () => (window.updateAllCalculations || (()=>{}))());
+      $('#expand-balance-chart')?.addEventListener('click', () => {
+        openModalById('balance-chart-modal');
+        setTimeout(() => modalBalanceChart && modalBalanceChart.resize(), 50);
+      });
+
       $('#generate-report-btn')?.addEventListener('click', () => {
         const startDate = $('#report-start-date').value;
         const endDate = $('#report-end-date').value;
@@ -1004,10 +1080,8 @@
           alert('Por favor, selecciona una fecha de inicio y de fin.');
           return;
         }
-
         const allTrades = window.__currentTrades || [];
         const filteredTrades = allTrades.filter(t => t.dateStr >= startDate && t.dateStr <= endDate);
-
         const wins = filteredTrades.filter(x => x.result > 0);
         const losses = filteredTrades.filter(x => x.result < 0);
         const totalProfit = filteredTrades.reduce((sum, t) => sum + t.result, 0);
@@ -1015,35 +1089,31 @@
         const totalWins = wins.reduce((s, x) => s + x.result, 0);
         const totalLoss = Math.abs(losses.reduce((s, x) => s + x.result, 0));
         const profitFactor = totalLoss ? totalWins / totalLoss : 0;
-
         $('#report-total-profit').textContent = `$${totalProfit.toFixed(2)}`;
         $('#report-total-trades').textContent = filteredTrades.length;
         $('#report-win-rate').textContent = `${winRate.toFixed(1)}%`;
         $('#report-profit-factor').textContent = profitFactor.toFixed(2);
-        
         const reportTbody = $('#report-table-body');
         if(reportTbody){
           reportTbody.innerHTML = filteredTrades.map(t => {
             const resultColor = (t.result || 0) >= 0 ? 'var(--success)' : 'var(--danger)';
             return `
               <tr style="border-bottom: 1px solid var(--border);">
-                <td style="padding:10px;">${t.dateStr}</td>
-                <td style="padding:10px;">${t.pair}</td>
-                <td style="padding:10px;">${t.type.toUpperCase()}</td>
-                <td style="padding:10px; text-align:right; color:${resultColor};">$${t.result.toFixed(2)}</td>
-              </tr>
-            `;
+                <td style="padding:10px;">${t.dateStr}</td><td style="padding:10px;">${t.pair}</td>
+                <td style="padding:10px;">${t.type.toUpperCase()}</td><td style="padding:10px; text-align:right; color:${resultColor};">$${t.result.toFixed(2)}</td>
+              </tr>`;
           }).join('');
         }
-
         $('#report-results').classList.remove('hidden');
       });
 
+      // Reset UI state
+      const emptyTrades = [];
       updateAccountsUI([]);
-      recalcFromTrades([]);
-      renderTradesTable([]);
-      renderAnalytics([]);
-      renderCalendar([]);
+      recalcFromTrades(emptyTrades);
+      renderTradesTable(emptyTrades);
+      renderAnalytics(emptyTrades);
+      renderCalendar(emptyTrades);
       renderStrategiesUI([]);
       populateAnalyticsFilter([]);
       updateChallengeTrackerUI(null);
@@ -1115,11 +1185,11 @@
       const selectedStrategyId = $('#analytics-strategy-filter').value;
       const filteredTrades = selectedStrategyId ? allTrades.filter(t => t.strategyId === selectedStrategyId) : allTrades;
       
-      (window.recalcFromTrades || (()=>{}))(allTrades);
-      (window.renderTradesTable || (()=>{}))(allTrades);
-      (window.renderAnalytics || (()=>{}))(filteredTrades);
-      (window.renderCalendar || (()=>{}))(allTrades);
-      (window.updateChallengeTrackerUI || (()=>{}))(calculateChallengeProgress(allTrades, settings));
+      recalcFromTrades(allTrades);
+      renderTradesTable(allTrades);
+      renderAnalytics(filteredTrades);
+      renderCalendar(allTrades);
+      updateChallengeTrackerUI(calculateChallengeProgress(allTrades, settings));
     }
     
     function calculateChallengeProgress(trades, settings) {
@@ -1347,22 +1417,22 @@
             bindSelfRealtime(user.uid);
             if (role === 'admin') await loadUsersTable();
         } else {
+            document.body.classList.remove('is-admin');
             unsubTrades && unsubTrades();
             unsubAccounts && unsubAccounts();
             unsubStrategies && unsubStrategies();
             unsubSettings && unsubSettings();
             unsubGeneralSettings && unsubGeneralSettings();
-
-            (window.recalcFromTrades || (() => {}))([]);
-            (window.updateAccountsUI || (() => {}))([]);
-            (window.renderTradesTable || (() => {}))([]);
-            (window.renderAnalytics || (() => {}))([]);
-            (window.renderCalendar || (() => {}))([]);
-            (window.renderStrategiesUI || (() => {}))([]);
-            (window.updateStrategiesDropdown || (() => {}))([]);
-            (window.populateAnalyticsFilter || (() => {}))([]);
-            (window.updateChallengeTrackerUI || (() => {}))(null);
-            document.body.classList.remove('is-admin');
+            const emptyTrades = [];
+            recalcFromTrades(emptyTrades);
+            updateAccountsUI([]);
+            renderTradesTable(emptyTrades);
+            renderAnalytics(emptyTrades);
+            renderCalendar(emptyTrades);
+            renderStrategiesUI([]);
+            updateStrategiesDropdown([]);
+            populateAnalyticsFilter([]);
+            updateChallengeTrackerUI(null);
             $('.user-name') && ($('.user-name').textContent = 'Invitado');
             $('#btn-login')?.classList.remove('hidden');
             $('#btn-logout')?.classList.add('hidden');
@@ -1378,17 +1448,6 @@
     async function updateUserRole(uid, newRole) {
         console.log(`Intentando cambiar rol para UID: ${uid} a ${newRole}`);
         alert('Esta funcionalidad requiere una Cloud Function en el backend para asignar roles de forma segura.');
-        // Para que esto funcione, necesitarías llamar a una Cloud Function.
-        // Ejemplo:
-        // const setRoleFunction = httpsCallable(functions, 'setRole');
-        // try {
-        //   await setRoleFunction({ uid: uid, role: newRole });
-        //   alert('Rol actualizado con éxito.');
-        //   loadUsersTable();
-        // } catch (error) {
-        //   alert('Error al actualizar el rol.');
-        //   console.error(error);
-        // }
     }
 
     async function loadUsersTable(){
@@ -1424,7 +1483,7 @@
         if(confirm(`¿Seguro que quieres cambiar el rol de este usuario a "${newRole}"?`)) {
             updateUserRole(uid, newRole);
         } else {
-            loadUsersTable(); // Recargar para revertir el cambio visual
+            loadUsersTable();
         }
       }));
     }
