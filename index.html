@@ -146,11 +146,9 @@
       <div class="inf">INFINITI</div>
       <div class="kap">KAPITAL</div>
     </div>
-
     <nav class="nav" id="nav">
       <a href="#" class="nav-item active" data-target="dashboard">
         <span class="icon"><i class="fa-solid fa-chart-line"></i></span>Dashboard</a>
-
       <button class="nav-link" aria-expanded="false" aria-controls="sm-cal">
         <span><span class="icon"><i class="fa-solid fa-calendar"></i></span> Calendario</span>
         <i class="fa-solid fa-caret-right caret" aria-hidden="true"></i>
@@ -159,7 +157,6 @@
         <a href="#" data-target="calendario">Vista general</a>
         <a href="#" data-target="reportes">Reportes</a>
       </div>
-
       <button class="nav-link" aria-expanded="false" aria-controls="sm-acc">
         <span><span class="icon"><i class="fa-solid fa-wallet"></i></span> Cuentas</span>
         <i class="fa-solid fa-caret-right caret"></i>
@@ -167,7 +164,6 @@
       <div id="sm-acc" class="submenu">
         <a href="#" data-target="cuentas">Gestión</a>
       </div>
-
       <button class="nav-link" aria-expanded="false" aria-controls="sm-op">
         <span><span class="icon"><i class="fa-solid fa-exchange-alt"></i></span> Operaciones</span>
         <i class="fa-solid fa-caret-right caret"></i>
@@ -176,12 +172,10 @@
         <a href="#" data-target="operaciones">Historial</a>
         <a href="#" id="quick-add-trade">Agregar operación</a>
       </div>
-
       <a href="#" class="nav-item" data-target="analiticas"><span class="icon"><i class="fa-solid fa-chart-bar"></i></span>Analíticas</a>
       <a href="#" class="nav-item" data-target="seguimiento"><span class="icon"><i class="fa-solid fa-tasks"></i></span>Seguimiento</a>
       <a href="#" class="nav-item" data-target="estrategias"><span class="icon"><i class="fa-solid fa-chess-knight"></i></span>Estrategias</a>
       <a href="#" class="nav-item" data-target="configuracion"><span class="icon"><i class="fa-solid fa-cog"></i></span>Configuración</a>
-
       <a href="#" class="nav-item only-admin" data-target="admin">
         <span class="icon"><i class="fa-solid fa-shield-halved"></i></span> Admin
       </a>
@@ -296,6 +290,12 @@
     </section>
 
     <section id="analiticas" class="section">
+      <div class="card" style="grid-column: 1 / -1; margin-bottom: -10px;">
+        <div class="form-group">
+          <label for="analytics-strategy-filter">Filtrar por Estrategia</label>
+          <select id="analytics-strategy-filter" class="form-control"></select>
+        </div>
+      </div>
       <div class="card" style="grid-column: span 3;">
         <div class="card-header"><div class="card-title">Beneficio Neto</div></div>
         <div class="metric-card"><div class="metric-val" id="analytics-total-profit">$0.00</div></div>
@@ -319,7 +319,7 @@
         </div>
       </div>
     </section>
-
+    
     <section id="seguimiento" class="section"><div class="card" style="grid-column:1/-1"><div class="card-title">Seguimiento</div></div></section>
     
     <section id="estrategias" class="section">
@@ -377,129 +377,123 @@
   <button class="fab" id="floating-add-trade-btn" aria-label="Agregar operación"><i class="fa-solid fa-plus"></i></button>
 
   <div id="add-trade-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="trade-title">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2 id="trade-title">Agregar Operación</h2>
-        <button class="close-modal" data-close>&times;</button>
-      </div>
-      <div class="modal-body">
-        <div class="form-group"><label>Par</label>
-          <select id="trade-pair-input" class="form-control">
-            <option value="EURUSD">EUR/USD</option><option value="GBPUSD">GBP/USD</option><option value="USDJPY">USD/JPY</option>
-          </select></div>
-        <div class="form-group"><label>Tipo</label>
-          <select id="trade-type-input" class="form-control"><option value="buy">Compra</option><option value="sell">Venta</option></select></div>
-        <div class="form-group"><label>Resultado ($)</label><input id="trade-result-input" type="number" class="form-control" placeholder="Ej: 250.50" step="0.01" /></div>
-        <div class="form-group">
-          <label for="trade-strategy-input">Estrategia</label>
-          <select id="trade-strategy-input" class="form-control">
-            <option value="">Ninguna</option>
-          </select>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="trade-title">Agregar Operación</h2>
+          <button class="close-modal" data-close>&times;</button>
         </div>
-        <div class="form-group"><label>Riesgo (% del capital)</label><input id="trade-risk-input" type="number" class="form-control" placeholder="Ej: 1.0" step="0.1" min="0.1" max="10" /></div>
-        <div class="form-group"><label>Beneficio Esperado (%)</label><input id="trade-reward-input" type="number" class="form-control" placeholder="Ej: 3.0" step="0.1" min="0.1" /></div>
-        <div class="form-group"><label>Pertenece al Challenge</label>
-          <select id="trade-challenge-input" class="form-control"><option value="yes">Sí</option><option value="no">No</option></select></div>
-        <input type="hidden" id="editing-trade-id" />
-      </div>
-      <div class="modal-footer">
-        <button class="btn secondary" data-close>Cancelar</button>
-        <button class="btn primary" id="save-trade-btn">Guardar Operación</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="add-account-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="acc-title">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2 id="acc-title">Agregar Nueva Cuenta</h2>
-        <button class="close-modal" data-close>&times;</button>
-      </div>
-      <div class="modal-body">
-        <div class="form-group"><label>Nombre</label><input id="account-name" class="form-control" placeholder="Ej: Cuenta Principal" /></div>
-        <div class="form-group"><label>Saldo ($)</label><input id="account-balance" type="number" class="form-control" placeholder="Ej: 10000.00" step="0.01" /></div>
-        <div class="form-group"><label>Tipo</label>
-          <select id="account-type" class="form-control"><option value="principal">Principal</option><option value="challenge">Challenge</option><option value="personal">Personal</option></select>
+        <div class="modal-body">
+          <div class="form-group"><label>Par</label>
+            <select id="trade-pair-input" class="form-control">
+              <option value="EURUSD">EUR/USD</option><option value="GBPUSD">GBP/USD</option><option value="USDJPY">USD/JPY</option>
+            </select></div>
+          <div class="form-group"><label>Tipo</label>
+            <select id="trade-type-input" class="form-control"><option value="buy">Compra</option><option value="sell">Venta</option></select></div>
+          <div class="form-group"><label>Resultado ($)</label><input id="trade-result-input" type="number" class="form-control" placeholder="Ej: 250.50" step="0.01" /></div>
+          <div class="form-group">
+            <label for="trade-strategy-input">Estrategia</label>
+            <select id="trade-strategy-input" class="form-control">
+              <option value="">Ninguna</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Riesgo (% del capital)</label><input id="trade-risk-input" type="number" class="form-control" placeholder="Ej: 1.0" step="0.1" min="0.1" max="10" /></div>
+          <div class="form-group"><label>Beneficio Esperado (%)</label><input id="trade-reward-input" type="number" class="form-control" placeholder="Ej: 3.0" step="0.1" min="0.1" /></div>
+          <div class="form-group"><label>Pertenece al Challenge</label>
+            <select id="trade-challenge-input" class="form-control"><option value="yes">Sí</option><option value="no">No</option></select></div>
+          <input type="hidden" id="editing-trade-id" />
         </div>
-        <input type="hidden" id="editing-account-id" />
-      </div>
-      <div class="modal-footer">
-        <button class="btn secondary" data-close>Cancelar</button>
-        <button class="btn primary" id="save-account-btn">Guardar Cuenta</button>
-      </div>
-    </div>
-  </div>
-  
-  <div id="add-strategy-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="strategy-title">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2 id="strategy-title">Agregar Nueva Estrategia</h2>
-        <button class="close-modal" data-close>&times;</button>
-      </div>
-      <div class="modal-body">
-        <div class="form-group">
-          <label>Nombre de la Estrategia</label>
-          <input id="strategy-name" class="form-control" placeholder="Ej: Ruptura de Resistencia" />
-        </div>
-        <div class="form-group">
-          <label>Descripción (Opcional)</label>
-          <textarea id="strategy-desc" class="form-control" placeholder="Añade notas sobre las confirmaciones, reglas, etc."></textarea>
-        </div>
-        <input type="hidden" id="editing-strategy-id" />
-      </div>
-      <div class="modal-footer">
-        <button class="btn secondary" data-close>Cancelar</button>
-        <button class="btn primary" id="save-strategy-btn">Guardar Estrategia</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="auth-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="auth-title">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2 id="auth-title">Acceso</h2>
-        <button class="close-modal" data-close>&times;</button>
-      </div>
-      <div class="modal-body">
-        <div class="form-group">
-          <label>Email</label>
-          <input id="auth-email" type="email" class="form-control" placeholder="tu@correo.com" />
-        </div>
-        <div class="form-group">
-          <label>Contraseña</label>
-          <input id="auth-pass" type="password" class="form-control" placeholder="••••••••" />
-        </div>
-        <div class="form-group" id="auth-name-wrap" style="display:none">
-          <label>Nombre</label>
-          <input id="auth-name" class="form-control" placeholder="Tu nombre" />
-        </div>
-        <div id="auth-error" class="hidden" style="margin-top:8px;color:var(--danger)"></div>
-      </div>
-      <div class="modal-footer" style="justify-content:space-between">
-        <div>
-          <button class="btn secondary" id="auth-toggle-mode">Crear cuenta</button>
-        </div>
-        <div>
+        <div class="modal-footer">
           <button class="btn secondary" data-close>Cancelar</button>
-          <button class="btn primary" id="auth-submit">Entrar</button>
+          <button class="btn primary" id="save-trade-btn">Guardar Operación</button>
         </div>
       </div>
-    </div>
+  </div>
+  <div id="add-account-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="acc-title">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="acc-title">Agregar Nueva Cuenta</h2>
+          <button class="close-modal" data-close>&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group"><label>Nombre</label><input id="account-name" class="form-control" placeholder="Ej: Cuenta Principal" /></div>
+          <div class="form-group"><label>Saldo ($)</label><input id="account-balance" type="number" class="form-control" placeholder="Ej: 10000.00" step="0.01" /></div>
+          <div class="form-group"><label>Tipo</label>
+            <select id="account-type" class="form-control"><option value="principal">Principal</option><option value="challenge">Challenge</option><option value="personal">Personal</option></select>
+          </div>
+          <input type="hidden" id="editing-account-id" />
+        </div>
+        <div class="modal-footer">
+          <button class="btn secondary" data-close>Cancelar</button>
+          <button class="btn primary" id="save-account-btn">Guardar Cuenta</button>
+        </div>
+      </div>
+  </div>
+  <div id="add-strategy-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="strategy-title">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="strategy-title">Agregar Nueva Estrategia</h2>
+          <button class="close-modal" data-close>&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Nombre de la Estrategia</label>
+            <input id="strategy-name" class="form-control" placeholder="Ej: Ruptura de Resistencia" />
+          </div>
+          <div class="form-group">
+            <label>Descripción (Opcional)</label>
+            <textarea id="strategy-desc" class="form-control" placeholder="Añade notas sobre las confirmaciones, reglas, etc."></textarea>
+          </div>
+          <input type="hidden" id="editing-strategy-id" />
+        </div>
+        <div class="modal-footer">
+          <button class="btn secondary" data-close>Cancelar</button>
+          <button class="btn primary" id="save-strategy-btn">Guardar Estrategia</button>
+        </div>
+      </div>
+  </div>
+  <div id="auth-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="auth-title">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="auth-title">Acceso</h2>
+          <button class="close-modal" data-close>&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Email</label>
+            <input id="auth-email" type="email" class="form-control" placeholder="tu@correo.com" />
+          </div>
+          <div class="form-group">
+            <label>Contraseña</label>
+            <input id="auth-pass" type="password" class="form-control" placeholder="••••••••" />
+          </div>
+          <div class="form-group" id="auth-name-wrap" style="display:none">
+            <label>Nombre</label>
+            <input id="auth-name" class="form-control" placeholder="Tu nombre" />
+          </div>
+          <div id="auth-error" class="hidden" style="margin-top:8px;color:var(--danger)"></div>
+        </div>
+        <div class="modal-footer" style="justify-content:space-between">
+          <div>
+            <button class="btn secondary" id="auth-toggle-mode">Crear cuenta</button>
+          </div>
+          <div>
+            <button class="btn secondary" data-close>Cancelar</button>
+            <button class="btn primary" id="auth-submit">Entrar</button>
+          </div>
+        </div>
+      </div>
   </div>
 
   <script>
     const $ = s => document.querySelector(s);
     const $$ = s => document.querySelectorAll(s);
-
     function setDate(){ $('#current-date').textContent = new Date().toLocaleDateString('es-ES',{weekday:'long',day:'2-digit',month:'long',year:'numeric'}) }
-
     let distributionChart, balanceChart, riskChart;
     function initCharts(){
       const d = $('#distributionChart'); if (d) distributionChart = new Chart(d.getContext('2d'),{type:'bar', data:{labels:['Win','Loss','BE'],datasets:[{data:[0,0,0],backgroundColor:['rgba(16,185,129,.7)','rgba(239,68,68,.7)','rgba(156,163,175,.7)']}]}, options:{responsive:true,maintainAspectRatio:false}});
       const b = $('#balanceChart'); if (b) balanceChart = new Chart(b.getContext('2d'),{type:'line', data:{labels:['D1','D2','D3','D4','D5','D6','Hoy'],datasets:[{data:[10000,10000,10000,10000,10000,10000,10000],borderColor:'rgba(212,175,55,1)',backgroundColor:'rgba(212,175,55,.15)',fill:true,tension:.3}]} , options:{responsive:true,maintainAspectRatio:false}});
       const r = $('#riskChart'); if (r) riskChart = new Chart(r.getContext('2d'),{type:'radar', data:{labels:['Gestión','Consistencia','Acierto','R/B','DD','Beneficio'],datasets:[{data:[0,0,0,0,0,0],backgroundColor:'rgba(212,175,55,.2)',borderColor:'rgba(212,175,55,1)'}]}, options:{responsive:true,maintainAspectRatio:false}});
     }
-
     (function(){
       const burger = document.getElementById('burger');
       const backdrop = document.getElementById('drawerBackdrop');
@@ -513,7 +507,6 @@
         el.addEventListener('click', ()=>{ if (window.matchMedia('(max-width:860px)').matches) close(); });
       });
     })();
-
     function setActiveSection(id){
       $$('.section').forEach(s=>s.classList.remove('active'));
       const tgt = document.getElementById(id); if (tgt) tgt.classList.add('active');
@@ -531,17 +524,14 @@
       const state = {}; $$('.submenu').forEach(p => { state[p.id] = p.classList.contains('open'); });
       sessionStorage.setItem('nav-acc-state', JSON.stringify(state));
     }
-
     function openModalById(id){ document.getElementById(id)?.classList.add('show'); document.body.style.overflow='hidden'; }
     function closeAllModals(){ $$('.modal').forEach(m=>m.classList.remove('show')); document.body.style.overflow=''; }
-
     window.__local = {
       tradingData:{ totalProfit:0, winRate:0, profitFactor:0, riskRewardRatio:0, winTrades:0, totalTrades:0,
         dailyRisk:0, weeklyRisk:0, monthlyRisk:0, challenge:{progress:0,profit:0,drawdown:0,trades:0,winRate:0}, trades:[] },
       accounts:[],
       strategies:[]
     };
-
     function updateRecentTrades(trades){
       const el = $('#recent-trades-container');
       if (!el) return;
@@ -552,7 +542,6 @@
         return `<div>${t.pair} · ${String(t.type||'').toUpperCase()} · <b style="color:${col}">${sign}$${Math.abs(t.result||0).toFixed(2)}</b> · ${t.dateStr||''}</div>`;
       }).join('');
     }
-
     function updateAccountsUI(accounts) {
       const el = $('#accounts-container');
       if (!el) return;
@@ -597,7 +586,6 @@
         el.appendChild(card);
       });
     }
-
     function renderTradesTable(trades) {
       const tbody = $('#trades-table-body');
       if (!tbody) return;
@@ -622,10 +610,8 @@
         `;
       }).join('');
     }
-
     let equityCurveChart = null;
     let calendar = null;
-
     function renderAnalytics(trades) {
       const t = trades || [];
       const wins = t.filter(x => x.result > 0);
@@ -637,15 +623,12 @@
       const winRate = total ? (wins.length / total) * 100 : 0;
       const profitFactor = totalLoss ? totalWins / totalLoss : 0;
       const avgRR = (wins.length && losses.length) ? (totalWins / wins.length) / (totalLoss / losses.length) : 0;
-
       $('#analytics-total-profit').textContent = `$${totalProfit.toFixed(2)}`;
       $('#analytics-win-rate').textContent = `${winRate.toFixed(1)}%`;
       $('#analytics-profit-factor').textContent = profitFactor.toFixed(2);
       $('#analytics-rr').textContent = avgRR.toFixed(2);
-
       renderEquityCurve(t);
     }
-
     function renderEquityCurve(trades) {
       const ctx = document.getElementById('equityCurveChart')?.getContext('2d');
       if (!ctx) return;
@@ -678,7 +661,6 @@
         }
       });
     }
-
     function renderCalendar(trades) {
       const calendarEl = document.getElementById('calendar-container');
       if (!calendarEl) return;
@@ -721,7 +703,6 @@
       });
       calendar.render();
     }
-
     function renderStrategiesUI(strategies) {
       const el = $('#strategies-container');
       if (!el) return;
@@ -738,7 +719,6 @@
         openModalById('add-strategy-modal');
       };
       el.appendChild(addStrategyButton);
-
       if (!strategies || strategies.length === 0) {
         const noStrategiesMessage = document.createElement('p');
         noStrategiesMessage.textContent = 'No has definido ninguna estrategia.';
@@ -763,7 +743,6 @@
         el.appendChild(card);
       });
     }
-
     function updateStrategiesDropdown(strategies) {
       const select = $('#trade-strategy-input');
       if (!select) return;
@@ -777,7 +756,17 @@
       });
       select.value = currentVal;
     }
-
+    function populateAnalyticsFilter(strategies) {
+      const select = $('#analytics-strategy-filter');
+      if (!select) return;
+      select.innerHTML = '<option value="">Todas las Estrategias</option>';
+      (strategies || []).forEach(s => {
+        const option = document.createElement('option');
+        option.value = s.id;
+        option.textContent = s.name;
+        select.appendChild(option);
+      });
+    }
     function recalcFromTrades(trades){
       const t = trades||[];
       const wins = t.filter(x=>x.result>0), losses = t.filter(x=>x.result<0);
@@ -787,7 +776,6 @@
       const winRate = total? (wins.length/total)*100 : 0;
       const pf = totalLoss? totalWins/totalLoss : 0;
       const rr = (wins.length && losses.length)? (totalWins/wins.length)/(totalLoss/losses.length) : 0;
-
       $('#total-trades').textContent = total;
       $('#total-trades-2').textContent = total;
       $('#win-trades').textContent = wins.length;
@@ -795,7 +783,6 @@
       $('#profit-factor').textContent = pf.toFixed(2);
       $('#risk-reward').textContent = rr.toFixed(2);
       $('#total-profit').textContent = `$${(totalWins-totalLoss).toFixed(2)}`;
-
       if (distributionChart){
         distributionChart.data.datasets[0].data = [wins.length, losses.length, t.filter(x=>x.result===0).length];
         distributionChart.update();
@@ -807,7 +794,6 @@
       }
       updateRecentTrades(t);
     }
-
     document.addEventListener('DOMContentLoaded', ()=>{
       setDate();
       initCharts();
@@ -825,12 +811,22 @@
       $$('[data-close]').forEach(x=>x.addEventListener('click', closeAllModals));
       window.addEventListener('click', e=>{ if (e.target.classList && e.target.classList.contains('modal')) closeAllModals(); });
       
+      $('#analytics-strategy-filter')?.addEventListener('change', () => {
+        const selectedStrategyId = $('#analytics-strategy-filter').value;
+        const allTrades = window.__currentTrades || [];
+        const filteredTrades = selectedStrategyId
+          ? allTrades.filter(t => t.strategyId === selectedStrategyId)
+          : allTrades;
+        (window.renderAnalytics || (()=>{}))(filteredTrades);
+      });
+      
       updateAccountsUI([]);
       recalcFromTrades([]);
       renderTradesTable([]);
       renderAnalytics([]);
       renderCalendar([]);
       renderStrategiesUI([]);
+      populateAnalyticsFilter([]);
     });
   </script>
 
@@ -899,9 +895,14 @@
       unsubTrades = onSnapshot(query(tRef, orderBy('createdAt','desc')), snap=>{
         const trades = snap.docs.map(d=>({id:d.id,...d.data()}));
         window.__currentTrades = trades;
-        (window.recalcFromTrades || (()=>{}))(trades);
+        
+        // Disparar los cálculos con los datos filtrados actualmente
+        const selectedStrategyId = $('#analytics-strategy-filter').value;
+        const filteredTrades = selectedStrategyId ? trades.filter(t => t.strategyId === selectedStrategyId) : trades;
+        
+        (window.recalcFromTrades || (()=>{}))(trades); // El dashboard siempre muestra el total
         (window.renderTradesTable || (()=>{}))(trades);
-        (window.renderAnalytics || (()=>{}))(trades);
+        (window.renderAnalytics || (()=>{}))(filteredTrades); // Analíticas respeta el filtro
         (window.renderCalendar || (()=>{}))(trades);
       });
       const aRef = collection(db, 'users', uid, 'accounts');
@@ -916,6 +917,7 @@
         window.__currentStrategies = strategies;
         (window.renderStrategiesUI || (()=>{}))(strategies);
         (window.updateStrategiesDropdown || (()=>{}))(strategies);
+        (window.populateAnalyticsFilter || (()=>{}))(strategies);
       });
     }
 
@@ -1068,6 +1070,7 @@
         (window.renderTradesTable || (()=>{}))([]); (window.renderAnalytics || (()=>{}))([]);
         (window.renderCalendar || (()=>{}))([]); (window.renderStrategiesUI || (()=>{}))([]);
         (window.updateStrategiesDropdown || (()=>{}))([]);
+        (window.populateAnalyticsFilter || (()=>{}))([]);
         document.body.classList.remove('is-admin');
         $('.user-name') && ($('.user-name').textContent = 'Invitado');
         $('#btn-login')?.classList.remove('hidden'); $('#btn-logout')?.classList.add('hidden');
