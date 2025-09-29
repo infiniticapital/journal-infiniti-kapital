@@ -738,7 +738,7 @@
               <button class="btn-icon btn-delete-strategy" data-id="${s.id}" title="Eliminar Estrategia">🗑️</button>
             </div>
           </div>
-          <p style="color: var(--muted);">${s.desc || 'Sin descripción.'}</p>
+          <p style="color: var(--muted); white-space: pre-wrap;">${s.desc || 'Sin descripción.'}</p>
         `;
         el.appendChild(card);
       });
