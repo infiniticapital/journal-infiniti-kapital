@@ -537,19 +537,23 @@
         el.addEventListener('click', ()=>{ if (window.matchMedia('(max-width:860px)').matches) close(); });
       });
     })();
-    function setActiveSection(id) {
-      $$('.section').forEach(s => s.classList.remove('active'));
-      const tgt = document.getElementById(id); 
-      if (tgt) {
-        tgt.classList.add('active');
-      }
-      $$('.nav a').forEach(a => a.classList.toggle('active', a.dataset.target === id));
-      if (id === 'calendario' && window.calendar) {
-        setTimeout(() => {
-          window.calendar.updateSize();
-        }, 10);
-      }
-    }
+    // PEGA ESTA FUNCIÓN EN SU LUGAR
+function setActiveSection(id) {
+  $$('.section').forEach(s => s.classList.remove('active'));
+  const tgt = document.getElementById(id); 
+  if (tgt) {
+    tgt.classList.add('active');
+  }
+
+  $$('.nav a').forEach(a => a.classList.toggle('active', a.dataset.target === id));
+
+  // Si la sección que activamos es el calendario, le pedimos que se redibuje
+  if (id === 'calendario' && window.calendar) {
+    setTimeout(() => {
+      window.calendar.updateSize();
+    }, 50); // Aumentamos un poco el tiempo para asegurar que funcione
+  }
+}
     function restoreAccordionState(){
       const state = JSON.parse(sessionStorage.getItem('nav-acc-state') || '{}');
       Object.entries(state).forEach(([id,open])=>{
@@ -861,24 +865,29 @@
       $$('.nav a').forEach(a=>a.addEventListener('click', e=>{
         e.preventDefault(); const id = a.dataset.target; if (id) setActiveSection(id);
       }));
-      $$('.nav button.nav-link').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const id = btn.getAttribute('aria-controls');
-          const panel = document.getElementById(id);
-          const isOpen = btn.getAttribute('aria-expanded') === 'true';
-          $$('.nav button.nav-link').forEach(otherBtn => {
-            otherBtn.setAttribute('aria-expanded', 'false');
-          });
-          $$('.submenu').forEach(otherPanel => {
-            otherPanel.classList.remove('open');
-          });
-          if (!isOpen) {
-            btn.setAttribute('aria-expanded', 'true');
-            panel.classList.add('open');
-          }
-          persistAccordionState();
-        });
-      });
+      // PEGA ESTE BLOQUE EN SU LUGAR
+$$('.nav button.nav-link').forEach(clickedBtn => {
+  clickedBtn.addEventListener('click', () => {
+    const targetPanelId = clickedBtn.getAttribute('aria-controls');
+    const targetPanel = document.getElementById(targetPanelId);
+    const isAlreadyOpen = targetPanel.classList.contains('open');
+
+    // Primero, cierra todos los paneles que estén abiertos
+    $$('.submenu.open').forEach(openPanel => {
+      openPanel.classList.remove('open');
+      const correspondingBtn = document.querySelector(`[aria-controls="${openPanel.id}"]`);
+      if(correspondingBtn) correspondingBtn.setAttribute('aria-expanded', 'false');
+    });
+
+    // Si el panel que clickeamos no estaba ya abierto, lo abrimos.
+    if (!isAlreadyOpen) {
+      targetPanel.classList.add('open');
+      clickedBtn.setAttribute('aria-expanded', 'true');
+    }
+
+    persistAccordionState();
+  });
+});
       $$('[data-close]').forEach(x=>x.addEventListener('click', closeAllModals));
       window.addEventListener('click', e=>{ if (e.target.classList && e.target.classList.contains('modal')) closeAllModals(); });
       
