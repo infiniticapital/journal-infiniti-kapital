@@ -537,10 +537,21 @@
         el.addEventListener('click', ()=>{ if (window.matchMedia('(max-width:860px)').matches) close(); });
       });
     })();
-    function setActiveSection(id){
-      $$('.section').forEach(s=>s.classList.remove('active'));
-      const tgt = document.getElementById(id); if (tgt) tgt.classList.add('active');
-      $$('.nav a').forEach(a=>a.classList.toggle('active', a.dataset.target===id));
+    function setActiveSection(id) {
+      $$('.section').forEach(s => s.classList.remove('active'));
+      const tgt = document.getElementById(id); 
+      if (tgt) {
+        tgt.classList.add('active');
+      }
+      
+      $$('.nav a').forEach(a => a.classList.toggle('active', a.dataset.target === id));
+
+      // Si la sección que activamos es el calendario, le pedimos que se redibuje
+      if (id === 'calendario' && window.calendar) {
+        setTimeout(() => {
+          window.calendar.updateSize();
+        }, 10); // Un pequeño retardo para asegurar que el CSS ha hecho visible el contenedor
+      }
     }
     function restoreAccordionState(){
       const state = JSON.parse(sessionStorage.getItem('nav-acc-state') || '{}');
@@ -865,13 +876,29 @@ function recalcFromTrades(trades){
       $$('.nav a').forEach(a=>a.addEventListener('click', e=>{
         e.preventDefault(); const id = a.dataset.target; if (id) setActiveSection(id);
       }));
-      $$('.nav button.nav-link').forEach(btn=>{
-        btn.addEventListener('click', ()=>{
-          const id = btn.getAttribute('aria-controls'); const panel = document.getElementById(id);
-          const isOpen = btn.getAttribute('aria-expanded')==='true';
-          btn.setAttribute('aria-expanded', String(!isOpen)); panel.classList.toggle('open', !isOpen); persistAccordionState();
+     $$('.nav button.nav-link').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('aria-controls');
+        const panel = document.getElementById(id);
+        const isOpen = btn.getAttribute('aria-expanded') === 'true';
+
+        // Primero, cierra TODOS los submenús
+        $$('.nav button.nav-link').forEach(otherBtn => {
+          otherBtn.setAttribute('aria-expanded', 'false');
         });
+        $$('.submenu').forEach(otherPanel => {
+          otherPanel.classList.remove('open');
+        });
+
+        // Luego, abre solo el que se clickeó (si estaba cerrado)
+        if (!isOpen) {
+          btn.setAttribute('aria-expanded', 'true');
+          panel.classList.add('open');
+        }
+
+        persistAccordionState();
       });
+    });
       $$('[data-close]').forEach(x=>x.addEventListener('click', closeAllModals));
       window.addEventListener('click', e=>{ if (e.target.classList && e.target.classList.contains('modal')) closeAllModals(); });
       
