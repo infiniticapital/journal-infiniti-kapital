@@ -309,7 +309,6 @@
 
   <button class="fab" id="floating-add-trade-btn" aria-label="Agregar operación"><i class="fa-solid fa-plus"></i></button>
 
-  <!-- MODAL: OPERACIÓN -->
   <div id="add-trade-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="trade-title">
     <div class="modal-content">
       <div class="modal-header">
@@ -336,7 +335,6 @@
     </div>
   </div>
 
-  <!-- MODAL: CUENTA -->
   <div id="add-account-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="acc-title">
     <div class="modal-content">
       <div class="modal-header">
@@ -358,7 +356,6 @@
     </div>
   </div>
 
-  <!-- MODAL: AUTH -->
   <div id="auth-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="auth-title">
     <div class="modal-content">
       <div class="modal-header">
@@ -392,7 +389,6 @@
     </div>
   </div>
 
-  <!-- ===== JS UI (no-module) ===== -->
   <script>
     const $ = s => document.querySelector(s);
     const $$ = s => document.querySelectorAll(s);
@@ -532,7 +528,6 @@
     });
   </script>
 
-  <!-- ===== Firebase/Firestore + Auth + Admin (module) ===== -->
   <script type="module">
     import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
     import {
@@ -540,7 +535,7 @@
       createUserWithEmailAndPassword, signOut, updateProfile
     } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
     import {
-      getFirestore, doc, setDoc, collection, addDoc, getDocs, query, orderBy, onSnapshot
+      getFirestore, doc, setDoc, collection, addDoc, getDocs, query, orderBy, onSnapshot, serverTimestamp
     } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
     const firebaseConfig = {
@@ -583,7 +578,7 @@
           const cred = await createUserWithEmailAndPassword(auth, email, pass);
           await updateProfile(cred.user, { displayName: name });
           await setDoc(doc(db, 'users', cred.user.uid), {
-            displayName: name, email, role: 'user', createdAt: Date.now()
+            displayName: name, email, role: 'user', createdAt: serverTimestamp()
           });
         }
         document.getElementById('auth-modal')?.classList.remove('show'); document.body.style.overflow='';
@@ -616,12 +611,12 @@
     // ---- Guardar Trade / Account ----
     async function saveTrade({ pair, type, result, risk, reward, inChallenge }){
       const now = new Date();
-      const dateStr = `${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()}`;
+      const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
       const user = auth.currentUser;
       if (user){
         await addDoc(collection(db, 'users', user.uid, 'trades'), {
           pair, type, result: Number(result||0), risk: Number(risk||0), reward: Number(reward||0),
-          inChallenge: !!inChallenge, createdAt: Date.now(), dateStr
+          inChallenge: !!inChallenge, createdAt: serverTimestamp(), dateStr
         });
       } else {
         window.__local.tradingData.trades.unshift({pair,type,result:Number(result||0),risk:Number(risk||0),reward:Number(reward||0),inChallenge:!!inChallenge,dateStr});
@@ -631,7 +626,7 @@
     async function saveAccount({ name, balance, type }){
       const user = auth.currentUser;
       if (user){
-        await addDoc(collection(db, 'users', user.uid, 'accounts'), { name, balance: Number(balance||0), type, createdAt: Date.now() });
+        await addDoc(collection(db, 'users', user.uid, 'accounts'), { name, balance: Number(balance||0), type, createdAt: serverTimestamp() });
       } else {
         window.__local.accounts.push({name, balance:Number(balance||0), type});
         window.updateAccountsUI(window.__local.accounts);
