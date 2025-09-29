@@ -432,10 +432,10 @@
     </section>
     
     <section id="admin" class="section only-admin">
-      <div class="card" style="grid-column:1/-1">
+      <div class="card" style="grid-column: 1/-1;">
         <div class="card-header">
           <div class="card-title">Panel de Administración</div>
-          <div><button class="btn primary" id="btn-refresh-users"><i class="fa-solid fa-rotate"></i> Actualizar</button></div>
+          <button class="btn primary" id="btn-refresh-users"><i class="fa-solid fa-rotate"></i> Actualizar Usuarios</button>
         </div>
         <div class="card" style="margin-bottom:14px">
           <div class="card-title" style="margin-bottom:8px">Usuarios</div>
@@ -452,6 +452,14 @@
               <tbody id="admin-users-tbody"></tbody>
             </table>
           </div>
+        </div>
+        <div class="card" style="margin-bottom:14px">
+            <div class="card-header">
+                <div class="card-title">Códigos de Invitación</div>
+                <button class="btn primary" id="btn-generate-invite"><i class="fa-solid fa-plus"></i> Generar Nuevo Código</button>
+            </div>
+            <p style="color: var(--muted); margin-bottom: 15px;">Estos son los códigos de un solo uso para registrar nuevos usuarios. Una vez que se usan, se desactivan.</p>
+            <div id="invite-codes-list" style="display: flex; flex-direction: column; gap: 8px;">Cargando códigos...</div>
         </div>
         <div class="card">
           <div class="card-title" style="margin-bottom:8px">Detalle de Usuario</div>
@@ -670,17 +678,16 @@
       });
     })();
     
+    // --- FUNCIÓN CORREGIDA PARA CAMBIAR DE VISTA ---
     function setActiveSection(id) {
         document.querySelectorAll('main > .section').forEach(section => {
             section.classList.remove('active');
         });
-
         const targetSection = document.getElementById(id);
         if (targetSection) {
             targetSection.classList.add('active');
         }
-
-        document.querySelectorAll('.nav a').forEach(a => {
+        document.querySelectorAll('.nav a.nav-item').forEach(a => {
             a.classList.toggle('active', a.dataset.target === id);
         });
         
@@ -1158,11 +1165,11 @@
     import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
     import {
       getAuth, onAuthStateChanged, signInWithEmailAndPassword,
-      createUserWithEmailAndPassword, signOut, updateProfile,
+      signOut, updateProfile,
       sendPasswordResetEmail
     } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
     import {
-      getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs, query, orderBy, onSnapshot, serverTimestamp, updateDoc, deleteDoc
+      getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs, query, orderBy, onSnapshot, serverTimestamp, updateDoc, deleteDoc, where
     } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
     import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js';
 
@@ -1201,23 +1208,15 @@
       const inviteCode = $('#auth-invite').value.trim();
       const err   = $('#auth-error');
       
-      const INVITATION_CODE = "INFINITI-2025"; // <-- ¡Cambia este código secreto por el que prefieras!
-
       try{
         err.classList.add('hidden');
         if (authMode==='login'){
           await signInWithEmailAndPassword(auth, email, pass);
         } else {
-          if (inviteCode !== INVITATION_CODE) {
-              err.textContent = "Código de invitación incorrecto.";
-              err.classList.remove('hidden');
-              return;
-          }
-          const cred = await createUserWithEmailAndPassword(auth, email, pass);
-          await updateProfile(cred.user, { displayName: name });
-          await setDoc(doc(db, 'users', cred.user.uid), {
-            displayName: name, email, role: 'user', createdAt: serverTimestamp()
-          });
+          const createUser = httpsCallable(functions, 'createUserWithInvite');
+          await createUser({ email, password, displayName: name, inviteCode });
+          // Iniciar sesión automáticamente después de un registro exitoso
+          await signInWithEmailAndPassword(auth, email, pass);
         }
         closeAllModals();
       }catch(e){ err.textContent = e.message; err.classList.remove('hidden'); }
@@ -1241,7 +1240,7 @@
         }
     });
 
-    let unsubTrades=null, unsubAccounts=null, unsubStrategies=null, unsubSettings = null, unsubGeneralSettings = null;
+    let unsubTrades=null, unsubAccounts=null, unsubStrategies=null, unsubSettings=null, unsubGeneralSettings=null, unsubInvites=null;
     
     window.updateAllCalculations = () => {
       const allTrades = window.__currentTrades || [];
@@ -1281,7 +1280,7 @@
     }
 
     function bindSelfRealtime(uid){
-      unsubTrades && unsubTrades(); unsubAccounts && unsubAccounts(); unsubStrategies && unsubStrategies(); unsubSettings && unsubSettings();
+      [unsubTrades, unsubAccounts, unsubStrategies, unsubSettings, unsubGeneralSettings, unsubInvites].forEach(unsub => unsub && unsub());
 
       const tRef = collection(db, 'users', uid, 'trades');
       unsubTrades = onSnapshot(query(tRef, orderBy('createdAt','asc')), snap=>{
@@ -1466,14 +1465,12 @@
             $('#btn-open-auth')?.classList.add('hidden');
             $('#welcome-message').textContent = "Tu sesión está activa. Tus operaciones se guardarán en la nube.";
             bindSelfRealtime(user.uid);
-            if (role === 'admin') await loadUsersTable();
+            if (role === 'admin') {
+                loadAdminPanel();
+            }
         } else {
             document.body.classList.remove('is-admin');
-            unsubTrades && unsubTrades();
-            unsubAccounts && unsubAccounts();
-            unsubStrategies && unsubStrategies();
-            unsubSettings && unsubSettings();
-            unsubGeneralSettings && unsubGeneralSettings();
+            [unsubTrades, unsubAccounts, unsubStrategies, unsubSettings, unsubGeneralSettings, unsubInvites].forEach(unsub => unsub && unsub());
             const emptyTrades = [];
             recalcFromTrades(emptyTrades);
             updateAccountsUI([]);
@@ -1500,6 +1497,35 @@
         console.log(`Intentando cambiar rol para UID: ${uid} a ${newRole}`);
         alert('Esta funcionalidad requiere una Cloud Function en el backend para asignar roles de forma segura.');
     }
+
+    async function loadAdminPanel() {
+        await loadUsersTable();
+        
+        unsubInvites && unsubInvites();
+        const invitesRef = collection(db, 'invitations');
+        unsubInvites = onSnapshot(query(invitesRef, where('isUsed', '==', false)), snap => {
+            const codes = snap.docs.map(d => d.id);
+            const listEl = $('#invite-codes-list');
+            if (!listEl) return;
+            if (codes.length === 0) {
+                listEl.textContent = 'No hay códigos de invitación activos.';
+                return;
+            }
+            listEl.innerHTML = codes.map(code => `
+                <div style="background: var(--secondary); padding: 8px 12px; border-radius: 8px; font-family: monospace;">${code}</div>
+            `).join('');
+        });
+    }
+
+    $('#btn-generate-invite')?.addEventListener('click', async () => {
+        try {
+            const generateCode = httpsCallable(functions, 'generateInviteCode');
+            const result = await generateCode();
+            alert(`Código generado: ${result.data.code}`);
+        } catch (error) {
+            alert('Error al generar código: ' + error.message);
+        }
+    });
 
     async function loadUsersTable(){
       if (!auth.currentUser) return;
