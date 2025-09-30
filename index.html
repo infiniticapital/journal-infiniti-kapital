@@ -432,20 +432,33 @@
     </section>
 
     <section id="configuracion" class="section">
-      <div class="card" style="grid-column:1/-1">
-        <div class="card-header">
-          <div class="card-title">Configuración General</div>
-        </div>
-        <div class="form-group">
-            <label>Saldo Inicial por Defecto ($)</label>
-            <input id="settings-initial-balance" type="number" class="form-control" placeholder="10000" />
-            <small style="color: var(--muted); display: block; margin-top: 4px;">Este valor se usará como punto de partida para el gráfico de Saldo en el Dashboard.</small>
-        </div>
-        <div style="text-align: right; margin-top: 20px;">
-            <button class="btn primary" id="save-general-settings-btn">Guardar Configuración</button>
-        </div>
-      </div>
-    </section>
+
+  <div class="card" style="grid-column:1/-1">
+    <div class="card-header">
+      <div class="card-title">Configuración General</div>
+    </div>
+    <div class="form-group">
+        <label>Saldo Inicial por Defecto ($)</label>
+        <input id="settings-initial-balance" type="number" class="form-control" placeholder="10000" />
+        <small style="color: var(--muted); display: block; margin-top: 4px;">Este valor se usará como punto de partida para el gráfico de Saldo en el Dashboard.</small>
+    </div>
+    <div style="text-align: right; margin-top: 20px;">
+        <button class="btn primary" id="save-general-settings-btn">Guardar Configuración</button>
+    </div>
+  </div>
+
+  <div class="card" style="grid-column:1/-1; margin-top: 20px;">
+    <div class="card-header">
+      <div class="card-title">Conexión con MT5 (API Key)</div>
+    </div>
+    <p style="color: var(--muted); margin-bottom: 15px;">Usa la siguiente clave en la configuración de tu bot de MT5 para registrar operaciones automáticamente.</p>
+    <div id="api-key-display" style="background: var(--secondary); padding: 12px; border-radius: 8px; font-family: monospace; margin-bottom: 15px; min-height: 45px;">
+      Cargando...
+    </div>
+    <button id="btn-generate-api-key" class="btn primary">Generar / Mostrar Clave</button>
+  </div>
+
+</section>
     
     <section id="admin" class="section">
       <div class="card" style="grid-column: 1/-1;">
