@@ -1109,104 +1109,131 @@
     }
 
     document.addEventListener('DOMContentLoaded', ()=>{
-      setDate();
-      initCharts();
-      restoreAccordionState();
+  setDate();
+  initCharts();
+  restoreAccordionState();
 
-      $$('.nav a[data-target], .submenu a[data-target]').forEach(a=>a.addEventListener('click', e=>{
-        e.preventDefault(); 
-        const id = a.dataset.target; 
-        if (id) setActiveSection(id);
-      }));
-      
-      $$('.nav button.nav-link').forEach(clickedBtn => {
-        clickedBtn.addEventListener('click', () => {
-          const targetPanelId = clickedBtn.getAttribute('aria-controls');
-          const targetPanel = document.getElementById(targetPanelId);
-          const isAlreadyOpen = targetPanel.classList.contains('open');
+  $$('.nav a[data-target], .submenu a[data-target]').forEach(a=>a.addEventListener('click', e=>{
+    e.preventDefault(); 
+    const id = a.dataset.target; 
+    if (id) setActiveSection(id);
+  }));
+  
+  $$('.nav button.nav-link').forEach(clickedBtn => {
+    clickedBtn.addEventListener('click', () => {
+      const targetPanelId = clickedBtn.getAttribute('aria-controls');
+      const targetPanel = document.getElementById(targetPanelId);
+      const isAlreadyOpen = targetPanel.classList.contains('open');
 
-          $$('.submenu.open').forEach(openPanel => {
-            if (openPanel.id !== targetPanelId) {
-                openPanel.classList.remove('open');
-                const correspondingBtn = document.querySelector(`[aria-controls="${openPanel.id}"]`);
-                if(correspondingBtn) correspondingBtn.setAttribute('aria-expanded', 'false');
-            }
-          });
-
-          if (!isAlreadyOpen) {
-            targetPanel.classList.add('open');
-            clickedBtn.setAttribute('aria-expanded', 'true');
-          } else {
-            targetPanel.classList.remove('open');
-            clickedBtn.setAttribute('aria-expanded', 'false');
-          }
-
-          persistAccordionState();
-        });
-      });
-      $$('[data-close]').forEach(x=>x.addEventListener('click', closeAllModals));
-      window.addEventListener('click', e=>{ if (e.target.classList && e.target.classList.contains('modal')) closeAllModals(); });
-      
-      $('#analytics-strategy-filter')?.addEventListener('change', () => {
-        (window.updateAllCalculations || (()=>{}))();
-      });
-
-      $('#edit-challenge')?.addEventListener('click', () => {
-        const settings = window.__currentSettings || {};
-        $('#challenge-balance').value = settings.initialBalance || 100000;
-        $('#challenge-target').value = settings.profitTarget || 10;
-        $('#challenge-max-loss').value = settings.maxLoss || 10;
-        $('#challenge-daily-loss').value = settings.dailyLoss || 5;
-        openModalById('challenge-settings-modal');
-      });
-
-      $('#save-general-settings-btn')?.addEventListener('click', () => {
-          const settings = {
-              initialBalance: parseFloat($('#settings-initial-balance').value) || 10000
-          };
-          (window.saveGeneralSettings || (()=>{}))(settings);
-      });
-      
-      $('#refresh-distribution')?.addEventListener('click', () => (window.updateAllCalculations || (()=>{}))());
-      $('#expand-balance-chart')?.addEventListener('click', () => {
-        openModalById('balance-chart-modal');
-        setTimeout(() => modalBalanceChart && modalBalanceChart.resize(), 50);
-      });
-
-      $('#generate-report-btn')?.addEventListener('click', () => {
-        const startDate = $('#report-start-date').value;
-        const endDate = $('#report-end-date').value;
-        if (!startDate || !endDate) {
-          alert('Por favor, selecciona una fecha de inicio y de fin.');
-          return;
+      $$('.submenu.open').forEach(openPanel => {
+        if (openPanel.id !== targetPanelId) {
+            openPanel.classList.remove('open');
+            const correspondingBtn = document.querySelector(`[aria-controls="${openPanel.id}"]`);
+            if(correspondingBtn) correspondingBtn.setAttribute('aria-expanded', 'false');
         }
-        const allTrades = window.__currentTrades || [];
-        const filteredTrades = allTrades.filter(t => t.dateStr >= startDate && t.dateStr <= endDate);
-        const wins = filteredTrades.filter(x => x.result > 0);
-        const losses = filteredTrades.filter(x => x.result < 0);
-        const totalProfit = filteredTrades.reduce((sum, t) => sum + t.result, 0);
-        const winRate = filteredTrades.length ? (wins.length / filteredTrades.length) * 100 : 0;
-        const totalWins = wins.reduce((s, x) => s + x.result, 0);
-        const totalLoss = Math.abs(losses.reduce((s, x) => s + x.result, 0));
-        const profitFactor = totalLoss ? totalWins / totalLoss : 0;
-        $('#report-total-profit').textContent = `$${totalProfit.toFixed(2)}`;
-        $('#report-total-trades').textContent = filteredTrades.length;
-        $('#report-win-rate').textContent = `${winRate.toFixed(1)}%`;
-        $('#report-profit-factor').textContent = profitFactor.toFixed(2);
-        const reportTbody = $('#report-table-body');
-        if(reportTbody){
-          reportTbody.innerHTML = filteredTrades.map(t => {
-            const resultColor = (t.result || 0) >= 0 ? 'var(--success)' : 'var(--danger)';
-            return `
-              <tr style="border-bottom: 1px solid var(--border);">
-                <td style="padding:10px;">${t.dateStr}</td><td style="padding:10px;">${t.pair}</td>
-                <td style="padding:10px;">${t.type.toUpperCase()}</td><td style="padding:10px; text-align:right; color:${resultColor};">$${t.result.toFixed(2)}</td>
-              </tr>`;
-          }).join('');
-        }
-        $('#report-results').classList.remove('hidden');
       });
 
+      if (!isAlreadyOpen) {
+        targetPanel.classList.add('open');
+        clickedBtn.setAttribute('aria-expanded', 'true');
+      } else {
+        targetPanel.classList.remove('open');
+        clickedBtn.setAttribute('aria-expanded', 'false');
+      }
+
+      persistAccordionState();
+    });
+  });
+  $$('[data-close]').forEach(x=>x.addEventListener('click', closeAllModals));
+  window.addEventListener('click', e=>{ if (e.target.classList && e.target.classList.contains('modal')) closeAllModals(); });
+  
+  $('#analytics-strategy-filter')?.addEventListener('change', () => {
+    (window.updateAllCalculations || (()=>{}))();
+  });
+
+  $('#edit-challenge')?.addEventListener('click', () => {
+    const settings = window.__currentSettings || {};
+    $('#challenge-balance').value = settings.initialBalance || 100000;
+    $('#challenge-target').value = settings.profitTarget || 10;
+    $('#challenge-max-loss').value = settings.maxLoss || 10;
+    $('#challenge-daily-loss').value = settings.dailyLoss || 5;
+    openModalById('challenge-settings-modal');
+  });
+
+  $('#save-general-settings-btn')?.addEventListener('click', () => {
+      const settings = {
+          initialBalance: parseFloat($('#settings-initial-balance').value) || 10000
+      };
+      (window.saveGeneralSettings || (()=>{}))(settings);
+  });
+  
+  $('#refresh-distribution')?.addEventListener('click', () => (window.updateAllCalculations || (()=>{}))());
+  $('#expand-balance-chart')?.addEventListener('click', () => {
+    openModalById('balance-chart-modal');
+    setTimeout(() => modalBalanceChart && modalBalanceChart.resize(), 50);
+  });
+
+  $('#generate-report-btn')?.addEventListener('click', () => {
+    const startDate = $('#report-start-date').value;
+    const endDate = $('#report-end-date').value;
+    if (!startDate || !endDate) {
+      alert('Por favor, selecciona una fecha de inicio y de fin.');
+      return;
+    }
+    const allTrades = window.__currentTrades || [];
+    const filteredTrades = allTrades.filter(t => t.dateStr >= startDate && t.dateStr <= endDate);
+    const wins = filteredTrades.filter(x => x.result > 0);
+    const losses = filteredTrades.filter(x => x.result < 0);
+    const totalProfit = filteredTrades.reduce((sum, t) => sum + t.result, 0);
+    const winRate = filteredTrades.length ? (wins.length / filteredTrades.length) * 100 : 0;
+    const totalWins = wins.reduce((s, x) => s + x.result, 0);
+    const totalLoss = Math.abs(losses.reduce((s, x) => s + x.result, 0));
+    const profitFactor = totalLoss ? totalWins / totalLoss : 0;
+    $('#report-total-profit').textContent = `$${totalProfit.toFixed(2)}`;
+    $('#report-total-trades').textContent = filteredTrades.length;
+    $('#report-win-rate').textContent = `${winRate.toFixed(1)}%`;
+    $('#report-profit-factor').textContent = profitFactor.toFixed(2);
+    const reportTbody = $('#report-table-body');
+    if(reportTbody){
+      reportTbody.innerHTML = filteredTrades.map(t => {
+        const resultColor = (t.result || 0) >= 0 ? 'var(--success)' : 'var(--danger)';
+        return `
+          <tr style="border-bottom: 1px solid var(--border);">
+            <td style="padding:10px;">${t.dateStr}</td><td style="padding:10px;">${t.pair}</td>
+            <td style="padding:10px;">${t.type.toUpperCase()}</td><td style="padding:10px; text-align:right; color:${resultColor};">$${t.result.toFixed(2)}</td>
+          </tr>`;
+      }).join('');
+    }
+    $('#report-results').classList.remove('hidden');
+  });
+  
+  // ▼▼▼ CÓDIGO AÑADIDO PARA LA CLAVE DE API ▼▼▼
+  $('#btn-generate-api-key')?.addEventListener('click', async () => {
+    const user = auth.currentUser;
+    if (!user) {
+      return alert('Debes iniciar sesión para generar una clave de API.');
+    }
+    const apiKeyDisplay = $('#api-key-display');
+    apiKeyDisplay.textContent = 'Generando...';
+    const userDocRef = doc(db, 'users', user.uid);
+    try {
+      const userDoc = await getDoc(userDocRef);
+      if (userDoc.exists() && userDoc.data().apiKey) {
+        apiKeyDisplay.textContent = userDoc.data().apiKey;
+      } else {
+        const newKey = 'ik_' + Math.random().toString(36).substring(2) + Date.now().toString(36);
+        await setDoc(userDocRef, { apiKey: newKey }, { merge: true });
+        apiKeyDisplay.textContent = newKey;
+      }
+    } catch (error) {
+      console.error("Error al generar la clave de API:", error);
+      apiKeyDisplay.textContent = 'Error al generar la clave.';
+      alert('Hubo un error al generar la clave de API.');
+    }
+  });
+  // ▲▲▲ FIN DEL CÓDIGO AÑADIDO ▲▲▲
+
+}); // <-- FIN DEL DOMContentLoaded
       const emptyTrades = [];
       updateAccountsUI([]);
       recalcFromTrades(emptyTrades);
