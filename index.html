@@ -148,15 +148,21 @@
     .hidden{display:none!important}
     .only-admin{display:none}
     body.is-admin .only-admin{display:block !important}
+
+    .logo img {
+  width: 90%; /* Ajusta este porcentaje a tu gusto */
+  height: auto; /* Mantiene la proporción correcta */
+  display: block; /* Ayuda con el centrado */
+  margin: 0 auto; /* Centra la imagen horizontalmente */
+} 
   </style>
 </head>
 <body>
 
   <aside class="sidebar" id="sidebar">
     <div class="logo">
-      <div class="inf">INFINITI</div>
-      <div class="kap">KAPITAL</div>
-    </div>
+  <img src="logo-infiniti-kapital.jpg" alt="Logo Infiniti Kapital" style="width: 100%; height: auto;">
+</div>
     <nav class="nav" id="nav">
       <a href="#" class="nav-item active" data-target="dashboard">
         <span class="icon"><i class="fa-solid fa-chart-line"></i></span>Dashboard</a>
