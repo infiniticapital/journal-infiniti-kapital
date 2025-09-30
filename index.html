@@ -535,10 +535,36 @@
           <button class="close-modal" data-close>&times;</button>
         </div>
         <div class="modal-body">
-          <div class="form-group"><label>Par</label>
-            <select id="trade-pair-input" class="form-control">
-              <option value="EURUSD">EUR/USD</option><option value="GBPUSD">GBP/USD</option><option value="USDJPY">USD/JPY</option>
-            </select></div>
+         <div class="form-group"><label>Par / Activo</label>
+  <select id="trade-pair-input" class="form-control">
+    <optgroup label="Pares Mayores (Majors)">
+        <option value="EURUSD">EUR/USD</option>
+        <option value="GBPUSD">GBP/USD</option>
+        <option value="USDJPY">USD/JPY</option>
+        <option value="USDCAD">USD/CAD</option>
+        <option value="AUDUSD">AUD/USD</option>
+        <option value="NZDUSD">NZD/USD</option>
+        <option value="USDCHF">USD/CHF</option>
+    </optgroup>
+    <optgroup label="Índices">
+        <option value="US30">US30 (Dow Jones)</option>
+        <option value="NAS100">NAS100 (Nasdaq)</option>
+        <option value="SPX500">SPX500 (S&P 500)</option>
+        <option value="GER30">GER30 (DAX)</option>
+        <option value="UK100">UK100 (FTSE 100)</option>
+    </optgroup>
+    <optgroup label="Criptomonedas">
+        <option value="BTCUSD">BTC/USD</option>
+        <option value="ETHUSD">ETH/USD</option>
+        <option value="XRPUSD">XRP/USD</option>
+    </optgroup>
+    <optgroup label="Materias Primas">
+        <option value="XAUUSD">XAU/USD (Oro)</option>
+        <option value="XAGUSD">XAG/USD (Plata)</option>
+        <option value="USOIL">USOIL (Petróleo WTI)</option>
+    </optgroup>
+  </select>
+</div>
           <div class="form-group"><label>Tipo</label>
             <select id="trade-type-input" class="form-control"><option value="buy">Compra</option><option value="sell">Venta</option></select></div>
           <div class="form-group"><label>Resultado ($)</label><input id="trade-result-input" type="number" class="form-control" placeholder="Ej: 250.50" step="0.01" /></div>
@@ -1652,6 +1678,29 @@ $('#save-account-btn')?.addEventListener('click', async () => {
   } catch (error) {
     console.error("Error guardando la cuenta:", error);
     alert('Hubo un error al guardar la cuenta.');
+  }
+});
+
+    // AÑADE ESTE CÓDIGO PARA HACER FUNCIONAR EL BOTÓN DE GUARDAR OPERACIÓN
+$('#save-trade-btn')?.addEventListener('click', async () => {
+  const tradeData = {
+    id: $('#editing-trade-id').value,
+    pair: $('#trade-pair-input').value,
+    type: $('#trade-type-input').value,
+    result: parseFloat($('#trade-result-input').value) || 0,
+    strategyId: $('#trade-strategy-input').value,
+    risk: parseFloat($('#trade-risk-input').value) || 0,
+    reward: parseFloat($('#trade-reward-input').value) || 0,
+    inChallenge: $('#trade-challenge-input').value === 'yes'
+  };
+
+  try {
+    await saveTrade(tradeData);
+    closeAllModals();
+    // No mostramos alerta para que el flujo sea más rápido
+  } catch (error) {
+    console.error("Error guardando la operación:", error);
+    alert('Hubo un error al guardar la operación.');
   }
 });
     
