@@ -1219,7 +1219,7 @@
           await signInWithEmailAndPassword(auth, email, pass);
         } else {
           const createUser = httpsCallable(functions, 'createUserWithInvite');
-          await createUser({ email, password, displayName: name, inviteCode });
+        await createUser({ email, password: pass, displayName: name, inviteCode });
           await signInWithEmailAndPassword(auth, email, pass);
         }
         closeAllModals();
