@@ -1594,6 +1594,24 @@
     }
     $('#btn-refresh-users')?.addEventListener('click', loadUsersTable);
 
+    $('#save-challenge-settings-btn')?.addEventListener('click', async () => {
+  const settings = {
+    initialBalance: parseFloat($('#challenge-balance').value) || 100000,
+    profitTarget: parseFloat($('#challenge-target').value) || 10,
+    maxLoss: parseFloat($('#challenge-max-loss').value) || 10,
+    dailyLoss: parseFloat($('#challenge-daily-loss').value) || 5
+  };
+
+  try {
+    // Llama a la función que ya existe para guardar en Firebase
+    await saveChallengeSettings(settings);
+    closeAllModals();
+    alert('Ajustes del Challenge guardados correctamente.');
+  } catch (error) {
+    console.error("Error guardando ajustes del challenge:", error);
+    alert('Hubo un error al guardar los ajustes.');
+  }
+});
   </script>
 </body>
 </html>
