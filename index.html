@@ -1612,6 +1612,30 @@
     alert('Hubo un error al guardar los ajustes.');
   }
 });
+
+// AÑADE ESTE CÓDIGO PARA HACER FUNCIONAR EL BOTÓN DE GUARDAR CUENTA
+$('#save-account-btn')?.addEventListener('click', async () => {
+  const accountData = {
+    id: $('#editing-account-id').value,
+    name: $('#account-name').value.trim(),
+    balance: parseFloat($('#account-balance').value) || 0,
+    type: $('#account-type').value
+  };
+
+  if (!accountData.name) {
+    return alert('Por favor, ingresa un nombre para la cuenta.');
+  }
+
+  try {
+    await saveAccount(accountData);
+    closeAllModals();
+    alert('Cuenta guardada correctamente.');
+  } catch (error) {
+    console.error("Error guardando la cuenta:", error);
+    alert('Hubo un error al guardar la cuenta.');
+  }
+});
+    
   </script>
 </body>
 </html>
