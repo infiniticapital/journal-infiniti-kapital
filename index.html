@@ -256,10 +256,25 @@
         <iframe src="https://sslecal2.investing.com?columns=exc_flags,exc_currency,exc_importance,exc_actual,exc_forecast,exc_previous&features=datepicker,timezone&countries=25,32,6,37,72,22,17,39,14,48,10,35,43,5,36,110,11,26,12,4,13,42,41,29&calType=day&timeZone=8&lang=56" width="100%" height="400" frameborder="0" allowtransparency="true" marginwidth="0" marginheight="0"></iframe>
       </div>
       <div class="card challenge"><div class="card-header"><div class="card-title">FTMO Challenge</div><button class="btn-icon" id="edit-challenge"><i class="fa-solid fa-pen"></i></button></div>
-        <div>
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+    <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
             <span>Progreso</span><span id="challenge-progress-value">0%</span>
-          </div>
+        </div>
+        <div style="height:10px;background:#334155;border-radius:6px;overflow:hidden"><div id="challenge-progress-bar" style="height:100%;width:0%;background:var(--success)"></div></div>
+
+        <div class="metric-card" style="margin-top: 10px;">
+            <div class="metric-val" id="challenge-initial-balance">$0.00</div>
+            <div class="metric-lab">Saldo Inicial</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:10px">
+            <div class="metric-card"><div class="metric-val" id="challenge-profit">+0.0%</div><div class="metric-lab">Beneficio</div></div>
+            <div class="metric-card"><div class="metric-val" id="challenge-drawdown">0.0%</div><div class="metric-lab">Drawdown</div></div>
+            <div class="metric-card"><div class="metric-val" id="challenge-trades">0</div><div class="metric-lab">Operaciones</div></div>
+            <div class="metric-card"><div class="metric-val" id="challenge-win-rate">0%</div><div class="metric-lab">Acierto</div></div>
+        </div>
+    </div>
+</div>
           <div style="height:10px;background:#334155;border-radius:6px;overflow:hidden"><div id="challenge-progress-bar" style="height:100%;width:0%;background:var(--success)"></div></div>
           <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:10px">
             <div class="metric-card"><div class="metric-val" id="challenge-profit">+0.0%</div><div class="metric-lab">Beneficio</div></div>
@@ -950,24 +965,28 @@
       });
     }
     function updateChallengeTrackerUI(progress) {
-      const p = progress || {};
-      const profitPercent = p.profitPercent || 0;
-      const target = p.profitTargetPercent || 10;
-      const progressPercent = target > 0 ? (profitPercent / target) * 100 : 0;
-      $('#challenge-profit').textContent = `${profitPercent.toFixed(2)}%`;
-      $('#challenge-drawdown').textContent = `${p.drawdownPercent?.toFixed(2) || 0.00}%`;
-      $('#challenge-trades').textContent = p.tradeCount || 0;
-      $('#challenge-win-rate').textContent = `${p.winRate?.toFixed(1) || 0}%`;
-      $('#challenge-progress-value').textContent = `${progressPercent.toFixed(1)}%`;
-      const progressBar = $('#challenge-progress-bar');
-      if (progressBar) progressBar.style.width = `${Math.min(100, progressPercent)}%`;
-      const ddElement = $('#challenge-drawdown').closest('.metric-card');
-      if (ddElement) {
+    const p = progress || {};
+    const settings = window.__currentSettings || {}; // Obtenemos los ajustes guardados
+    const profitPercent = p.profitPercent || 0;
+    const target = p.profitTargetPercent || 10;
+    const progressPercent = target > 0 ? (profitPercent / target) * 100 : 0;
+
+    // LÍNEA AÑADIDA PARA MOSTRAR EL SALDO INICIAL
+    $('#challenge-initial-balance').textContent = `$${(settings.initialBalance || 0).toFixed(2)}`;
+
+    $('#challenge-profit').textContent = `${profitPercent.toFixed(2)}%`;
+    $('#challenge-drawdown').textContent = `${p.drawdownPercent?.toFixed(2) || 0.00}%`;
+    $('#challenge-trades').textContent = p.tradeCount || 0;
+    $('#challenge-win-rate').textContent = `${p.winRate?.toFixed(1) || 0}%`;
+    $('#challenge-progress-value').textContent = `${progressPercent.toFixed(1)}%`;
+    const progressBar = $('#challenge-progress-bar');
+    if (progressBar) progressBar.style.width = `${Math.min(100, progressPercent)}%`;
+    const ddElement = $('#challenge-drawdown').closest('.metric-card');
+    if (ddElement) {
         const isViolated = (p.drawdownPercent || 0) >= (p.maxLossPercent || 10);
         ddElement.style.backgroundColor = isViolated ? 'rgba(239, 68, 68, .4)' : '';
-      }
     }
-    
+}
     function calculateRiskMetrics(trades, initialBalance) {
         if (!initialBalance || initialBalance === 0) {
             $('#daily-risk').textContent = '0.0%';
