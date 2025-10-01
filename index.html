@@ -417,18 +417,18 @@
     
     <section id="seguimiento" class="section">
        <div class="card" style="grid-column: span 6;">
-    <div class="card-header"><div class="card-title">Metas Semanales</div></div>
-    <div class="form-group">
-        <label>Objetivo de Beneficio ($)</label>
-        <input id="weekly-goal-input" type="number" class="form-control" placeholder="Ej: 1500">
-    </div>
-    <div class="form-group">
-        <label>Progreso Actual</label>
-        <div style="height:10px;background:#334155;border-radius:6px;overflow:hidden; margin-top: 4px;">
-            <div id="weekly-progress-bar" style="height:100%;width:0%;background:var(--success)"></div>
+        <div class="card-header"><div class="card-title">Metas Semanales</div></div>
+        <div class="form-group">
+            <label>Objetivo de Beneficio ($)</label>
+            <input id="weekly-goal-input" type="number" class="form-control" placeholder="Ej: 1500">
         </div>
-    </div>
-</div>       
+        <div class="form-group">
+            <label>Progreso Actual</label>
+            <div style="height:10px;background:#334155;border-radius:6px;overflow:hidden; margin-top: 4px;">
+                <div id="weekly-progress-bar" style="height:100%;width:0%;background:var(--success)"></div>
+            </div>
+        </div>
+    </div>       
       <div class="card" style="grid-column: span 6;">
             <div class="card-header"><div class="card-title">Checklist del Trader</div></div>
             <div class="form-group">
@@ -439,9 +439,9 @@
         </div>
         <div class="card" style="grid-column: 1 / -1;">
             <div class="card-header"><div class="card-title">Notas de la Sesión</div></div>
-            <textarea class="form-control" placeholder="¿Cómo te sentiste hoy? ¿Qué aprendiste?"></textarea>
+            <textarea id="session-note-textarea" class="form-control" placeholder="¿Cómo te sentiste hoy? ¿Qué aprendiste?"></textarea>
             <div style="text-align: right; margin-top: 10px;">
-                <button class="btn primary">Guardar Nota</button>
+                <button id="btn-save-note" class="btn primary">Guardar Nota</button>
             </div>
         </div>
     </section>
@@ -482,7 +482,7 @@
     </section>
     
     <section id="admin" class="section">
-      <div class="card" style="grid-column: 1/-1;">
+      <div class="card" style="grid-column: 1 / -1;">
         <div class="card-header">
           <div class="card-title">Panel de Administración</div>
           <button class="btn primary" id="btn-refresh-users"><i class="fa-solid fa-rotate"></i> Actualizar Usuarios</button>
@@ -1394,6 +1394,28 @@ const firebaseConfig = {
         }
     });
 
+    // CÓDIGO PARA EL BOTÓN DE GUARDAR NOTA
+    $('#btn-save-note')?.addEventListener('click', async () => {
+        const noteText = $('#session-note-textarea').value.trim();
+        if (!noteText) {
+            return alert('La nota no puede estar vacía.');
+        }
+        const user = auth.currentUser;
+        if (!user) return alert('Debes iniciar sesión para guardar notas.');
+        try {
+            await addDoc(collection(db, 'users', user.uid, 'notes'), {
+                text: noteText,
+                createdAt: serverTimestamp(),
+                dateStr: new Date().toISOString().slice(0, 10)
+            });
+            $('#session-note-textarea').value = '';
+            alert('Nota guardada.');
+        } catch (error) {
+           console.error("Error guardando la nota:", error);
+            alert('No se pudo guardar la nota.');
+        }
+    });
+
     // Firestore interaction functions
     async function saveTrade(tradeData){
       const user = auth.currentUser; if (!user) return;
@@ -1568,31 +1590,49 @@ const firebaseConfig = {
       renderAnalytics(filteredTrades);
       renderCalendar(allTrades);
       updateChallengeTrackerUI(calculateChallengeProgress(allTrades, settings));
+      updateWeeklyProgress(); // <-- LÍNEA AÑADIDA
     }
     
-function calculateChallengeProgress(trades, settings) {
-  if (!settings || !settings.initialBalance) return {};
-  const initialBalance = settings.initialBalance;
-  let peakEquity = initialBalance;
-  let currentEquity = initialBalance;
-  let maxDrawdown = 0;
-  const challengeTrades = (trades || []).filter(t => t.inChallenge);
-  challengeTrades.forEach(trade => {
-    currentEquity += trade.result;
-    peakEquity = Math.max(peakEquity, currentEquity);
-    const drawdown = peakEquity - currentEquity;
-    maxDrawdown = Math.max(maxDrawdown, drawdown);
-  });
-  const totalProfit = currentEquity - initialBalance;
-  const profitPercent = (totalProfit / initialBalance) * 100;
-  const drawdownPercent = (maxDrawdown / initialBalance) * 100;
-  const wins = challengeTrades.filter(t => t.result > 0).length;
-  const winRate = challengeTrades.length ? (wins / challengeTrades.length) * 100 : 0;
-  return {
-    profitPercent, drawdownPercent, tradeCount: challengeTrades.length, winRate,
-    profitTargetPercent: settings.profitTarget, maxLossPercent: settings.maxLoss
-  };
-}    
+    // NUEVA FUNCIÓN PARA PROGRESO SEMANAL
+    function updateWeeklyProgress() {
+        const goal = parseFloat($('#weekly-goal-input').value) || 0;
+        if (goal === 0) {
+            $('#weekly-progress-bar').style.width = '0%';
+            return;
+        }
+        const trades = window.__currentTrades || [];
+        const now = new Date();
+        const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + 1)).toISOString().slice(0, 10);
+        const weeklyProfit = trades
+            .filter(t => t.dateStr >= startOfWeek && t.result > 0)
+            .reduce((sum, t) => sum + t.result, 0);
+        const progress = Math.min(100, (weeklyProfit / goal) * 100);
+        $('#weekly-progress-bar').style.width = `${progress}%`;
+    }
+
+    function calculateChallengeProgress(trades, settings) {
+      if (!settings || !settings.initialBalance) return {};
+      const initialBalance = settings.initialBalance;
+      let peakEquity = initialBalance;
+      let currentEquity = initialBalance;
+      let maxDrawdown = 0;
+      const challengeTrades = (trades || []).filter(t => t.inChallenge);
+      challengeTrades.forEach(trade => {
+        currentEquity += trade.result;
+        peakEquity = Math.max(peakEquity, currentEquity);
+        const drawdown = peakEquity - currentEquity;
+        maxDrawdown = Math.max(maxDrawdown, drawdown);
+      });
+      const totalProfit = currentEquity - initialBalance;
+      const profitPercent = (totalProfit / initialBalance) * 100;
+      const drawdownPercent = (maxDrawdown / initialBalance) * 100;
+      const wins = challengeTrades.filter(t => t.result > 0).length;
+      const winRate = challengeTrades.length ? (wins / challengeTrades.length) * 100 : 0;
+      return {
+        profitPercent, drawdownPercent, tradeCount: challengeTrades.length, winRate,
+        profitTargetPercent: settings.profitTarget, maxLossPercent: settings.maxLoss
+      };
+    }    
     // Delegated event listener for main content area
     $('main')?.addEventListener('click', (e) => {
       const editAccountBtn = e.target.closest('.btn-edit-account');
