@@ -1629,7 +1629,7 @@ const firebaseConfig = {
             $('#btn-open-auth').classList.remove('hidden');
             $('#welcome-message').textContent = "Inicia sesión para guardar tus operaciones en la nube.";
 
-            // Reset UI
+            // Reset UI on logout
             const empty = [];
             window.__currentTrades = empty;
             window.__currentAccounts = empty;
@@ -1649,12 +1649,16 @@ const firebaseConfig = {
             updateChallengeTrackerUI(null);
             renderNotesHistory(empty);
 
-            // Clear admin panel
+            // Clear admin panel completely on logout
             if ($('#admin-users-tbody')) $('#admin-users-tbody').innerHTML = '';
             if ($('#invite-codes-list')) $('#invite-codes-list').innerHTML = '';
             if ($('#admin-user-detail')) $('#admin-user-detail').textContent = 'Selecciona un usuario…';
+            // --- LÍNEAS AÑADIDAS PARA LIMPIAR EL PANEL DE ADMIN ---
+            if ($('#admin-user-accounts')) $('#admin-user-accounts').innerHTML = '—';
+            if ($('#admin-user-trades')) $('#admin-user-trades').innerHTML = '—';
+            // --- FIN DE LAS LÍNEAS AÑADIDAS ---
         }
-    });
+    });    
 
     window.updateAllCalculations = () => {
       const allTrades = window.__currentTrades || [];
