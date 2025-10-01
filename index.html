@@ -1540,6 +1540,29 @@ const firebaseConfig = {
       updateChallengeTrackerUI(calculateChallengeProgress(allTrades, settings));
     }
     
+function calculateChallengeProgress(trades, settings) {
+  if (!settings || !settings.initialBalance) return {};
+  const initialBalance = settings.initialBalance;
+  let peakEquity = initialBalance;
+  let currentEquity = initialBalance;
+  let maxDrawdown = 0;
+  const challengeTrades = (trades || []).filter(t => t.inChallenge);
+  challengeTrades.forEach(trade => {
+    currentEquity += trade.result;
+    peakEquity = Math.max(peakEquity, currentEquity);
+    const drawdown = peakEquity - currentEquity;
+    maxDrawdown = Math.max(maxDrawdown, drawdown);
+  });
+  const totalProfit = currentEquity - initialBalance;
+  const profitPercent = (totalProfit / initialBalance) * 100;
+  const drawdownPercent = (maxDrawdown / initialBalance) * 100;
+  const wins = challengeTrades.filter(t => t.result > 0).length;
+  const winRate = challengeTrades.length ? (wins / challengeTrades.length) * 100 : 0;
+  return {
+    profitPercent, drawdownPercent, tradeCount: challengeTrades.length, winRate,
+    profitTargetPercent: settings.profitTarget, maxLossPercent: settings.maxLoss
+  };
+}    
     // Delegated event listener for main content area
     $('main')?.addEventListener('click', (e) => {
       const editAccountBtn = e.target.closest('.btn-edit-account');
