@@ -1021,29 +1021,29 @@
       });
     }
     
-    function updateChallengeTrackerUI(progress) {
-        const p = progress || {};
-        const settings = window.__currentSettings || {};
-        const profitPercent = p.profitPercent || 0;
-        const target = p.profitTargetPercent || 10;
-        const progressPercent = target > 0 ? (profitPercent / target) * 100 : 0;
-        
-        const initialBalanceEl = $('#challenge-initial-balance');
-        if(initialBalanceEl) initialBalanceEl.textContent = `$${(settings.initialBalance || 0).toFixed(2)}`;
-        
-        $('#challenge-profit').textContent = `${profitPercent.toFixed(2)}%`;
-        $('#challenge-drawdown').textContent = `${p.drawdownPercent?.toFixed(2) || 0.00}%`;
-        $('#challenge-trades').textContent = p.tradeCount || 0;
-        $('#challenge-win-rate').textContent = `${p.winRate?.toFixed(1) || 0}%`;
-        $('#challenge-progress-value').textContent = `${progressPercent.toFixed(1)}%`;
-        const progressBar = $('#challenge-progress-bar');
-        if (progressBar) progressBar.style.width = `${Math.min(100, progressPercent)}%`;
-        const ddElement = $('#challenge-drawdown').closest('.metric-card');
-        if (ddElement) {
-            const isViolated = (p.drawdownPercent || 0) >= (p.maxLossPercent || 10);
-            ddElement.style.backgroundColor = isViolated ? 'rgba(239, 68, 68, .4)' : '';
-        }
+  function updateChallengeTrackerUI(progress) {
+    const p = progress || {};
+    const settings = window.__currentSettings || {}; // Obtenemos los ajustes guardados
+    const profitPercent = p.profitPercent || 0;
+    const target = p.profitTargetPercent || 10;
+    const progressPercent = target > 0 ? (profitPercent / target) * 100 : 0;
+
+    const initialBalanceEl = $('#challenge-initial-balance');
+    if(initialBalanceEl) initialBalanceEl.textContent = `$${(settings.initialBalance || 0).toFixed(2)}`;
+
+    $('#challenge-profit').textContent = `${profitPercent.toFixed(2)}%`;
+    $('#challenge-drawdown').textContent = `${p.drawdownPercent?.toFixed(2) || 0.00}%`;
+    $('#challenge-trades').textContent = p.tradeCount || 0;
+    $('#challenge-win-rate').textContent = `${p.winRate?.toFixed(1) || 0}%`;
+    $('#challenge-progress-value').textContent = `${progressPercent.toFixed(1)}%`;
+    const progressBar = $('#challenge-progress-bar');
+    if (progressBar) progressBar.style.width = `${Math.min(100, progressPercent)}%`;
+    const ddElement = $('#challenge-drawdown').closest('.metric-card');
+    if (ddElement) {
+        const isViolated = (p.drawdownPercent || 0) >= (p.maxLossPercent || 10);
+        ddElement.style.backgroundColor = isViolated ? 'rgba(239, 68, 68, .4)' : '';
     }
+}
     
     function calculateRiskMetrics(trades, initialBalance) {
         if (!initialBalance || initialBalance === 0) {
