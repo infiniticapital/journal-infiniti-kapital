@@ -1151,127 +1151,155 @@
     }
     
     // All UI event listeners are here to ensure the DOM is ready
-    document.addEventListener('DOMContentLoaded', ()=>{
-      setDate();
-      initCharts();
-      restoreAccordionState();
+   document.addEventListener('DOMContentLoaded', ()=>{
+  setDate();
+  initCharts();
+  restoreAccordionState();
 
-      (function(){ // sidebar toggle logic
-        const burger = document.getElementById('burger');
-        const backdrop = document.getElementById('drawerBackdrop');
-        const open = ()=>{ document.body.classList.add('sidebar-open'); burger?.setAttribute('aria-expanded','true'); document.body.style.overflow='hidden'; };
-        const close= ()=>{ document.body.classList.remove('sidebar-open'); burger?.setAttribute('aria-expanded','false'); document.body.style.overflow=''; };
-        const toggle=()=> document.body.classList.contains('sidebar-open') ? close() : open();
-        burger?.addEventListener('click', toggle);
-        backdrop?.addEventListener('click', close);
-        window.addEventListener('keydown', e=>{ if(e.key==='Escape') close(); });
-        $$('.nav a[data-target], .submenu a[data-target]').forEach(el=>{
-          el.addEventListener('click', ()=>{ if (window.matchMedia('(max-width:860px)').matches) close(); });
-        });
-      })();
+  let reportDataForExport = []; // Variable para guardar los datos del reporte
 
-      $$('.nav a[data-target], .submenu a[data-target]').forEach(a=>a.addEventListener('click', e=>{
-        e.preventDefault(); 
-        const id = a.dataset.target; 
-        if (id) setActiveSection(id);
-      }));
-      
-      $$('.nav button.nav-link').forEach(clickedBtn => {
-        clickedBtn.addEventListener('click', () => {
-          const targetPanelId = clickedBtn.getAttribute('aria-controls');
-          const targetPanel = $(`#${targetPanelId}`);
-          if(!targetPanel) return;
-          const isAlreadyOpen = targetPanel.classList.contains('open');
-
-          $$('.submenu.open').forEach(openPanel => {
-            if (openPanel.id !== targetPanelId) {
-                openPanel.classList.remove('open');
-                const correspondingBtn = $(`[aria-controls="${openPanel.id}"]`);
-                if(correspondingBtn) correspondingBtn.setAttribute('aria-expanded', 'false');
-            }
-          });
-
-          if (!isAlreadyOpen) {
-            targetPanel.classList.add('open');
-            clickedBtn.setAttribute('aria-expanded', 'true');
-          } else {
-            targetPanel.classList.remove('open');
-            clickedBtn.setAttribute('aria-expanded', 'false');
-          }
-
-          persistAccordionState();
-        });
-      });
-
-      $$('[data-close]').forEach(x=>x.addEventListener('click', closeAllModals));
-      window.addEventListener('click', e=>{ if (e.target.classList && e.target.classList.contains('modal')) closeAllModals(); });
-      
-      $('#analytics-strategy-filter')?.addEventListener('change', () => {
-        (window.updateAllCalculations || (()=>{}))();
-      });
-
-      $('#edit-challenge')?.addEventListener('click', () => {
-        const settings = window.__currentSettings || {};
-        $('#challenge-balance').value = settings.initialBalance || 100000;
-        $('#challenge-target').value = settings.profitTarget || 10;
-        $('#challenge-max-loss').value = settings.maxLoss || 10;
-        $('#challenge-daily-loss').value = settings.dailyLoss || 5;
-        openModalById('challenge-settings-modal');
-      });
-
-      $('#save-general-settings-btn')?.addEventListener('click', () => {
-          const settings = {
-              initialBalance: parseFloat($('#settings-initial-balance').value) || 10000
-          };
-          (window.saveGeneralSettings || (()=>{}))(settings);
-      });
-      
-      $('#refresh-distribution')?.addEventListener('click', () => (window.updateAllCalculations || (()=>{}))());
-      
-      $('#expand-balance-chart')?.addEventListener('click', () => {
-        openModalById('balance-chart-modal');
-        setTimeout(() => modalBalanceChart && modalBalanceChart.resize(), 50);
-      });
-
-      $('#generate-report-btn')?.addEventListener('click', () => {
-        const startDate = $('#report-start-date').value;
-        const endDate = $('#report-end-date').value;
-        if (!startDate || !endDate) {
-          alert('Por favor, selecciona una fecha de inicio y de fin.');
-          return;
-        }
-        const allTrades = (window.__currentTrades || []).sort((a,b) => (a.createdAt?.toMillis() || 0) - (b.createdAt?.toMillis() || 0));
-        const filteredTrades = allTrades.filter(t => t.dateStr >= startDate && t.dateStr <= endDate);
-        const wins = filteredTrades.filter(x => x.result > 0);
-        const losses = filteredTrades.filter(x => x.result < 0);
-        const totalProfit = filteredTrades.reduce((sum, t) => sum + t.result, 0);
-        const winRate = filteredTrades.length ? (wins.length / filteredTrades.length) * 100 : 0;
-        const totalWins = wins.reduce((s, x) => s + x.result, 0);
-        const totalLoss = Math.abs(losses.reduce((s, x) => s + x.result, 0));
-        const profitFactor = totalLoss ? totalWins / totalLoss : 0;
-        $('#report-total-profit').textContent = `$${totalProfit.toFixed(2)}`;
-        $('#report-total-trades').textContent = filteredTrades.length;
-        $('#report-win-rate').textContent = `${winRate.toFixed(1)}%`;
-        $('#report-profit-factor').textContent = profitFactor.toFixed(2);
-        const reportTbody = $('#report-table-body');
-        if(reportTbody){
-          reportTbody.innerHTML = filteredTrades.length > 0 ? filteredTrades.map(t => {
-            const resultColor = (t.result || 0) >= 0 ? 'var(--success)' : 'var(--danger)';
-            return `
-              <tr style="border-bottom: 1px solid var(--border);">
-                <td style="padding:10px;">${t.dateStr}</td><td style="padding:10px;">${t.pair}</td>
-                <td style="padding:10px;">${t.type.toUpperCase()}</td><td style="padding:10px; text-align:right; color:${resultColor};">$${t.result.toFixed(2)}</td>
-              </tr>`;
-          }).join('') : `<tr><td colspan="4" style="text-align:center; padding: 12px; color: var(--muted);">No hay operaciones en este rango.</td></tr>`;
-        }
-        $('#report-results').classList.remove('hidden');
-      });
-      
-      $('#add-trade-btn')?.addEventListener('click', openNewTradeModal);
-      $('#floating-add-trade-btn')?.addEventListener('click', openNewTradeModal);
-      $('#quick-add-trade')?.addEventListener('click', (e)=>{ e.preventDefault(); openNewTradeModal(); });
+  // Lógica para el menú lateral en móviles
+  ;(function(){
+    const burger = document.getElementById('burger');
+    const backdrop = document.getElementById('drawerBackdrop');
+    const open = ()=>{ document.body.classList.add('sidebar-open'); burger?.setAttribute('aria-expanded','true'); document.body.style.overflow='hidden'; };
+    const close= ()=>{ document.body.classList.remove('sidebar-open'); burger?.setAttribute('aria-expanded','false'); document.body.style.overflow=''; };
+    const toggle=()=> document.body.classList.contains('sidebar-open') ? close() : open();
+    burger?.addEventListener('click', toggle);
+    backdrop?.addEventListener('click', close);
+    window.addEventListener('keydown', e=>{ if(e.key==='Escape') close(); });
+    $$('.nav a[data-target], .submenu a[data-target]').forEach(el=>{
+      el.addEventListener('click', ()=>{ if (window.matchMedia('(max-width:860px)').matches) close(); });
     });
-  </script>
+  })();
+
+  // Lógica para la navegación principal
+  $$('.nav a[data-target], .submenu a[data-target]').forEach(a=>a.addEventListener('click', e=>{
+    e.preventDefault(); 
+    const id = a.dataset.target; 
+    if (id) setActiveSection(id);
+  }));
+  
+  // Lógica para los submenús (acordeón)
+  $$('.nav button.nav-link').forEach(clickedBtn => {
+    clickedBtn.addEventListener('click', () => {
+      const targetPanelId = clickedBtn.getAttribute('aria-controls');
+      const targetPanel = $(`#${targetPanelId}`);
+      if(!targetPanel) return;
+      const isAlreadyOpen = targetPanel.classList.contains('open');
+      $$('.submenu.open').forEach(openPanel => {
+        if (openPanel.id !== targetPanelId) {
+            openPanel.classList.remove('open');
+            const correspondingBtn = $(`[aria-controls="${openPanel.id}"]`);
+            if(correspondingBtn) correspondingBtn.setAttribute('aria-expanded', 'false');
+        }
+      });
+      if (!isAlreadyOpen) {
+        targetPanel.classList.add('open');
+        clickedBtn.setAttribute('aria-expanded', 'true');
+      } else {
+        targetPanel.classList.remove('open');
+        clickedBtn.setAttribute('aria-expanded', 'false');
+      }
+      persistAccordionState();
+    });
+  });
+
+  // Lógica para cerrar modales y otros listeners de UI
+  $$('[data-close]').forEach(x=>x.addEventListener('click', closeAllModals));
+  window.addEventListener('click', e=>{ if (e.target.classList && e.target.classList.contains('modal')) closeAllModals(); });
+  
+  $('#analytics-strategy-filter')?.addEventListener('change', () => (window.updateAllCalculations || (()=>{}))() );
+  
+  $('#edit-challenge')?.addEventListener('click', () => {
+    const settings = window.__currentSettings || {};
+    $('#challenge-balance').value = settings.initialBalance || 100000;
+    $('#challenge-target').value = settings.profitTarget || 10;
+    $('#challenge-max-loss').value = settings.maxLoss || 10;
+    $('#challenge-daily-loss').value = settings.dailyLoss || 5;
+    openModalById('challenge-settings-modal');
+  });
+
+  $('#save-general-settings-btn')?.addEventListener('click', () => {
+      const settings = { initialBalance: parseFloat($('#settings-initial-balance').value) || 10000 };
+      (window.saveGeneralSettings || (()=>{}))(settings);
+  });
+  
+  $('#refresh-distribution')?.addEventListener('click', () => (window.updateAllCalculations || (()=>{}))());
+  
+  $('#expand-balance-chart')?.addEventListener('click', () => {
+    openModalById('balance-chart-modal');
+    setTimeout(() => modalBalanceChart && modalBalanceChart.resize(), 50);
+  });
+  
+  $('#add-trade-btn')?.addEventListener('click', openNewTradeModal);
+  $('#floating-add-trade-btn')?.addEventListener('click', openNewTradeModal);
+  $('#quick-add-trade')?.addEventListener('click', (e)=>{ e.preventDefault(); openNewTradeModal(); });
+
+  // ▼▼▼ BLOQUE DE CÓDIGO PARA REPORTES Y DESCARGA ▼▼▼
+  $('#generate-report-btn')?.addEventListener('click', () => {
+    const startDate = $('#report-start-date').value;
+    const endDate = $('#report-end-date').value;
+    if (!startDate || !endDate) {
+      return alert('Por favor, selecciona una fecha de inicio y de fin.');
+    }
+    const allTrades = (window.__currentTrades || []);
+    const filteredTrades = allTrades.filter(t => t.dateStr >= startDate && t.dateStr <= endDate);
+
+    reportDataForExport = filteredTrades;
+
+    const wins = filteredTrades.filter(x => x.result > 0);
+    const totalProfit = filteredTrades.reduce((sum, t) => sum + (t.result || 0), 0);
+    const winRate = filteredTrades.length ? (wins.length / filteredTrades.length) * 100 : 0;
+    const totalWins = wins.reduce((s, x) => s + (x.result || 0), 0);
+    const totalLoss = Math.abs(filteredTrades.filter(x => x.result < 0).reduce((s, x) => s + (x.result || 0), 0));
+    const profitFactor = totalLoss ? totalWins / totalLoss : 0;
+    $('#report-total-profit').textContent = `$${totalProfit.toFixed(2)}`;
+    $('#report-total-trades').textContent = filteredTrades.length;
+    $('#report-win-rate').textContent = `${winRate.toFixed(1)}%`;
+    $('#report-profit-factor').textContent = profitFactor.toFixed(2);
+    const reportTbody = $('#report-table-body');
+    if(reportTbody){
+      reportTbody.innerHTML = filteredTrades.length > 0 ? filteredTrades.map(t => {
+        const resultColor = (t.result || 0) >= 0 ? 'var(--success)' : 'var(--danger)';
+        return `
+          <tr style="border-bottom: 1px solid var(--border);">
+            <td style="padding:10px;">${t.dateStr}</td><td style="padding:10px;">${t.pair}</td>
+            <td style="padding:10px;">${(t.type || '').toUpperCase()}</td><td style="padding:10px; text-align:right; color:${resultColor};">$${(t.result || 0).toFixed(2)}</td>
+          </tr>`;
+      }).join('') : `<tr><td colspan="4" style="text-align:center; padding: 12px; color: var(--muted);">No hay operaciones en este rango.</td></tr>`;
+    }
+    $('#report-results').classList.remove('hidden');
+  });
+
+  $('#download-csv-btn')?.addEventListener('click', () => {
+    if (!reportDataForExport || reportDataForExport.length === 0) {
+      return alert('Primero debes generar un reporte para poder descargarlo.');
+    }
+    const headers = ['Fecha', 'Par', 'Tipo', 'Resultado ($)'];
+    const rows = reportDataForExport.map(trade => 
+      [
+        `"${trade.dateStr}"`,
+        `"${trade.pair}"`,
+        `"${(trade.type || '').toUpperCase()}"`,
+        (trade.result || 0).toFixed(2)
+      ].join(',')
+    );
+    const csvContent = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    const fileName = `reporte-trading-${new Date().toISOString().slice(0,10)}.csv`;
+    link.setAttribute("download", fileName);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  });
+  // ▲▲▲ FIN DEL BLOQUE DE REPORTE Y DESCARGA ▲▲▲
+
+}); // <-- FIN DEL DOMContentLoaded  </script>
   
   <script type="module">
     import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
