@@ -1336,7 +1336,7 @@ const firebaseConfig = {
 
     const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const db   = getFirestore(app);
+    window.auth = auth; 
     const functions = getFunctions(app);
     
     // Auth Modal Logic
