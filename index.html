@@ -416,18 +416,20 @@
     </section>
     
     <section id="seguimiento" class="section">
-        <div class="card" style="grid-column: span 6;">
-            <div class="card-header"><div class="card-title">Metas Semanales</div></div>
-            <div class="form-group">
-                <label>Objetivo de Beneficio ($)</label>
-                <input type="number" class="form-control" placeholder="Ej: 1500">
-            </div>
-            <div class="form-group">
-                <label>Progreso Actual</label>
-                <div style="height:10px;background:#334155;border-radius:6px;overflow:hidden; margin-top: 4px;"><div style="height:100%;width:45%;background:var(--success)"></div></div>
-            </div>
+       <div class="card" style="grid-column: span 6;">
+    <div class="card-header"><div class="card-title">Metas Semanales</div></div>
+    <div class="form-group">
+        <label>Objetivo de Beneficio ($)</label>
+        <input id="weekly-goal-input" type="number" class="form-control" placeholder="Ej: 1500">
+    </div>
+    <div class="form-group">
+        <label>Progreso Actual</label>
+        <div style="height:10px;background:#334155;border-radius:6px;overflow:hidden; margin-top: 4px;">
+            <div id="weekly-progress-bar" style="height:100%;width:0%;background:var(--success)"></div>
         </div>
-        <div class="card" style="grid-column: span 6;">
+    </div>
+</div>       
+      <div class="card" style="grid-column: span 6;">
             <div class="card-header"><div class="card-title">Checklist del Trader</div></div>
             <div class="form-group">
                 <label style="display:flex; align-items:center; gap: 8px;"><input type="checkbox" style="width: 18px; height: 18px;"> Revisé el calendario económico</label>
