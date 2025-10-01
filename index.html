@@ -252,28 +252,29 @@
         </div>
         <div class="chart"><canvas id="riskChart"></canvas></div>
       </div>
-      <div class="card news" style="height: 450px; padding: 0; overflow: hidden;">
-    <div class="tradingview-widget-container" style="height: 100%; width: 100%;">
-    <div id="tradingview_f928c" style="height: 100%; width: 100%;"></div>
-    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-    <script type="text/javascript">
-    new TradingView.widget(
-    {
-      "autosize": true,
-      "symbol": "FX:EURUSD",
-      "interval": "60",
-      "timezone": "Etc/UTC",
-      "theme": "dark",
-      "style": "1",
-      "locale": "es",
-      "enable_publishing": false,
-      "allow_symbol_change": true,
-      "container_id": "tradingview_f928c"
-    }
-    );
-    </script>
-  </div>
-</div>      <div class="card news"><div class="card-header"><div class="card-title">Calendario Económico</div></div>
+      <div class="card" style="grid-column: span 6; height: 450px; padding: 0; overflow: hidden;">
+        <div class="tradingview-widget-container" style="height: 100%; width: 100%;">
+          <div id="tradingview_f928c" style="height: 100%; width: 100%;"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+          <script type="text/javascript">
+          new TradingView.widget(
+          {
+            "autosize": true,
+            "symbol": "FX:EURUSD",
+            "interval": "60",
+            "timezone": "Etc/UTC",
+            "theme": "dark",
+            "style": "1",
+            "locale": "es",
+            "enable_publishing": false,
+            "allow_symbol_change": true,
+            "container_id": "tradingview_f928c"
+          }
+          );
+          </script>
+        </div>
+      </div>
+      <div class="card news"><div class="card-header"><div class="card-title">Calendario Económico</div></div>
         <iframe src="https://sslecal2.investing.com?columns=exc_flags,exc_currency,exc_importance,exc_actual,exc_forecast,exc_previous&features=datepicker,timezone&countries=25,32,6,37,72,22,17,39,14,48,10,35,43,5,36,110,11,26,12,4,13,42,41,29&calType=day&timeZone=8&lang=56" width="100%" height="400" frameborder="0" allowtransparency="true" marginwidth="0" marginheight="0"></iframe>
       </div>
       
@@ -442,6 +443,12 @@
             <textarea id="session-note-textarea" class="form-control" placeholder="¿Cómo te sentiste hoy? ¿Qué aprendiste?"></textarea>
             <div style="text-align: right; margin-top: 10px;">
                 <button id="btn-save-note" class="btn primary">Guardar Nota</button>
+            </div>
+        </div>
+        <div class="card" style="grid-column: 1 / -1;">
+            <div class="card-header"><div class="card-title">Historial de Notas</div></div>
+            <div id="notes-history-container" style="color: var(--muted);">
+                No hay notas guardadas.
             </div>
         </div>
     </section>
@@ -1416,6 +1423,22 @@ const firebaseConfig = {
         }
     });
 
+    $('#weekly-goal-input')?.addEventListener('blur', async () => {
+        const user = auth.currentUser;
+        if (!user) return; 
+
+        const goalValue = parseFloat($('#weekly-goal-input').value);
+        const settingsRef = doc(db, 'users', user.uid, 'settings', 'general');
+
+        try {
+            await setDoc(settingsRef, { 
+                weeklyGoal: isNaN(goalValue) ? 0 : goalValue 
+            }, { merge: true });
+        } catch (error) {
+            console.error("Error al guardar la meta semanal:", error);
+        }
+    });
+
     // Firestore interaction functions
     async function saveTrade(tradeData){
       const user = auth.currentUser; if (!user) return;
@@ -1473,6 +1496,23 @@ const firebaseConfig = {
       }
     }
 
+    function renderNotesHistory(notes) {
+        const container = $('#notes-history-container');
+        if (!container) return;
+
+        if (!notes || notes.length === 0) {
+            container.textContent = 'No hay notas guardadas.';
+            return;
+        }
+
+        container.innerHTML = notes.map(note => `
+            <div class="card" style="margin-bottom: 10px; background: var(--secondary);">
+                <p style="white-space: pre-wrap; margin: 0;">${note.text}</p>
+                <small style="display: block; text-align: right; color: var(--muted); margin-top: 8px;">${note.dateStr}</small>
+            </div>
+        `).join('');
+    }
+
     // Realtime listeners
     let unsubscribes = [];
     function cleanupListeners() {
@@ -1497,9 +1537,10 @@ const firebaseConfig = {
 
       const generalSettingsRef = doc(db, 'users', uid, 'settings', 'general');
       const unsubGeneralSettings = onSnapshot(generalSettingsRef, snap => {
-        const settings = snap.data() || { initialBalance: 10000 };
+        const settings = snap.data() || { initialBalance: 10000, weeklyGoal: '' };
         window.__currentGeneralSettings = settings;
         $('#settings-initial-balance').value = settings.initialBalance;
+        $('#weekly-goal-input').value = settings.weeklyGoal || '';
         (window.updateAllCalculations || (()=>{}))();
       });      
 
@@ -1517,8 +1558,14 @@ const firebaseConfig = {
         updateStrategiesDropdown(strategies);
         populateAnalyticsFilter(strategies);
       });
+      
+      const notesRef = collection(db, 'users', uid, 'notes');
+      const unsubNotes = onSnapshot(query(notesRef, orderBy('createdAt', 'desc')), snap => {
+          const notes = snap.docs.map(d => ({id: d.id, ...d.data()}));
+          renderNotesHistory(notes);
+      });
 
-      unsubscribes.push(unsubTrades, unsubSettings, unsubGeneralSettings, unsubAccounts, unsubStrategies);
+      unsubscribes.push(unsubTrades, unsubSettings, unsubGeneralSettings, unsubAccounts, unsubStrategies, unsubNotes);
     }
 
     // Main Auth State Change Handler
@@ -1571,6 +1618,7 @@ const firebaseConfig = {
             populateAnalyticsFilter(empty);
             recalcFromTrades(empty);
             updateChallengeTrackerUI(null);
+            renderNotesHistory(empty);
 
             // Clear admin panel
             if ($('#admin-users-tbody')) $('#admin-users-tbody').innerHTML = '';
@@ -1590,7 +1638,7 @@ const firebaseConfig = {
       renderAnalytics(filteredTrades);
       renderCalendar(allTrades);
       updateChallengeTrackerUI(calculateChallengeProgress(allTrades, settings));
-      updateWeeklyProgress(); // <-- LÍNEA AÑADIDA
+      updateWeeklyProgress();
     }
     
     // NUEVA FUNCIÓN PARA PROGRESO SEMANAL
