@@ -924,6 +924,120 @@ function renderAnalytics(trades) {
   const profitFactor = Math.abs(totalLossValue) ? totalWinsValue / Math.abs(totalLossValue) : 0;
   const avgRR = (wins.length && losses.length) ? (totalWinsValue / wins.length) / (Math.abs(totalLossValue) / losses.length) : 0;
 
+  // Añade esta nueva función completa en tu script
+let symbolVolumeChart = null; // Variable global para el gráfico
+
+function renderHistorySummary(trades) {
+    if (!trades) return;
+    const summary = {};
+    
+    // 1. Agrupar trades por símbolo y calcular estadísticas base
+    trades.forEach(trade => {
+        const symbol = trade.pair;
+        if (!summary[symbol]) {
+            summary[symbol] = {
+                netProfit: 0,
+                tradeCount: 0,
+                winCount: 0,
+            };
+        }
+        summary[symbol].netProfit += trade.result;
+        summary[symbol].tradeCount++;
+        if (trade.result > 0) {
+            summary[symbol].winCount++;
+        }
+    });
+
+    const totalTrades = trades.length;
+    const tbody = document.getElementById('history-summary-tbody');
+    if (!tbody) return;
+    tbody.innerHTML = ''; // Limpiar tabla
+
+    const chartLabels = [];
+    const chartData = [];
+    const chartColors = ['#10b981', '#ef4444', '#f59e0b', '#3b82f6', '#8b5cf6', '#ec4899'];
+
+    let totalNetProfit = 0;
+    let totalWins = 0;
+    
+    // 2. Renderizar la tabla con los datos agrupados
+    Object.keys(summary).sort().forEach(symbol => {
+        const data = summary[symbol];
+        totalNetProfit += data.netProfit;
+        totalWins += data.winCount;
+        
+        const lossCount = data.tradeCount - data.winCount;
+        const winRate = data.tradeCount > 0 ? (data.winCount / data.tradeCount) * 100 : 0;
+        const lossRate = data.tradeCount > 0 ? (lossCount / data.tradeCount) * 100 : 0;
+        const avgResult = data.tradeCount > 0 ? data.netProfit / data.tradeCount : 0;
+        const volumePercent = totalTrades > 0 ? (data.tradeCount / totalTrades) * 100 : 0;
+
+        const row = document.createElement('tr');
+        row.style.borderBottom = '1px solid var(--border)';
+        row.innerHTML = `
+            <td style="padding: 12px; font-weight: bold;">${symbol}</td>
+            <td style="padding: 12px; text-align: right; color: ${data.netProfit >= 0 ? 'var(--success)' : 'var(--danger)'};">$${data.netProfit.toFixed(2)}</td>
+            <td style="padding: 12px; text-align: right;">$${avgResult.toFixed(2)}</td>
+            <td style="padding: 12px; text-align: right;">${volumePercent.toFixed(2)}%</td>
+            <td style="padding: 12px; text-align: right;">${data.tradeCount}</td>
+            <td style="padding: 12px; text-align: right; color: var(--success);">${winRate.toFixed(2)}%</td>
+            <td style="padding: 12px; text-align: right; color: var(--danger);">${lossRate.toFixed(2)}%</td>
+        `;
+        tbody.appendChild(row);
+
+        chartLabels.push(symbol);
+        chartData.push(data.tradeCount);
+    });
+
+    // Añadir fila de totales
+    const totalLosses = totalTrades - totalWins;
+    const totalWinRate = totalTrades > 0 ? (totalWins / totalTrades) * 100 : 0;
+    const totalLossRate = totalTrades > 0 ? (totalLosses / totalTrades) * 100 : 0;
+    const totalAvgResult = totalTrades > 0 ? totalNetProfit / totalTrades : 0;
+
+    const footerRow = document.createElement('tr');
+    footerRow.style.fontWeight = 'bold';
+    footerRow.innerHTML = `
+        <td style="padding: 12px;">Todos los símbolos</td>
+        <td style="padding: 12px; text-align: right; color: ${totalNetProfit >= 0 ? 'var(--success)' : 'var(--danger)'};">$${totalNetProfit.toFixed(2)}</td>
+        <td style="padding: 12px; text-align: right;">$${totalAvgResult.toFixed(2)}</td>
+        <td style="padding: 12px; text-align: right;">100.00%</td>
+        <td style="padding: 12px; text-align: right;">${totalTrades}</td>
+        <td style="padding: 12px; text-align: right; color: var(--success);">${totalWinRate.toFixed(2)}%</td>
+        <td style="padding: 12px; text-align: right; color: var(--danger);">${totalLossRate.toFixed(2)}%</td>
+    `;
+    tbody.appendChild(footerRow);
+
+    // 3. Renderizar el gráfico Donut
+    const ctx = document.getElementById('symbol-volume-chart')?.getContext('2d');
+    if (!ctx) return;
+    if (symbolVolumeChart) {
+        symbolVolumeChart.destroy(); // Destruir gráfico anterior para evitar errores
+    }
+    symbolVolumeChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: chartLabels,
+            datasets: [{
+                label: 'Operaciones por Símbolo',
+                data: chartData,
+                backgroundColor: chartColors,
+                borderColor: 'var(--secondary)',
+                borderWidth: 2,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: { color: 'var(--text)' }
+                }
+            }
+        }
+    });
+}
   // --- ¡NUEVOS CÁLCULOS! ---
   const avgWin = wins.length > 0 ? totalWinsValue / wins.length : 0;
   const avgLoss = losses.length > 0 ? totalLossValue / losses.length : 0; // Este valor es negativo
