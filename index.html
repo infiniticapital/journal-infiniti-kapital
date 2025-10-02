@@ -1241,7 +1241,12 @@
     openModalById('balance-chart-modal');
     setTimeout(() => modalBalanceChart && modalBalanceChart.resize(), 50);
   });
-  
+
+      // Para que la barra de progreso se actualice mientras escribes la meta
+  $('#weekly-goal-input')?.addEventListener('input', () => {
+      (window.updateAllCalculations || (()=>{}))();
+  });
+     
   $('#add-trade-btn')?.addEventListener('click', openNewTradeModal);
   $('#floating-add-trade-btn')?.addEventListener('click', openNewTradeModal);
   $('#quick-add-trade')?.addEventListener('click', (e)=>{ e.preventDefault(); openNewTradeModal(); });
