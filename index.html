@@ -431,14 +431,13 @@
         </div>
     </div>       
       <div class="card" style="grid-column: span 6;">
-            <div class="card-header"><div class="card-title">Checklist del Trader</div></div>
-            <div class="form-group">
-                <label style="display:flex; align-items:center; gap: 8px;"><input type="checkbox" style="width: 18px; height: 18px;"> Revisé el calendario económico</label>
-                <label style="display:flex; align-items:center; gap: 8px; margin-top: 8px;"><input type="checkbox" style="width: 18px; height: 18px;"> Seguí mi plan de trading al 100%</label>
-                <label style="display:flex; align-items:center; gap: 8px; margin-top: 8px;"><input type="checkbox" style="width: 18px; height: 18px;"> No operé por venganza (revenge trading)</label>
-            </div>
-        </div>
-        <div class="card" style="grid-column: 1 / -1;">
+    <div class="card-header"><div class="card-title">Checklist del Trader</div></div>
+    <div class="form-group">
+        <label style="display:flex; align-items:center; gap: 8px;"><input type="checkbox" id="checklist-calendar" style="width: 18px; height: 18px;"> Revisé el calendario económico</label>
+        <label style="display:flex; align-items:center; gap: 8px; margin-top: 8px;"><input type="checkbox" id="checklist-plan" style="width: 18px; height: 18px;"> Seguí mi plan de trading al 100%</label>
+        <label style="display:flex; align-items:center; gap: 8px; margin-top: 8px;"><input type="checkbox" id="checklist-revenge" style="width: 18px; height: 18px;"> No operé por venganza (revenge trading)</label>
+    </div>
+</div>        <div class="card" style="grid-column: 1 / -1;">
             <div class="card-header"><div class="card-title">Notas de la Sesión</div></div>
             <textarea id="session-note-textarea" class="form-control" placeholder="¿Cómo te sentiste hoy? ¿Qué aprendiste?"></textarea>
             <input type="hidden" id="editing-note-id" />
