@@ -1727,8 +1727,9 @@ window.db = db;
       };
     }    
     
-  // REEMPLAZA TU FUNCIÓN addEventListener COMPLETA CON ESTA
+// REEMPLAZA TU FUNCIÓN addEventListener COMPLETA CON ESTA
     $('main')?.addEventListener('click', (e) => {
+      
       // --- Cuentas ---
       const editAccountBtn = e.target.closest('.btn-edit-account');
       if (editAccountBtn) {
@@ -1823,7 +1824,7 @@ window.db = db;
           return;
       }
 
-      // --- Panel de Admin ---
+      // --- Panel de Admin (SOLUCIÓN) ---
       const openUserBtn = e.target.closest('.btn-open-user');
       if (openUserBtn) {
           openUserDetail(openUserBtn.dataset.uid);
