@@ -1727,38 +1727,30 @@ window.db = db;
       };
     }    
     
-   $('main')?.addEventListener('click', (e) => {
-    
-    // Bloque para el botón 'Editar Cuenta' (este ya lo tenías)
-    const editAccountBtn = e.target.closest('.btn-edit-account');
-    if (editAccountBtn) {
+  // REEMPLAZA TU FUNCIÓN addEventListener COMPLETA CON ESTA
+    $('main')?.addEventListener('click', (e) => {
+      // --- Cuentas ---
+      const editAccountBtn = e.target.closest('.btn-edit-account');
+      if (editAccountBtn) {
         const account = window.__currentAccounts?.find(a => a.id === editAccountBtn.dataset.id);
         if (account) {
-            $('#acc-title').textContent = 'Editar Cuenta'; 
-            $('#account-name').value = account.name; 
-            $('#account-balance').value = account.balance;
-            $('#account-type').value = account.type; 
-            $('#editing-account-id').value = account.id; 
-            openModalById('add-account-modal');
+          $('#acc-title').textContent = 'Editar Cuenta'; 
+          $('#account-name').value = account.name; 
+          $('#account-balance').value = account.balance;
+          $('#account-type').value = account.type; 
+          $('#editing-account-id').value = account.id; 
+          openModalById('add-account-modal');
         }
         return;
-    }
-
-    // ... aquí irían los otros bloques para editar/borrar trades, notas, etc. ...
-
-    // ▼▼▼ BLOQUE AÑADIDO PARA ACTIVAR 'VER DETALLES' ▼▼▼
-    const openUserBtn = e.target.closest('.btn-open-user');
-    if (openUserBtn) {
-        openUserDetail(openUserBtn.dataset.uid);
-        return;
-    }
-    // ▲▲▲ FIN DEL BLOQUE AÑADIDO ▲▲▲
-
-}); 
+      }
       
       const deleteAccountBtn = e.target.closest('.btn-delete-account');
-      if (deleteAccountBtn) { deleteItem('accounts', deleteAccountBtn.dataset.id); return; }
+      if (deleteAccountBtn) { 
+        deleteItem('accounts', deleteAccountBtn.dataset.id); 
+        return; 
+      }
       
+      // --- Trades ---
       const editTradeBtn = e.target.closest('.btn-edit-trade');
       if (editTradeBtn) {
         const trade = window.__currentTrades?.find(t => t.id === editTradeBtn.dataset.id);
@@ -1778,8 +1770,12 @@ window.db = db;
       }
 
       const deleteTradeBtn = e.target.closest('.btn-delete-trade');
-      if (deleteTradeBtn) { deleteItem('trades', deleteTradeBtn.dataset.id); return; }
+      if (deleteTradeBtn) { 
+        deleteItem('trades', deleteTradeBtn.dataset.id); 
+        return; 
+      }
       
+      // --- Estrategias ---
       const editStrategyBtn = e.target.closest('.btn-edit-strategy');
       if (editStrategyBtn) {
         const strategy = window.__currentStrategies?.find(s => s.id === editStrategyBtn.dataset.id);
@@ -1794,7 +1790,10 @@ window.db = db;
       }
 
       const deleteStrategyBtn = e.target.closest('.btn-delete-strategy');
-      if (deleteStrategyBtn) { deleteItem('strategies', deleteStrategyBtn.dataset.id); return; }
+      if (deleteStrategyBtn) { 
+        deleteItem('strategies', deleteStrategyBtn.dataset.id); 
+        return; 
+      }
       
       const evaluateAiBtn = e.target.closest('.btn-evaluate-ai');
       if (evaluateAiBtn) {
@@ -1805,6 +1804,7 @@ window.db = db;
           return;
       }
 
+      // --- Notas ---
       const deleteNoteBtn = e.target.closest('.btn-delete-note');
       if (deleteNoteBtn) {
         deleteItem('notes', deleteNoteBtn.dataset.id);
@@ -1820,6 +1820,13 @@ window.db = db;
           $('#session-note-textarea').value = noteText;
           $('#session-note-textarea').focus();
           $('#editing-note-id').value = noteId;
+          return;
+      }
+
+      // --- Panel de Admin ---
+      const openUserBtn = e.target.closest('.btn-open-user');
+      if (openUserBtn) {
+          openUserDetail(openUserBtn.dataset.uid);
           return;
       }
     });
