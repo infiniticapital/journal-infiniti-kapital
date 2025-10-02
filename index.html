@@ -1129,53 +1129,74 @@
         }
     }
 
-    function recalcFromTrades(trades) {
-        const t = (trades || []).sort((a, b) => (a.createdAt?.toMillis() || 0) - (b.createdAt?.toMillis() || 0));
-        const wins = t.filter(x => x.result > 0), losses = t.filter(x => x.result < 0);
-        const total = t.length;
-        const totalWins = wins.reduce((s, x) => s + x.result, 0);
-        const totalLoss = Math.abs(losses.reduce((s, x) => s + x.result, 0));
-        const winRate = total ? (wins.length / total) * 100 : 0;
-        const pf = totalLoss ? totalWins / totalLoss : 0;
-        const rr = (wins.length && losses.length) ? (totalWins / wins.length) / (totalLoss / losses.length) : 0;
-
-        $('#total-trades').textContent = total;
-        $('#total-trades-2').textContent = total;
-        $('#win-trades').textContent = wins.length;
-        $('#win-rate').textContent = `${winRate.toFixed(1)}%`;
-        $('#profit-factor').textContent = pf.toFixed(2);
-        $('#risk-reward').textContent = rr.toFixed(2);
-        $('#total-profit').textContent = `$${(totalWins - totalLoss).toFixed(2)}`;
-
-        if (distributionChart) {
-            distributionChart.data.datasets[0].data = [wins.length, losses.length, t.filter(x => x.result === 0).length];
-            distributionChart.update();
+    // Reemplaza tu función 'recalcFromTrades' completa con esta nueva versión
+function recalcFromTrades(trades) {
+    // --- FUNCIÓN AUXILIAR MEJORADA PARA ORDENAR ---
+    // Esta función maneja de forma segura diferentes tipos de fechas.
+    const getSafeTimestamp = (trade) => {
+        if (!trade || !trade.createdAt) return 0;
+        // Si es un Timestamp de Firestore, usa toMillis()
+        if (typeof trade.createdAt.toMillis === 'function') {
+            return trade.createdAt.toMillis();
         }
-        const settings = window.__currentGeneralSettings || { initialBalance: 10000 };
-        if (balanceChart || modalBalanceChart) {
-            const data = [];
-            let bal = settings.initialBalance;
-            data.push(bal);
-            t.forEach(trade => {
-                bal += trade.result || 0;
-                data.push(bal);
-            });
-            const labels = ['Inicio', ...Array.from({ length: t.length }, (_, i) => i + 1)];
-            if (balanceChart) {
-                balanceChart.data.datasets[0].data = data;
-                balanceChart.data.labels = labels;
-                balanceChart.update();
-            }
-            if (modalBalanceChart) {
-                modalBalanceChart.data.datasets[0].data = data;
-                modalBalanceChart.data.labels = labels;
-                modalBalanceChart.update();
-            }
+        // Si es un objeto de Fecha de JavaScript, usa getTime()
+        if (trade.createdAt instanceof Date) {
+            return trade.createdAt.getTime();
         }
-        updateRecentTrades(t.slice().reverse());
-        calculateRiskMetrics(t, settings.initialBalance);
+        // Si es un número (ya en milisegundos), devuélvelo
+        if (typeof trade.createdAt === 'number') {
+            return trade.createdAt;
+        }
+        return 0; // Fallback seguro
+    };
+
+    const t = (trades || []).sort((a, b) => getSafeTimestamp(a) - getSafeTimestamp(b));
+    // --- FIN DE LA MEJORA ---
+
+    const wins = t.filter(x => x.result > 0), losses = t.filter(x => x.result < 0);
+    const total = t.length;
+    const totalWins = wins.reduce((s, x) => s + x.result, 0);
+    const totalLoss = Math.abs(losses.reduce((s, x) => s + x.result, 0));
+    const winRate = total ? (wins.length / total) * 100 : 0;
+    const pf = totalLoss ? totalWins / totalLoss : 0;
+    const rr = (wins.length && losses.length) ? (totalWins / wins.length) / (totalLoss / losses.length) : 0;
+
+    $('#total-trades').textContent = total;
+    $('#total-trades-2').textContent = total;
+    $('#win-trades').textContent = wins.length;
+    $('#win-rate').textContent = `${winRate.toFixed(1)}%`;
+    $('#profit-factor').textContent = pf.toFixed(2);
+    $('#risk-reward').textContent = rr.toFixed(2);
+    $('#total-profit').textContent = `$${(totalWins - totalLoss).toFixed(2)}`;
+
+    if (distributionChart) {
+        distributionChart.data.datasets[0].data = [wins.length, losses.length, t.filter(x => x.result === 0).length];
+        distributionChart.update();
     }
-    
+    const settings = window.__currentGeneralSettings || { initialBalance: 10000 };
+    if (balanceChart || modalBalanceChart) {
+        const data = [];
+        let bal = settings.initialBalance;
+        data.push(bal);
+        t.forEach(trade => {
+            bal += trade.result || 0;
+            data.push(bal);
+        });
+        const labels = ['Inicio', ...Array.from({ length: t.length }, (_, i) => i + 1)];
+        if (balanceChart) {
+            balanceChart.data.datasets[0].data = data;
+            balanceChart.data.labels = labels;
+            balanceChart.update();
+        }
+        if (modalBalanceChart) {
+            modalBalanceChart.data.datasets[0].data = data;
+            modalBalanceChart.data.labels = labels;
+            modalBalanceChart.update();
+        }
+    }
+    updateRecentTrades(t.slice().reverse());
+    calculateRiskMetrics(t, settings.initialBalance);
+}    
     function renderHistorySummary(trades) {
         if (!trades) return;
         const summary = {};
