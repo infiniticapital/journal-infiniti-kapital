@@ -892,23 +892,48 @@
 
     let equityCurveChart = null;
     let calendar = null;
-    function renderAnalytics(trades) {
-      const t = trades || [];
-      const wins = t.filter(x => x.result > 0);
-      const losses = t.filter(x => x.result < 0);
-      const total = t.length;
-      const totalWins = wins.reduce((s, x) => s + x.result, 0);
-      const totalLoss = Math.abs(losses.reduce((s, x) => s + x.result, 0));
-      const totalProfit = totalWins - totalLoss;
-      const winRate = total ? (wins.length / total) * 100 : 0;
-      const profitFactor = totalLoss ? totalWins / totalLoss : 0;
-      const avgRR = (wins.length && losses.length) ? (totalWins / wins.length) / (totalLoss / losses.length) : 0;
-      $('#analytics-total-profit').textContent = `$${totalProfit.toFixed(2)}`;
-      $('#analytics-win-rate').textContent = `${winRate.toFixed(1)}%`;
-      $('#analytics-profit-factor').textContent = profitFactor.toFixed(2);
-      $('#analytics-rr').textContent = avgRR.toFixed(2);
-      renderEquityCurve(t);
-    }
+
+function renderAnalytics(trades) {
+  const t = trades || [];
+  const wins = t.filter(x => x.result > 0);
+  const losses = t.filter(x => x.result < 0);
+  const total = t.length;
+
+  const totalWinsValue = wins.reduce((s, x) => s + x.result, 0);
+  const totalLossValue = losses.reduce((s, x) => s + x.result, 0); // Este valor es negativo
+  
+  const totalProfit = totalWinsValue + totalLossValue;
+  const winRate = total ? (wins.length / total) : 0;
+  const profitFactor = Math.abs(totalLossValue) ? totalWinsValue / Math.abs(totalLossValue) : 0;
+  const avgRR = (wins.length && losses.length) ? (totalWinsValue / wins.length) / (Math.abs(totalLossValue) / losses.length) : 0;
+
+  // --- ¡NUEVOS CÁLCULOS! ---
+  const avgWin = wins.length > 0 ? totalWinsValue / wins.length : 0;
+  const avgLoss = losses.length > 0 ? totalLossValue / losses.length : 0; // Este valor es negativo
+
+  const lossRate = total > 0 ? losses.length / total : 0;
+  const expectancy = (winRate * avgWin) - (lossRate * Math.abs(avgLoss));
+  
+  // --- Actualización de elementos existentes ---
+  $('#analytics-total-profit').textContent = `$${totalProfit.toFixed(2)}`;
+  $('#analytics-win-rate').textContent = `${(winRate * 100).toFixed(1)}%`;
+  $('#analytics-profit-factor').textContent = profitFactor.toFixed(2);
+  $('#analytics-rr').textContent = avgRR.toFixed(2);
+  
+  // --- ¡ACTUALIZACIÓN DE NUEVOS ELEMENTOS! ---
+  $('#analytics-avg-win').textContent = `$${avgWin.toFixed(2)}`;
+  $('#analytics-avg-loss').textContent = `-$${Math.abs(avgLoss).toFixed(2)}`;
+  
+  const expectancyEl = $('#analytics-expectancy');
+  if(expectancyEl) {
+    expectancyEl.textContent = `$${expectancy.toFixed(2)}`;
+    // Cambia el color de la expectativa según si es positiva o negativa
+    expectancyEl.style.color = expectancy >= 0 ? 'var(--success)' : 'var(--danger)';
+  }
+
+  // Renderizar el gráfico de la curva de capital (sin cambios)
+  renderEquityCurve(t);
+}
 
     function renderEquityCurve(trades) {
       const ctx = document.getElementById('equityCurveChart')?.getContext('2d');
