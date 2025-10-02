@@ -1161,6 +1161,40 @@
     
     // All UI event listeners are here to ensure the DOM is ready
    document.addEventListener('DOMContentLoaded', ()=>{
+  
+   const checklistIds = ['checklist-calendar', 'checklist-plan', 'checklist-revenge'];
+
+  function saveChecklistState() {
+    const state = {};
+    checklistIds.forEach(id => {
+      const checkbox = document.getElementById(id);
+      if (checkbox) {
+        state[id] = checkbox.checked;
+      }
+    });
+    localStorage.setItem('traderChecklistState', JSON.stringify(state));
+  }
+
+  function loadChecklistState() {
+    const savedState = JSON.parse(localStorage.getItem('traderChecklistState') || '{}');
+    checklistIds.forEach(id => {
+      const checkbox = document.getElementById(id);
+      if (checkbox && savedState[id] !== undefined) {
+        checkbox.checked = savedState[id];
+      }
+    });
+  }
+
+  // Cargar el estado guardado tan pronto como la página esté lista
+  loadChecklistState();
+
+  // Guardar el estado cada vez que se haga clic en una casilla
+  checklistIds.forEach(id => {
+    const checkbox = document.getElementById(id);
+    if (checkbox) {
+      checkbox.addEventListener('change', saveChecklistState);
+    }
+  });
   setDate();
   initCharts();
   restoreAccordionState();
