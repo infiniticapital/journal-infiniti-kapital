@@ -1883,7 +1883,7 @@ window.db = db;
       const filteredTrades = selectedStrategyId ? allTrades.filter(t => t.strategyId === selectedStrategyId) : allTrades;
       
       recalcFromTrades(allTrades);
-      renderTradesTable(allTrades.slice().reverse());
+      renderHistorySummary(allTrades);
       renderAnalytics(filteredTrades);
       renderCalendar(allTrades);
       updateChallengeTrackerUI(calculateChallengeProgress(allTrades, settings));
