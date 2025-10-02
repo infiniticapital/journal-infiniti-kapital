@@ -1927,22 +1927,23 @@ window.db = db;
     }
 
     let unsubInvites = null;
-    async function loadAdminPanel() {
-        loadUsersTable();
-        unsubInvites && unsubInvites();
-        const invitesRef = collection(db, 'invitations');
-        unsubInvites = onSnapshot(query(invitesRef, where('isUsed', '==', false)), snap => {
-            const listEl = $('#invite-codes-list');
-            if (!listEl) return;
-            if (snap.empty) {
-                listEl.textContent = 'No hay códigos de invitación activos.';
-                return;
-            }
-            listEl.innerHTML = snap.docs.map(d => `<div style="background: var(--secondary); padding: 8px 12px; border-radius: 8px; font-family: monospace;">${d.id}</div>`).join('');
-        });
-        unsubscribes.push(unsubInvites);
-    }
-
+  async function loadAdminPanel() {
+    loadUsersTable();
+    unsubInvites && unsubInvites();
+    const invitesRef = collection(db, 'invitations');
+    // ▼▼▼ CAMBIO AQUÍ ▼▼▼
+    const q = query(invitesRef, where('isUsed', '==', false));
+    unsubInvites = onSnapshot(q, snap => {
+        const listEl = $('#invite-codes-list');
+        if (!listEl) return;
+        if (snap.empty) {
+            listEl.textContent = 'No hay códigos de invitación activos.';
+            return;
+        }
+        listEl.innerHTML = snap.docs.map(d => `<div style="background: var(--secondary); padding: 8px 12px; border-radius: 8px; font-family: monospace;">${d.id}</div>`).join('');
+    });
+    unsubscribes.push(unsubInvites);
+}
     $('#btn-generate-invite')?.addEventListener('click', async () => {
         try {
             const generateCode = httpsCallable(functions, 'generateInviteCode');
