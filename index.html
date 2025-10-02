@@ -2000,22 +2000,14 @@ window.db = db;
       }
     }
     
-async function openUserDetail(uid){
+    async function openUserDetail(uid){
   $('#admin-user-detail').textContent = `Usuario: ${uid}`;
   $('#admin-user-accounts').textContent = 'Cargando…';
   $('#admin-user-trades').textContent   = 'Cargando…';
-  try {
-    const accSnap = await getDocs(collection(db, 'users', uid, 'accounts'));
-    const trdSnap = await getDocs(query(collection(db, 'users', uid, 'trades'), orderBy('createdAt','desc')));
-
-    $('#admin-user-accounts').innerHTML = accSnap.docs.map(d => `<div><b>${d.data().name||'Cuenta'}</b> · $${(d.data().balance||0).toFixed(2)}</div>`).join('') || 'Sin cuentas';
-    $('#admin-user-trades').innerHTML = trdSnap.docs.map(d => `<div>${d.data().dateStr||''} · ${d.data().pair||'—'} · $${(d.data().result||0).toFixed(2)}</div>`).join('') || 'Sin trades';
-
-  } catch(error) {
-    console.error("Error al obtener detalles del usuario:", error);
-    $('#admin-user-accounts').textContent = 'Error al cargar.';
-    $('#admin-user-trades').textContent = 'Error al cargar.';
-  }
+  const accSnap = await getDocs(collection(db, 'users', uid, 'accounts'));
+  const trdSnap = await getDocs(query(collection(db, 'users', uid, 'trades'), orderBy('createdAt','desc')));
+  $('#admin-user-accounts').innerHTML = accSnap.docs.map(d => `<div><b>${d.data().name||'Cuenta'}</b> · $${(d.data().balance||0).toFixed(2)}</div>`).join('') || 'Sin cuentas';
+  $('#admin-user-trades').innerHTML = trdSnap.docs.map(d => `<div>${d.data().dateStr||''} · ${d.data().pair||'—'} · $${d.data().result||0}</div>`).join('') || 'Sin trades';
 }
 
     $('#admin-panel-container')?.addEventListener('click', (e) => { // Use a container for delegation
