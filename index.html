@@ -1727,20 +1727,34 @@ window.db = db;
       };
     }    
     
-    $('main')?.addEventListener('click', (e) => {
-      const editAccountBtn = e.target.closest('.btn-edit-account');
-      if (editAccountBtn) {
+   $('main')?.addEventListener('click', (e) => {
+    
+    // Bloque para el botón 'Editar Cuenta' (este ya lo tenías)
+    const editAccountBtn = e.target.closest('.btn-edit-account');
+    if (editAccountBtn) {
         const account = window.__currentAccounts?.find(a => a.id === editAccountBtn.dataset.id);
         if (account) {
-          $('#acc-title').textContent = 'Editar Cuenta'; 
-          $('#account-name').value = account.name; 
-          $('#account-balance').value = account.balance;
-          $('#account-type').value = account.type; 
-          $('#editing-account-id').value = account.id; 
-          openModalById('add-account-modal');
+            $('#acc-title').textContent = 'Editar Cuenta'; 
+            $('#account-name').value = account.name; 
+            $('#account-balance').value = account.balance;
+            $('#account-type').value = account.type; 
+            $('#editing-account-id').value = account.id; 
+            openModalById('add-account-modal');
         }
         return;
-      }
+    }
+
+    // ... aquí irían los otros bloques para editar/borrar trades, notas, etc. ...
+
+    // ▼▼▼ BLOQUE AÑADIDO PARA ACTIVAR 'VER DETALLES' ▼▼▼
+    const openUserBtn = e.target.closest('.btn-open-user');
+    if (openUserBtn) {
+        openUserDetail(openUserBtn.dataset.uid);
+        return;
+    }
+    // ▲▲▲ FIN DEL BLOQUE AÑADIDO ▲▲▲
+
+}); 
       
       const deleteAccountBtn = e.target.closest('.btn-delete-account');
       if (deleteAccountBtn) { deleteItem('accounts', deleteAccountBtn.dataset.id); return; }
