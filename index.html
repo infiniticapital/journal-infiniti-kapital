@@ -385,36 +385,55 @@
       </div>
     </section>
 
-    <section id="analiticas" class="section">
-      <div class="card" style="grid-column: 1 / -1; margin-bottom: -10px;">
-        <div class="form-group">
-          <label for="analytics-strategy-filter">Filtrar por Estrategia</label>
-          <select id="analytics-strategy-filter" class="form-control"></select>
-        </div>
-      </div>
-      <div class="card" style="grid-column: span 3;">
-        <div class="card-header"><div class="card-title">Beneficio Neto</div></div>
-        <div class="metric-card"><div class="metric-val" id="analytics-total-profit">$0.00</div></div>
-      </div>
-      <div class="card" style="grid-column: span 3;">
-        <div class="card-header"><div class="card-title">Tasa de Acierto</div></div>
-        <div class="metric-card"><div class="metric-val" id="analytics-win-rate">0%</div></div>
-      </div>
-      <div class="card" style="grid-column: span 3;">
-        <div class="card-header"><div class="card-title">Profit Factor</div></div>
-        <div class="metric-card"><div class="metric-val" id="analytics-profit-factor">0.00</div></div>
-      </div>
-      <div class="card" style="grid-column: span 3;">
-        <div class="card-header"><div class="card-title">R/B Promedio</div></div>
-        <div class="metric-card"><div class="metric-val" id="analytics-rr">0.00</div></div>
-      </div>
-      <div class="card" style="grid-column: 1 / -1;">
-        <div class="card-header"><div class="card-title">Curva de Capital</div></div>
-        <div class="chart" style="height: 400px;">
-          <canvas id="equityCurveChart"></canvas>
-        </div>
-      </div>
-    </section>
+   <section id="analiticas" class="section">
+  <div class="card" style="grid-column: 1 / -1; margin-bottom: -10px;">
+    <div class="form-group">
+      <label for="analytics-strategy-filter">Filtrar por Estrategia</label>
+      <select id="analytics-strategy-filter" class="form-control"></select>
+    </div>
+  </div>
+
+  <div class="card" style="grid-column: span 3;">
+    <div class="card-header"><div class="card-title">Beneficio Neto</div></div>
+    <div class="metric-card"><div class="metric-val" id="analytics-total-profit">$0.00</div></div>
+  </div>
+  <div class="card" style="grid-column: span 3;">
+    <div class="card-header"><div class="card-title">Tasa de Acierto</div></div>
+    <div class="metric-card"><div class="metric-val" id="analytics-win-rate">0%</div></div>
+  </div>
+  <div class="card" style="grid-column: span 3;">
+    <div class="card-header"><div class="card-title">Profit Factor</div></div>
+    <div class="metric-card"><div class="metric-val" id="analytics-profit-factor">0.00</div></div>
+  </div>
+  <div class="card" style="grid-column: span 3;">
+    <div class="card-header"><div class="card-title">R/B Promedio</div></div>
+    <div class="metric-card"><div class="metric-val" id="analytics-rr">0.00</div></div>
+  </div>
+
+  <div class="card" style="grid-column: span 3;">
+    <div class="card-header"><div class="card-title">Beneficio Promedio</div></div>
+    <div class="metric-card"><div class="metric-val" id="analytics-avg-win" style="color:var(--success)">$0.00</div></div>
+  </div>
+  <div class="card" style="grid-column: span 3;">
+    <div class="card-header"><div class="card-title">Pérdida Promedio</div></div>
+    <div class="metric-card"><div class="metric-val" id="analytics-avg-loss" style="color:var(--danger)">$0.00</div></div>
+  </div>
+  <div class="card" style="grid-column: span 3;">
+    <div class="card-header"><div class="card-title">Expectativa</div></div>
+    <div class="metric-card"><div class="metric-val" id="analytics-expectancy">$0.00</div></div>
+  </div>
+  <div class="card" style="grid-column: span 3;">
+    <div class="card-header"><div class="card-title">Ratio de Sharpe</div></div>
+    <div class="metric-card"><div class="metric-val" id="analytics-sharpe">N/A</div><div class="metric-lab">Próximamente</div></div>
+  </div>
+  
+  <div class="card" style="grid-column: 1 / -1;">
+    <div class="card-header"><div class="card-title">Curva de Capital</div></div>
+    <div class="chart" style="height: 400px;">
+      <canvas id="equityCurveChart"></canvas>
+    </div>
+  </div>
+</section>    
     
     <section id="seguimiento" class="section">
        <div class="card" style="grid-column: span 6;">
