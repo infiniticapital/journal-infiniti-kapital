@@ -154,10 +154,15 @@
       body.sidebar-open .drawer-backdrop{ display:block }
       main{ padding:16px }
     }
+    @media (min-width: 768px) {
+      [style*="md:grid-column: span 4"] { grid-column: span 4; }
+      [style*="md:grid-column: span 8"] { grid-column: span 8; }
+    }
 
     .hidden{display:none!important}
     .only-admin{display:none}
     body.is-admin .only-admin{display:block !important}
+    .btn.secondary.active { background-color: var(--accent); color: var(--primary); }
   </style>
 </head>
 <body>
@@ -364,93 +369,93 @@
     </section>
     
     <section id="operaciones" class="section">
-    <div class="card" style="grid-column: 1 / -1;">
-        <div class="card-header" style="flex-wrap: wrap; gap: 10px;">
-            <div class="card-title">Análisis de Volumen por Símbolo</div>
-            <div id="history-filter-buttons" style="display: flex; gap: 8px;">
-                <button class="btn secondary active" data-range="all">Todo</button>
-                <button class="btn secondary" data-range="1y">1A</button>
-                <button class="btn secondary" data-range="6m">6M</button>
-                <button class="btn secondary" data-range="3m">3M</button>
-                <button class="btn secondary" data-range="1m">1M</button>
-            </div>
-        </div>
-
-        <div style="display: grid; grid-template-columns: repeat(12, 1fr); gap: 18px; margin-top: 20px;">
-            <div style="grid-column: span 12; md:grid-column: span 4; min-height: 300px; display: flex; align-items: center; justify-content: center;">
-                <canvas id="symbol-volume-chart"></canvas>
-            </div>
-
-            <div style="grid-column: span 12; md:grid-column: span 8; overflow-x: auto;">
-                <table style="width: 100%; border-collapse: collapse;">
-                    <thead>
-                        <tr style="border-bottom: 1px solid var(--border);">
-                            <th style="padding: 10px; text-align: left; color: var(--muted);">Símbolo</th>
-                            <th style="padding: 10px; text-align: right; color: var(--muted);">Beneficio Neto</th>
-                            <th style="padding: 10px; text-align: right; color: var(--muted);">Resultado Prom.</th>
-                            <th style="padding: 10px; text-align: right; color: var(--muted);">Volumen %</th>
-                            <th style="padding: 10px; text-align: right; color: var(--muted);">Operaciones</th>
-                            <th style="padding: 10px; text-align: right; color: var(--muted);">Ganancias (%)</th>
-                            <th style="padding: 10px; text-align: right; color: var(--muted);">Pérdidas (%)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="history-summary-tbody">
-                        </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</section>
-    
-   <section id="analiticas" class="section">
-  <div class="card" style="grid-column: 1 / -1; margin-bottom: -10px;">
-    <div class="form-group">
-      <label for="analytics-strategy-filter">Filtrar por Estrategia</label>
-      <select id="analytics-strategy-filter" class="form-control"></select>
-    </div>
-  </div>
-
-  <div class="card" style="grid-column: span 3;">
-    <div class="card-header"><div class="card-title">Beneficio Neto</div></div>
-    <div class="metric-card"><div class="metric-val" id="analytics-total-profit">$0.00</div></div>
-  </div>
-  <div class="card" style="grid-column: span 3;">
-    <div class="card-header"><div class="card-title">Tasa de Acierto</div></div>
-    <div class="metric-card"><div class="metric-val" id="analytics-win-rate">0%</div></div>
-  </div>
-  <div class="card" style="grid-column: span 3;">
-    <div class="card-header"><div class="card-title">Profit Factor</div></div>
-    <div class="metric-card"><div class="metric-val" id="analytics-profit-factor">0.00</div></div>
-  </div>
-  <div class="card" style="grid-column: span 3;">
-    <div class="card-header"><div class="card-title">R/B Promedio</div></div>
-    <div class="metric-card"><div class="metric-val" id="analytics-rr">0.00</div></div>
-  </div>
-
-  <div class="card" style="grid-column: span 3;">
-    <div class="card-header"><div class="card-title">Beneficio Promedio</div></div>
-    <div class="metric-card"><div class="metric-val" id="analytics-avg-win" style="color:var(--success)">$0.00</div></div>
-  </div>
-  <div class="card" style="grid-column: span 3;">
-    <div class="card-header"><div class="card-title">Pérdida Promedio</div></div>
-    <div class="metric-card"><div class="metric-val" id="analytics-avg-loss" style="color:var(--danger)">$0.00</div></div>
-  </div>
-  <div class="card" style="grid-column: span 3;">
-    <div class="card-header"><div class="card-title">Expectativa</div></div>
-    <div class="metric-card"><div class="metric-val" id="analytics-expectancy">$0.00</div></div>
-  </div>
-  <div class="card" style="grid-column: span 3;">
-    <div class="card-header"><div class="card-title">Ratio de Sharpe</div></div>
-    <div class="metric-card"><div class="metric-val" id="analytics-sharpe">N/A</div><div class="metric-lab">Próximamente</div></div>
-  </div>
+      <div class="card" style="grid-column: 1 / -1;">
+          <div class="card-header" style="flex-wrap: wrap; gap: 10px;">
+              <div class="card-title">Análisis de Volumen por Símbolo</div>
+              <div id="history-filter-buttons" style="display: flex; gap: 8px;">
+                  <button class="btn secondary active" data-range="all">Todo</button>
+                  <button class="btn secondary" data-range="1y">1A</button>
+                  <button class="btn secondary" data-range="6m">6M</button>
+                  <button class="btn secondary" data-range="3m">3M</button>
+                  <button class="btn secondary" data-range="1m">1M</button>
+              </div>
+          </div>
   
-  <div class="card" style="grid-column: 1 / -1;">
-    <div class="card-header"><div class="card-title">Curva de Capital</div></div>
-    <div class="chart" style="height: 400px;">
-      <canvas id="equityCurveChart"></canvas>
-    </div>
-  </div>
-</section>    
+          <div style="display: grid; grid-template-columns: repeat(12, 1fr); gap: 18px; margin-top: 20px;">
+              <div style="grid-column: span 12; md:grid-column: span 4; min-height: 300px; display: flex; align-items: center; justify-content: center;">
+                  <canvas id="symbol-volume-chart"></canvas>
+              </div>
+  
+              <div style="grid-column: span 12; md:grid-column: span 8; overflow-x: auto;">
+                  <table style="width: 100%; border-collapse: collapse;">
+                      <thead>
+                          <tr style="border-bottom: 1px solid var(--border);">
+                              <th style="padding: 10px; text-align: left; color: var(--muted);">Símbolo</th>
+                              <th style="padding: 10px; text-align: right; color: var(--muted);">Beneficio Neto</th>
+                              <th style="padding: 10px; text-align: right; color: var(--muted);">Resultado Prom.</th>
+                              <th style="padding: 10px; text-align: right; color: var(--muted);">Volumen %</th>
+                              <th style="padding: 10px; text-align: right; color: var(--muted);">Operaciones</th>
+                              <th style="padding: 10px; text-align: right; color: var(--muted);">Ganancias (%)</th>
+                              <th style="padding: 10px; text-align: right; color: var(--muted);">Pérdidas (%)</th>
+                          </tr>
+                      </thead>
+                      <tbody id="history-summary-tbody">
+                      </tbody>
+                  </table>
+              </div>
+          </div>
+      </div>
+    </section>
+    
+    <section id="analiticas" class="section">
+      <div class="card" style="grid-column: 1 / -1; margin-bottom: -10px;">
+        <div class="form-group">
+          <label for="analytics-strategy-filter">Filtrar por Estrategia</label>
+          <select id="analytics-strategy-filter" class="form-control"></select>
+        </div>
+      </div>
+    
+      <div class="card" style="grid-column: span 3;">
+        <div class="card-header"><div class="card-title">Beneficio Neto</div></div>
+        <div class="metric-card"><div class="metric-val" id="analytics-total-profit">$0.00</div></div>
+      </div>
+      <div class="card" style="grid-column: span 3;">
+        <div class="card-header"><div class="card-title">Tasa de Acierto</div></div>
+        <div class="metric-card"><div class="metric-val" id="analytics-win-rate">0%</div></div>
+      </div>
+      <div class="card" style="grid-column: span 3;">
+        <div class="card-header"><div class="card-title">Profit Factor</div></div>
+        <div class="metric-card"><div class="metric-val" id="analytics-profit-factor">0.00</div></div>
+      </div>
+      <div class="card" style="grid-column: span 3;">
+        <div class="card-header"><div class="card-title">R/B Promedio</div></div>
+        <div class="metric-card"><div class="metric-val" id="analytics-rr">0.00</div></div>
+      </div>
+    
+      <div class="card" style="grid-column: span 3;">
+        <div class="card-header"><div class="card-title">Beneficio Promedio</div></div>
+        <div class="metric-card"><div class="metric-val" id="analytics-avg-win" style="color:var(--success)">$0.00</div></div>
+      </div>
+      <div class="card" style="grid-column: span 3;">
+        <div class="card-header"><div class="card-title">Pérdida Promedio</div></div>
+        <div class="metric-card"><div class="metric-val" id="analytics-avg-loss" style="color:var(--danger)">$0.00</div></div>
+      </div>
+      <div class="card" style="grid-column: span 3;">
+        <div class="card-header"><div class="card-title">Expectativa</div></div>
+        <div class="metric-card"><div class="metric-val" id="analytics-expectancy">$0.00</div></div>
+      </div>
+      <div class="card" style="grid-column: span 3;">
+        <div class="card-header"><div class="card-title">Ratio de Sharpe</div></div>
+        <div class="metric-card"><div class="metric-val" id="analytics-sharpe">N/A</div><div class="metric-lab">Próximamente</div></div>
+      </div>
+      
+      <div class="card" style="grid-column: 1 / -1;">
+        <div class="card-header"><div class="card-title">Curva de Capital</div></div>
+        <div class="chart" style="height: 400px;">
+          <canvas id="equityCurveChart"></canvas>
+        </div>
+      </div>
+    </section>
     
     <section id="seguimiento" class="section">
        <div class="card" style="grid-column: span 6;">
@@ -467,13 +472,14 @@
         </div>
     </div>       
       <div class="card" style="grid-column: span 6;">
-    <div class="card-header"><div class="card-title">Checklist del Trader</div></div>
-    <div class="form-group">
-        <label style="display:flex; align-items:center; gap: 8px;"><input type="checkbox" id="checklist-calendar" style="width: 18px; height: 18px;"> Revisé el calendario económico</label>
-        <label style="display:flex; align-items:center; gap: 8px; margin-top: 8px;"><input type="checkbox" id="checklist-plan" style="width: 18px; height: 18px;"> Seguí mi plan de trading al 100%</label>
-        <label style="display:flex; align-items:center; gap: 8px; margin-top: 8px;"><input type="checkbox" id="checklist-revenge" style="width: 18px; height: 18px;"> No operé por venganza (revenge trading)</label>
-    </div>
-</div>        <div class="card" style="grid-column: 1 / -1;">
+            <div class="card-header"><div class="card-title">Checklist del Trader</div></div>
+            <div class="form-group">
+                <label style="display:flex; align-items:center; gap: 8px;"><input type="checkbox" id="checklist-calendar" style="width: 18px; height: 18px;"> Revisé el calendario económico</label>
+                <label style="display:flex; align-items:center; gap: 8px; margin-top: 8px;"><input type="checkbox" id="checklist-plan" style="width: 18px; height: 18px;"> Seguí mi plan de trading al 100%</label>
+                <label style="display:flex; align-items:center; gap: 8px; margin-top: 8px;"><input type="checkbox" id="checklist-revenge" style="width: 18px; height: 18px;"> No operé por venganza (revenge trading)</label>
+            </div>
+        </div>
+        <div class="card" style="grid-column: 1 / -1;">
             <div class="card-header"><div class="card-title">Notas de la Sesión</div></div>
             <textarea id="session-note-textarea" class="form-control" placeholder="¿Cómo te sentiste hoy? ¿Qué aprendiste?"></textarea>
             <input type="hidden" id="editing-note-id" />
@@ -768,8 +774,7 @@
       </div>
   </div>
 
-  <script>
-    const $ = s => document.querySelector(s);
+  <script>const $ = s => document.querySelector(s);
     const $$ = s => document.querySelectorAll(s);
     
     function setDate(){ 
@@ -777,7 +782,7 @@
         if (el) el.textContent = new Date().toLocaleDateString('es-ES',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
     }
     
-    let distributionChart, balanceChart, riskChart, modalBalanceChart;
+    let distributionChart, balanceChart, riskChart, modalBalanceChart, equityCurveChart, symbolVolumeChart;
     
     function initCharts(){
       const d = $('#distributionChart'); if (d) distributionChart = new Chart(d.getContext('2d'),{type:'bar', data:{labels:['Win','Loss','BE'],datasets:[{label: 'Operaciones', data:[0,0,0],backgroundColor:['rgba(16,185,129,.7)','rgba(239,68,68,.7)','rgba(156,163,175,.7)']}]}, options:{responsive:true,maintainAspectRatio:false}});
@@ -882,289 +887,141 @@
       });
     }
 
-    function renderTradesTable(trades) {
-      const tbody = $('#trades-table-body');
-      if (!tbody) return;
-      if (!trades || trades.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" style="padding:20px; text-align:center; color:var(--muted);">No hay operaciones registradas.</td></tr>`;
-        return;
+    function renderAnalytics(trades) {
+      const t = trades || [];
+      const wins = t.filter(x => x.result > 0);
+      const losses = t.filter(x => x.result < 0);
+      const total = t.length;
+
+      const totalWinsValue = wins.reduce((s, x) => s + x.result, 0);
+      const totalLossValue = losses.reduce((s, x) => s + x.result, 0);
+      
+      const totalProfit = totalWinsValue + totalLossValue;
+      const winRate = total ? (wins.length / total) : 0;
+      const profitFactor = Math.abs(totalLossValue) ? totalWinsValue / Math.abs(totalLossValue) : 0;
+      const avgRR = (wins.length && losses.length) ? (totalWinsValue / wins.length) / (Math.abs(totalLossValue) / losses.length) : 0;
+
+      const avgWin = wins.length > 0 ? totalWinsValue / wins.length : 0;
+      const avgLoss = losses.length > 0 ? totalLossValue / losses.length : 0;
+
+      const lossRate = total > 0 ? losses.length / total : 0;
+      const expectancy = (winRate * avgWin) - (lossRate * Math.abs(avgLoss));
+      
+      $('#analytics-total-profit').textContent = `$${totalProfit.toFixed(2)}`;
+      $('#analytics-win-rate').textContent = `${(winRate * 100).toFixed(1)}%`;
+      $('#analytics-profit-factor').textContent = profitFactor.toFixed(2);
+      $('#analytics-rr').textContent = avgRR.toFixed(2);
+      
+      $('#analytics-avg-win').textContent = `$${avgWin.toFixed(2)}`;
+      $('#analytics-avg-loss').textContent = `-$${Math.abs(avgLoss).toFixed(2)}`;
+      
+      const expectancyEl = $('#analytics-expectancy');
+      if(expectancyEl) {
+        expectancyEl.textContent = `$${expectancy.toFixed(2)}`;
+        expectancyEl.style.color = expectancy >= 0 ? 'var(--success)' : 'var(--danger)';
       }
-      tbody.innerHTML = trades.map(t => {
-        const resultColor = (t.result || 0) >= 0 ? 'var(--success)' : 'var(--danger)';
-        const sign = (t.result || 0) >= 0 ? '+' : '';
-        return `
-          <tr style="border-bottom: 1px solid var(--border);">
-            <td style="padding:10px;">${t.dateStr || 'N/A'}</td>
-            <td style="padding:10px;">${t.pair || 'N/A'}</td>
-            <td style="padding:10px;">${(t.type || '').toUpperCase()}</td>
-            <td style="padding:10px; text-align:right; font-weight:bold; color:${resultColor};">${sign}$${(t.result || 0).toFixed(2)}</td>
-            <td style="padding:10px; text-align:center;">
-              <button class="btn-icon btn-edit-trade" data-id="${t.id}" title="Editar Operación"><i class="fa-solid fa-pen"></i></button>
-              <button class="btn-icon btn-delete-trade" data-id="${t.id}" title="Eliminar Operación"><i class="fa-solid fa-trash"></i></button>
-            </td>
-          </tr>
-        `;
-      }).join('');
+      renderEquityCurve(t);
     }
-
-    let equityCurveChart = null;
-    let calendar = null;
-
-function renderAnalytics(trades) {
-  const t = trades || [];
-  const wins = t.filter(x => x.result > 0);
-  const losses = t.filter(x => x.result < 0);
-  const total = t.length;
-
-  const totalWinsValue = wins.reduce((s, x) => s + x.result, 0);
-  const totalLossValue = losses.reduce((s, x) => s + x.result, 0); // Este valor es negativo
-  
-  const totalProfit = totalWinsValue + totalLossValue;
-  const winRate = total ? (wins.length / total) : 0;
-  const profitFactor = Math.abs(totalLossValue) ? totalWinsValue / Math.abs(totalLossValue) : 0;
-  const avgRR = (wins.length && losses.length) ? (totalWinsValue / wins.length) / (Math.abs(totalLossValue) / losses.length) : 0;
-
-  // Añade esta nueva función completa en tu script
-let symbolVolumeChart = null; // Variable global para el gráfico
-
-function renderHistorySummary(trades) {
-    if (!trades) return;
-    const summary = {};
-    
-    // 1. Agrupar trades por símbolo y calcular estadísticas base
-    trades.forEach(trade => {
-        const symbol = trade.pair;
-        if (!summary[symbol]) {
-            summary[symbol] = {
-                netProfit: 0,
-                tradeCount: 0,
-                winCount: 0,
-            };
-        }
-        summary[symbol].netProfit += trade.result;
-        summary[symbol].tradeCount++;
-        if (trade.result > 0) {
-            summary[symbol].winCount++;
-        }
-    });
-
-    const totalTrades = trades.length;
-    const tbody = document.getElementById('history-summary-tbody');
-    if (!tbody) return;
-    tbody.innerHTML = ''; // Limpiar tabla
-
-    const chartLabels = [];
-    const chartData = [];
-    const chartColors = ['#10b981', '#ef4444', '#f59e0b', '#3b82f6', '#8b5cf6', '#ec4899'];
-
-    let totalNetProfit = 0;
-    let totalWins = 0;
-    
-    // 2. Renderizar la tabla con los datos agrupados
-    Object.keys(summary).sort().forEach(symbol => {
-        const data = summary[symbol];
-        totalNetProfit += data.netProfit;
-        totalWins += data.winCount;
-        
-        const lossCount = data.tradeCount - data.winCount;
-        const winRate = data.tradeCount > 0 ? (data.winCount / data.tradeCount) * 100 : 0;
-        const lossRate = data.tradeCount > 0 ? (lossCount / data.tradeCount) * 100 : 0;
-        const avgResult = data.tradeCount > 0 ? data.netProfit / data.tradeCount : 0;
-        const volumePercent = totalTrades > 0 ? (data.tradeCount / totalTrades) * 100 : 0;
-
-        const row = document.createElement('tr');
-        row.style.borderBottom = '1px solid var(--border)';
-        row.innerHTML = `
-            <td style="padding: 12px; font-weight: bold;">${symbol}</td>
-            <td style="padding: 12px; text-align: right; color: ${data.netProfit >= 0 ? 'var(--success)' : 'var(--danger)'};">$${data.netProfit.toFixed(2)}</td>
-            <td style="padding: 12px; text-align: right;">$${avgResult.toFixed(2)}</td>
-            <td style="padding: 12px; text-align: right;">${volumePercent.toFixed(2)}%</td>
-            <td style="padding: 12px; text-align: right;">${data.tradeCount}</td>
-            <td style="padding: 12px; text-align: right; color: var(--success);">${winRate.toFixed(2)}%</td>
-            <td style="padding: 12px; text-align: right; color: var(--danger);">${lossRate.toFixed(2)}%</td>
-        `;
-        tbody.appendChild(row);
-
-        chartLabels.push(symbol);
-        chartData.push(data.tradeCount);
-    });
-
-    // Añadir fila de totales
-    const totalLosses = totalTrades - totalWins;
-    const totalWinRate = totalTrades > 0 ? (totalWins / totalTrades) * 100 : 0;
-    const totalLossRate = totalTrades > 0 ? (totalLosses / totalTrades) * 100 : 0;
-    const totalAvgResult = totalTrades > 0 ? totalNetProfit / totalTrades : 0;
-
-    const footerRow = document.createElement('tr');
-    footerRow.style.fontWeight = 'bold';
-    footerRow.innerHTML = `
-        <td style="padding: 12px;">Todos los símbolos</td>
-        <td style="padding: 12px; text-align: right; color: ${totalNetProfit >= 0 ? 'var(--success)' : 'var(--danger)'};">$${totalNetProfit.toFixed(2)}</td>
-        <td style="padding: 12px; text-align: right;">$${totalAvgResult.toFixed(2)}</td>
-        <td style="padding: 12px; text-align: right;">100.00%</td>
-        <td style="padding: 12px; text-align: right;">${totalTrades}</td>
-        <td style="padding: 12px; text-align: right; color: var(--success);">${totalWinRate.toFixed(2)}%</td>
-        <td style="padding: 12px; text-align: right; color: var(--danger);">${totalLossRate.toFixed(2)}%</td>
-    `;
-    tbody.appendChild(footerRow);
-
-    // 3. Renderizar el gráfico Donut
-    const ctx = document.getElementById('symbol-volume-chart')?.getContext('2d');
-    if (!ctx) return;
-    if (symbolVolumeChart) {
-        symbolVolumeChart.destroy(); // Destruir gráfico anterior para evitar errores
-    }
-    symbolVolumeChart = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: chartLabels,
-            datasets: [{
-                label: 'Operaciones por Símbolo',
-                data: chartData,
-                backgroundColor: chartColors,
-                borderColor: 'var(--secondary)',
-                borderWidth: 2,
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'right',
-                    labels: { color: 'var(--text)' }
-                }
-            }
-        }
-    });
-}
-  // --- ¡NUEVOS CÁLCULOS! ---
-  const avgWin = wins.length > 0 ? totalWinsValue / wins.length : 0;
-  const avgLoss = losses.length > 0 ? totalLossValue / losses.length : 0; // Este valor es negativo
-
-  const lossRate = total > 0 ? losses.length / total : 0;
-  const expectancy = (winRate * avgWin) - (lossRate * Math.abs(avgLoss));
-  
-  // --- Actualización de elementos existentes ---
-  $('#analytics-total-profit').textContent = `$${totalProfit.toFixed(2)}`;
-  $('#analytics-win-rate').textContent = `${(winRate * 100).toFixed(1)}%`;
-  $('#analytics-profit-factor').textContent = profitFactor.toFixed(2);
-  $('#analytics-rr').textContent = avgRR.toFixed(2);
-  
-  // --- ¡ACTUALIZACIÓN DE NUEVOS ELEMENTOS! ---
-  $('#analytics-avg-win').textContent = `$${avgWin.toFixed(2)}`;
-  $('#analytics-avg-loss').textContent = `-$${Math.abs(avgLoss).toFixed(2)}`;
-  
-  const expectancyEl = $('#analytics-expectancy');
-  if(expectancyEl) {
-    expectancyEl.textContent = `$${expectancy.toFixed(2)}`;
-    // Cambia el color de la expectativa según si es positiva o negativa
-    expectancyEl.style.color = expectancy >= 0 ? 'var(--success)' : 'var(--danger)';
-  }
-
-  // Renderizar el gráfico de la curva de capital (sin cambios)
-  renderEquityCurve(t);
-}
 
     function renderEquityCurve(trades) {
-      const ctx = document.getElementById('equityCurveChart')?.getContext('2d');
-      if (!ctx) return;
-      let cumulativeProfit = 0;
-      const equityData = trades.map(trade => {
-        cumulativeProfit += trade.result;
-        return cumulativeProfit;
-      });
-      const labels = Array.from({ length: trades.length }, (_, i) => i + 1);
-      if (equityCurveChart) {
-        equityCurveChart.destroy();
-      }
-      equityCurveChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: ['Inicio', ...labels],
-          datasets: [{
-            label: 'Beneficio Acumulado ($)',
-            data: [0, ...equityData],
-            borderColor: 'rgba(212, 175, 55, 1)',
-            backgroundColor: 'rgba(212, 175, 55, 0.15)',
-            fill: true,
-            tension: 0.1
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: { y: { beginAtZero: false } }
+        const ctx = document.getElementById('equityCurveChart')?.getContext('2d');
+        if (!ctx) return;
+        let cumulativeProfit = 0;
+        const equityData = trades.map(trade => {
+            cumulativeProfit += trade.result;
+            return cumulativeProfit;
+        });
+        const labels = Array.from({ length: trades.length }, (_, i) => i + 1);
+        if (equityCurveChart) {
+            equityCurveChart.destroy();
         }
-      });
+        equityCurveChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Inicio', ...labels],
+                datasets: [{
+                    label: 'Beneficio Acumulado ($)',
+                    data: [0, ...equityData],
+                    borderColor: 'rgba(212, 175, 55, 1)',
+                    backgroundColor: 'rgba(212, 175, 55, 0.15)',
+                    fill: true,
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: false } }
+            }
+        });
     }
 
     function renderCalendar(trades) {
-      const calendarEl = document.getElementById('calendar-container');
-      if (!calendarEl) return;
-      const dailySummary = {};
-      (trades || []).forEach(trade => {
-        const date = trade.dateStr;
-        if (!dailySummary[date]) {
-          dailySummary[date] = { profit: 0, count: 0 };
+        const calendarEl = document.getElementById('calendar-container');
+        if (!calendarEl) return;
+        const dailySummary = {};
+        (trades || []).forEach(trade => {
+            const date = trade.dateStr;
+            if (!dailySummary[date]) {
+                dailySummary[date] = { profit: 0, count: 0 };
+            }
+            dailySummary[date].profit += trade.result;
+            dailySummary[date].count++;
+        });
+        const calendarEvents = Object.keys(dailySummary).map(date => {
+            const day = dailySummary[date];
+            const isWin = day.profit >= 0;
+            return {
+                start: date,
+                title: `${day.profit >= 0 ? '+' : ''}$${day.profit.toFixed(2)} (${day.count} ops)`,
+                backgroundColor: isWin ? 'var(--success)' : 'var(--danger)',
+                borderColor: isWin ? 'var(--success)' : 'var(--danger)',
+            };
+        });
+        if (window.calendar) {
+            window.calendar.destroy();
         }
-        dailySummary[date].profit += trade.result;
-        dailySummary[date].count++;
-      });
-      const calendarEvents = Object.keys(dailySummary).map(date => {
-        const day = dailySummary[date];
-        const isWin = day.profit >= 0;
-        return {
-          start: date,
-          title: `${day.profit >= 0 ? '+' : ''}$${day.profit.toFixed(2)} (${day.count} ops)`,
-          backgroundColor: isWin ? 'var(--success)' : 'var(--danger)',
-          borderColor: isWin ? 'var(--success)' : 'var(--danger)',
-        };
-      });
-      if (window.calendar) {
-        window.calendar.destroy();
-      }
-      window.calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
-        locale: 'es',
-        headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
-        events: calendarEvents,
-        eventClick: function(info) {
-          const date = info.event.start.toLocaleDateString('es-ES', { day:'2-digit', month:'long', year:'numeric' });
-          alert(`Resumen para ${date}:\n\n${info.event.title}`);
-        }
-      });
-      window.calendar.render();
+        window.calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            locale: 'es',
+            headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
+            events: calendarEvents,
+            eventClick: function (info) {
+                const date = info.event.start.toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
+                alert(`Resumen para ${date}:\n\n${info.event.title}`);
+            }
+        });
+        window.calendar.render();
     }
 
     function renderStrategiesUI(strategies) {
-      const el = $('#strategies-container');
-      if (!el) return;
-      el.innerHTML = ''; 
-      const addStrategyButton = document.createElement('div');
-      addStrategyButton.className = 'btn primary';
-      addStrategyButton.style = "display:inline-flex; align-items:center; gap:8px; margin-bottom: 20px; cursor: pointer;";
-      addStrategyButton.innerHTML = `<i class="fa-solid fa-plus"></i> Agregar Estrategia`;
-      addStrategyButton.onclick = () => {
-        $('#strategy-title').textContent = 'Agregar Nueva Estrategia';
-        $('#strategy-name').value = '';
-        $('#strategy-desc').value = '';
-        $('#editing-strategy-id').value = '';
-        openModalById('add-strategy-modal');
-      };
-      el.appendChild(addStrategyButton);
-      if (!strategies || strategies.length === 0) {
-        const noStrategiesMessage = document.createElement('p');
-        noStrategiesMessage.textContent = 'No has definido ninguna estrategia.';
-        noStrategiesMessage.style.color = 'var(--muted)';
-        el.appendChild(noStrategiesMessage);
-        return;
-      }
-      strategies.forEach(s => {
-        const card = document.createElement('div');
-        card.className = 'card';
-        card.style.marginTop = '10px';
-        card.innerHTML = `
+        const el = $('#strategies-container');
+        if (!el) return;
+        el.innerHTML = '';
+        const addStrategyButton = document.createElement('div');
+        addStrategyButton.className = 'btn primary';
+        addStrategyButton.style = "display:inline-flex; align-items:center; gap:8px; margin-bottom: 20px; cursor: pointer;";
+        addStrategyButton.innerHTML = `<i class="fa-solid fa-plus"></i> Agregar Estrategia`;
+        addStrategyButton.onclick = () => {
+            $('#strategy-title').textContent = 'Agregar Nueva Estrategia';
+            $('#strategy-name').value = '';
+            $('#strategy-desc').value = '';
+            $('#editing-strategy-id').value = '';
+            openModalById('add-strategy-modal');
+        };
+        el.appendChild(addStrategyButton);
+        if (!strategies || strategies.length === 0) {
+            const noStrategiesMessage = document.createElement('p');
+            noStrategiesMessage.textContent = 'No has definido ninguna estrategia.';
+            noStrategiesMessage.style.color = 'var(--muted)';
+            el.appendChild(noStrategiesMessage);
+            return;
+        }
+        strategies.forEach(s => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.style.marginTop = '10px';
+            card.innerHTML = `
           <div class="card-header">
             <div class="card-title">${s.name || 'Estrategia sin nombre'}</div>
             <div>
@@ -1175,67 +1032,67 @@ function renderHistorySummary(trades) {
           </div>
           <p style="color: var(--muted); white-space: pre-wrap;">${s.desc || 'Sin descripción.'}</p>
         `;
-        el.appendChild(card);
-      });
+            el.appendChild(card);
+        });
     }
 
     function updateStrategiesDropdown(strategies) {
-      const select = $('#trade-strategy-input');
-      if (!select) return;
-      const currentVal = select.value;
-      select.innerHTML = '<option value="">Ninguna</option>';
-      (strategies || []).forEach(s => {
-        const option = document.createElement('option');
-        option.value = s.id;
-        option.textContent = s.name;
-        select.appendChild(option);
-      });
-      select.value = currentVal;
+        const select = $('#trade-strategy-input');
+        if (!select) return;
+        const currentVal = select.value;
+        select.innerHTML = '<option value="">Ninguna</option>';
+        (strategies || []).forEach(s => {
+            const option = document.createElement('option');
+            option.value = s.id;
+            option.textContent = s.name;
+            select.appendChild(option);
+        });
+        select.value = currentVal;
     }
 
     function populateAnalyticsFilter(strategies) {
-      const select = $('#analytics-strategy-filter');
-      if (!select) return;
-      select.innerHTML = '<option value="">Todas las Estrategias</option>';
-      (strategies || []).forEach(s => {
-        const option = document.createElement('option');
-        option.value = s.id;
-        option.textContent = s.name;
-        select.appendChild(option);
-      });
+        const select = $('#analytics-strategy-filter');
+        if (!select) return;
+        select.innerHTML = '<option value="">Todas las Estrategias</option>';
+        (strategies || []).forEach(s => {
+            const option = document.createElement('option');
+            option.value = s.id;
+            option.textContent = s.name;
+            select.appendChild(option);
+        });
     }
-    
-  function updateChallengeTrackerUI(progress) {
-    const p = progress || {};
-    const settings = window.__currentSettings || {}; // Obtenemos los ajustes guardados
-    const profitPercent = p.profitPercent || 0;
-    const target = p.profitTargetPercent || 10;
-    const progressPercent = target > 0 ? (profitPercent / target) * 100 : 0;
 
-    const initialBalanceEl = $('#challenge-initial-balance');
-    if(initialBalanceEl) initialBalanceEl.textContent = `$${(settings.initialBalance || 0).toFixed(2)}`;
+    function updateChallengeTrackerUI(progress) {
+        const p = progress || {};
+        const settings = window.__currentSettings || {};
+        const profitPercent = p.profitPercent || 0;
+        const target = p.profitTargetPercent || 10;
+        const progressPercent = target > 0 ? (profitPercent / target) * 100 : 0;
 
-    $('#challenge-profit').textContent = `${profitPercent.toFixed(2)}%`;
-    $('#challenge-drawdown').textContent = `${p.drawdownPercent?.toFixed(2) || 0.00}%`;
-    $('#challenge-trades').textContent = p.tradeCount || 0;
-    $('#challenge-win-rate').textContent = `${p.winRate?.toFixed(1) || 0}%`;
-    $('#challenge-progress-value').textContent = `${progressPercent.toFixed(1)}%`;
-    const progressBar = $('#challenge-progress-bar');
-    if (progressBar) progressBar.style.width = `${Math.min(100, progressPercent)}%`;
-    const ddElement = $('#challenge-drawdown').closest('.metric-card');
-    if (ddElement) {
-        const isViolated = (p.drawdownPercent || 0) >= (p.maxLossPercent || 10);
-        ddElement.style.backgroundColor = isViolated ? 'rgba(239, 68, 68, .4)' : '';
+        const initialBalanceEl = $('#challenge-initial-balance');
+        if (initialBalanceEl) initialBalanceEl.textContent = `$${(settings.initialBalance || 0).toFixed(2)}`;
+
+        $('#challenge-profit').textContent = `${profitPercent.toFixed(2)}%`;
+        $('#challenge-drawdown').textContent = `${p.drawdownPercent?.toFixed(2) || 0.00}%`;
+        $('#challenge-trades').textContent = p.tradeCount || 0;
+        $('#challenge-win-rate').textContent = `${p.winRate?.toFixed(1) || 0}%`;
+        $('#challenge-progress-value').textContent = `${progressPercent.toFixed(1)}%`;
+        const progressBar = $('#challenge-progress-bar');
+        if (progressBar) progressBar.style.width = `${Math.min(100, progressPercent)}%`;
+        const ddElement = $('#challenge-drawdown').closest('.metric-card');
+        if (ddElement) {
+            const isViolated = (p.drawdownPercent || 0) >= (p.maxLossPercent || 10);
+            ddElement.style.backgroundColor = isViolated ? 'rgba(239, 68, 68, .4)' : '';
+        }
     }
-}
-    
+
     function calculateRiskMetrics(trades, initialBalance) {
         if (!initialBalance || initialBalance === 0) {
             $('#daily-risk').textContent = '0.0%';
             $('#weekly-risk').textContent = '0.0%';
             $('#monthly-risk').textContent = '0.0%';
-            if(riskChart) {
-                riskChart.data.datasets[0].data = [0,0,0,0,0,0];
+            if (riskChart) {
+                riskChart.data.datasets[0].data = [0, 0, 0, 0, 0, 0];
                 riskChart.update();
             }
             return;
@@ -1243,9 +1100,9 @@ function renderHistorySummary(trades) {
 
         const now = new Date();
         const today = now.toISOString().slice(0, 10);
-        const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1) )).toISOString().slice(0, 10);
+        const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1))).toISOString().slice(0, 10);
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
-        
+
         const dailyLoss = trades.filter(t => t.dateStr === today && t.result < 0).reduce((sum, t) => sum + t.result, 0);
         const weeklyLoss = trades.filter(t => t.dateStr >= startOfWeek && t.result < 0).reduce((sum, t) => sum + t.result, 0);
         const monthlyLoss = trades.filter(t => t.dateStr >= startOfMonth && t.result < 0).reduce((sum, t) => sum + t.result, 0);
@@ -1253,7 +1110,7 @@ function renderHistorySummary(trades) {
         $('#daily-risk').textContent = `${(Math.abs(dailyLoss) / initialBalance * 100).toFixed(1)}%`;
         $('#weekly-risk').textContent = `${(Math.abs(weeklyLoss) / initialBalance * 100).toFixed(1)}%`;
         $('#monthly-risk').textContent = `${(Math.abs(monthlyLoss) / initialBalance * 100).toFixed(1)}%`;
-        
+
         const wins = trades.filter(x => x.result > 0);
         const losses = trades.filter(x => x.result < 0);
         const winRate = trades.length ? (wins.length / trades.length) * 100 : 0;
@@ -1261,66 +1118,174 @@ function renderHistorySummary(trades) {
         const totalLoss = Math.abs(losses.reduce((s, x) => s + x.result, 0));
         const totalProfit = totalWins - totalLoss;
         const avgRR = (wins.length && losses.length) ? (totalWins / wins.length) / (totalLoss / losses.length) : 0;
-        
+
         const aciertoScore = Math.min(5, winRate / 15);
         const rrScore = Math.min(5, avgRR * 2);
         const beneficioScore = Math.min(5, (totalProfit / initialBalance * 100) / 4);
 
-        if(riskChart) {
+        if (riskChart) {
             riskChart.data.datasets[0].data = [3, 4, aciertoScore, rrScore, 3, beneficioScore];
             riskChart.update();
         }
     }
-  
-    function recalcFromTrades(trades){
-      const t = (trades || []).sort((a,b) => (a.createdAt?.toMillis() || 0) - (b.createdAt?.toMillis() || 0));
-      const wins = t.filter(x=>x.result>0), losses = t.filter(x=>x.result<0);
-      const total = t.length;
-      const totalWins = wins.reduce((s,x)=>s+x.result,0);
-      const totalLoss = Math.abs(losses.reduce((s,x)=>s+x.result,0));
-      const winRate = total? (wins.length/total)*100 : 0;
-      const pf = totalLoss? totalWins/totalLoss : 0;
-      const rr = (wins.length && losses.length)? (totalWins/wins.length)/(totalLoss/losses.length) : 0;
 
-      $('#total-trades').textContent = total;
-      $('#total-trades-2').textContent = total;
-      $('#win-trades').textContent = wins.length;
-      $('#win-rate').textContent = `${winRate.toFixed(1)}%`;
-      $('#profit-factor').textContent = pf.toFixed(2);
-      $('#risk-reward').textContent = rr.toFixed(2);
-      $('#total-profit').textContent = `$${(totalWins-totalLoss).toFixed(2)}`;
+    function recalcFromTrades(trades) {
+        const t = (trades || []).sort((a, b) => (a.createdAt?.toMillis() || 0) - (b.createdAt?.toMillis() || 0));
+        const wins = t.filter(x => x.result > 0), losses = t.filter(x => x.result < 0);
+        const total = t.length;
+        const totalWins = wins.reduce((s, x) => s + x.result, 0);
+        const totalLoss = Math.abs(losses.reduce((s, x) => s + x.result, 0));
+        const winRate = total ? (wins.length / total) * 100 : 0;
+        const pf = totalLoss ? totalWins / totalLoss : 0;
+        const rr = (wins.length && losses.length) ? (totalWins / wins.length) / (totalLoss / losses.length) : 0;
 
-      if (distributionChart){
-        distributionChart.data.datasets[0].data = [wins.length, losses.length, t.filter(x=>x.result===0).length];
-        distributionChart.update();
-      }
-      const settings = window.__currentGeneralSettings || { initialBalance: 10000 };
-      if (balanceChart || modalBalanceChart){
-        const data = []; 
-        let bal = settings.initialBalance;
-        data.push(bal);
-        t.forEach(trade => {
-            bal += trade.result || 0;
+        $('#total-trades').textContent = total;
+        $('#total-trades-2').textContent = total;
+        $('#win-trades').textContent = wins.length;
+        $('#win-rate').textContent = `${winRate.toFixed(1)}%`;
+        $('#profit-factor').textContent = pf.toFixed(2);
+        $('#risk-reward').textContent = rr.toFixed(2);
+        $('#total-profit').textContent = `$${(totalWins - totalLoss).toFixed(2)}`;
+
+        if (distributionChart) {
+            distributionChart.data.datasets[0].data = [wins.length, losses.length, t.filter(x => x.result === 0).length];
+            distributionChart.update();
+        }
+        const settings = window.__currentGeneralSettings || { initialBalance: 10000 };
+        if (balanceChart || modalBalanceChart) {
+            const data = [];
+            let bal = settings.initialBalance;
             data.push(bal);
-        });
-        const labels = ['Inicio', ...Array.from({length: t.length}, (_,i)=>i+1)];
-        if(balanceChart) {
-            balanceChart.data.datasets[0].data = data;
-            balanceChart.data.labels = labels;
-            balanceChart.update();
+            t.forEach(trade => {
+                bal += trade.result || 0;
+                data.push(bal);
+            });
+            const labels = ['Inicio', ...Array.from({ length: t.length }, (_, i) => i + 1)];
+            if (balanceChart) {
+                balanceChart.data.datasets[0].data = data;
+                balanceChart.data.labels = labels;
+                balanceChart.update();
+            }
+            if (modalBalanceChart) {
+                modalBalanceChart.data.datasets[0].data = data;
+                modalBalanceChart.data.labels = labels;
+                modalBalanceChart.update();
+            }
         }
-        if(modalBalanceChart) {
-            modalBalanceChart.data.datasets[0].data = data;
-            modalBalanceChart.data.labels = labels;
-            modalBalanceChart.update();
-        }
-      }
-      updateRecentTrades(t.slice().reverse()); // recent trades expects reverse chronological
-      calculateRiskMetrics(t, settings.initialBalance);
+        updateRecentTrades(t.slice().reverse());
+        calculateRiskMetrics(t, settings.initialBalance);
     }
     
+    function renderHistorySummary(trades) {
+        if (!trades) return;
+        const summary = {};
+        
+        trades.forEach(trade => {
+            const symbol = trade.pair;
+            if (!summary[symbol]) {
+                summary[symbol] = {
+                    netProfit: 0,
+                    tradeCount: 0,
+                    winCount: 0,
+                };
+            }
+            summary[symbol].netProfit += trade.result;
+            summary[symbol].tradeCount++;
+            if (trade.result > 0) {
+                summary[symbol].winCount++;
+            }
+        });
+
+        const totalTrades = trades.length;
+        const tbody = document.getElementById('history-summary-tbody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+
+        const chartLabels = [];
+        const chartData = [];
+        const chartColors = ['#10b981', '#ef4444', '#f59e0b', '#3b82f6', '#8b5cf6', '#ec4899'];
+
+        let totalNetProfit = 0;
+        let totalWins = 0;
+        
+        Object.keys(summary).sort().forEach(symbol => {
+            const data = summary[symbol];
+            totalNetProfit += data.netProfit;
+            totalWins += data.winCount;
+            
+            const lossCount = data.tradeCount - data.winCount;
+            const winRate = data.tradeCount > 0 ? (data.winCount / data.tradeCount) * 100 : 0;
+            const lossRate = data.tradeCount > 0 ? (lossCount / data.tradeCount) * 100 : 0;
+            const avgResult = data.tradeCount > 0 ? data.netProfit / data.tradeCount : 0;
+            const volumePercent = totalTrades > 0 ? (data.tradeCount / totalTrades) * 100 : 0;
+
+            const row = document.createElement('tr');
+            row.style.borderBottom = '1px solid var(--border)';
+            row.innerHTML = `
+                <td style="padding: 12px; font-weight: bold;">${symbol}</td>
+                <td style="padding: 12px; text-align: right; color: ${data.netProfit >= 0 ? 'var(--success)' : 'var(--danger)'};">$${data.netProfit.toFixed(2)}</td>
+                <td style="padding: 12px; text-align: right;">$${avgResult.toFixed(2)}</td>
+                <td style="padding: 12px; text-align: right;">${volumePercent.toFixed(2)}%</td>
+                <td style="padding: 12px; text-align: right;">${data.tradeCount}</td>
+                <td style="padding: 12px; text-align: right; color: var(--success);">${winRate.toFixed(2)}%</td>
+                <td style="padding: 12px; text-align: right; color: var(--danger);">${lossRate.toFixed(2)}%</td>
+            `;
+            tbody.appendChild(row);
+
+            chartLabels.push(symbol);
+            chartData.push(data.tradeCount);
+        });
+
+        const totalLosses = totalTrades - totalWins;
+        const totalWinRate = totalTrades > 0 ? (totalWins / totalTrades) * 100 : 0;
+        const totalLossRate = totalTrades > 0 ? (totalLosses / totalTrades) * 100 : 0;
+        const totalAvgResult = totalTrades > 0 ? totalNetProfit / totalTrades : 0;
+
+        const footerRow = document.createElement('tr');
+        footerRow.style.fontWeight = 'bold';
+        footerRow.innerHTML = `
+            <td style="padding: 12px;">Todos los símbolos</td>
+            <td style="padding: 12px; text-align: right; color: ${totalNetProfit >= 0 ? 'var(--success)' : 'var(--danger)'};">$${totalNetProfit.toFixed(2)}</td>
+            <td style="padding: 12px; text-align: right;">$${totalAvgResult.toFixed(2)}</td>
+            <td style="padding: 12px; text-align: right;">100.00%</td>
+            <td style="padding: 12px; text-align: right;">${totalTrades}</td>
+            <td style="padding: 12px; text-align: right; color: var(--success);">${totalWinRate.toFixed(2)}%</td>
+            <td style="padding: 12px; text-align: right; color: var(--danger);">${totalLossRate.toFixed(2)}%</td>
+        `;
+        tbody.appendChild(footerRow);
+
+        const ctx = document.getElementById('symbol-volume-chart')?.getContext('2d');
+        if (!ctx) return;
+        if (symbolVolumeChart) {
+            symbolVolumeChart.destroy();
+        }
+        symbolVolumeChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: chartLabels,
+                datasets: [{
+                    label: 'Operaciones por Símbolo',
+                    data: chartData,
+                    backgroundColor: chartColors,
+                    borderColor: 'var(--secondary)',
+                    borderWidth: 2,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: { color: 'var(--text)' }
+                    }
+                }
+            }
+        });
+    }
+
     function openNewTradeModal() {
-        $('#trade-title').textContent = 'Agregar Operación'; 
+        $('#trade-title').textContent = 'Agregar Operación';
         $('#editing-trade-id').value = '';
         $('#add-trade-modal form') ? $('#add-trade-modal form').reset() : (() => {
             $('#trade-pair-input').value = 'EURUSD';
@@ -1333,224 +1298,204 @@ function renderHistorySummary(trades) {
         })();
         openModalById('add-trade-modal');
     }
-    
-    // All UI event listeners are here to ensure the DOM is ready
-   document.addEventListener('DOMContentLoaded', ()=>{
-  
-   const checklistIds = ['checklist-calendar', 'checklist-plan', 'checklist-revenge'];
 
-  function saveChecklistState() {
-    const state = {};
-    checklistIds.forEach(id => {
-      const checkbox = document.getElementById(id);
-      if (checkbox) {
-        state[id] = checkbox.checked;
-      }
-    });
-    localStorage.setItem('traderChecklistState', JSON.stringify(state));
-  }
+    document.addEventListener('DOMContentLoaded', () => {
+        const checklistIds = ['checklist-calendar', 'checklist-plan', 'checklist-revenge'];
 
-   
-  function loadChecklistState() {
-    const savedState = JSON.parse(localStorage.getItem('traderChecklistState') || '{}');
-    checklistIds.forEach(id => {
-      const checkbox = document.getElementById(id);
-      if (checkbox && savedState[id] !== undefined) {
-        checkbox.checked = savedState[id];
-      }
-    });
-  }
-
-  // Cargar el estado guardado tan pronto como la página esté lista
-  loadChecklistState();
-
-  // Guardar el estado cada vez que se haga clic en una casilla
-  checklistIds.forEach(id => {
-    const checkbox = document.getElementById(id);
-    if (checkbox) {
-      checkbox.addEventListener('change', saveChecklistState);
-    }
-  });
-  setDate();
-  initCharts();
-  restoreAccordionState();
-
-// Dentro de DOMContentLoaded, junto a los otros listeners
-const filterButtons = document.querySelectorAll('#history-filter-buttons button');
-filterButtons.forEach(button => {
-    button.addEventListener('click', () => {
-        filterButtons.forEach(btn => btn.classList.remove('active'));
-        button.classList.add('active');
-
-        const range = button.dataset.range;
-        if (range === 'all') {
-            renderHistorySummary(window.__currentTrades || []);
-            return;
+        function saveChecklistState() {
+            const state = {};
+            checklistIds.forEach(id => {
+                const checkbox = document.getElementById(id);
+                if (checkbox) { state[id] = checkbox.checked; }
+            });
+            localStorage.setItem('traderChecklistState', JSON.stringify(state));
         }
 
-        const now = new Date();
-        const startDate = new Date();
-        if (range === '1m') startDate.setMonth(now.getMonth() - 1);
-        if (range === '3m') startDate.setMonth(now.getMonth() - 3);
-        if (range === '6m') startDate.setMonth(now.getMonth() - 6);
-        if (range === '1y') startDate.setFullYear(now.getFullYear() - 1);
-
-        const startDateStr = startDate.toISOString().slice(0, 10);
-        const filteredTrades = (window.__currentTrades || []).filter(t => t.dateStr >= startDateStr);
-        renderHistorySummary(filteredTrades);
-    });
-});     
-
-    let reportDataForExport = []; // Variable para guardar los datos del reporte
-
-     
- // Lógica para el menú lateral en móviles
-  ;(function(){
-    const burger = document.getElementById('burger');
-    const backdrop = document.getElementById('drawerBackdrop');
-    const open = ()=>{ document.body.classList.add('sidebar-open'); burger?.setAttribute('aria-expanded','true'); document.body.style.overflow='hidden'; };
-    const close= ()=>{ document.body.classList.remove('sidebar-open'); burger?.setAttribute('aria-expanded','false'); document.body.style.overflow=''; };
-    const toggle=()=> document.body.classList.contains('sidebar-open') ? close() : open();
-    burger?.addEventListener('click', toggle);
-    backdrop?.addEventListener('click', close);
-    window.addEventListener('keydown', e=>{ if(e.key==='Escape') close(); });
-    $$('.nav a[data-target], .submenu a[data-target]').forEach(el=>{
-      el.addEventListener('click', ()=>{ if (window.matchMedia('(max-width:860px)').matches) close(); });
-    });
-  })();
-
-  // Lógica para la navegación principal
-  $$('.nav a[data-target], .submenu a[data-target]').forEach(a=>a.addEventListener('click', e=>{
-    e.preventDefault(); 
-    const id = a.dataset.target; 
-    if (id) setActiveSection(id);
-  }));
-  
-  // Lógica para los submenús (acordeón)
-  $$('.nav button.nav-link').forEach(clickedBtn => {
-    clickedBtn.addEventListener('click', () => {
-      const targetPanelId = clickedBtn.getAttribute('aria-controls');
-      const targetPanel = $(`#${targetPanelId}`);
-      if(!targetPanel) return;
-      const isAlreadyOpen = targetPanel.classList.contains('open');
-      $$('.submenu.open').forEach(openPanel => {
-        if (openPanel.id !== targetPanelId) {
-            openPanel.classList.remove('open');
-            const correspondingBtn = $(`[aria-controls="${openPanel.id}"]`);
-            if(correspondingBtn) correspondingBtn.setAttribute('aria-expanded', 'false');
+        function loadChecklistState() {
+            const savedState = JSON.parse(localStorage.getItem('traderChecklistState') || '{}');
+            checklistIds.forEach(id => {
+                const checkbox = document.getElementById(id);
+                if (checkbox && savedState[id] !== undefined) { checkbox.checked = savedState[id]; }
+            });
         }
-      });
-      if (!isAlreadyOpen) {
-        targetPanel.classList.add('open');
-        clickedBtn.setAttribute('aria-expanded', 'true');
-      } else {
-        targetPanel.classList.remove('open');
-        clickedBtn.setAttribute('aria-expanded', 'false');
-      }
-      persistAccordionState();
+        loadChecklistState();
+
+        checklistIds.forEach(id => {
+            const checkbox = document.getElementById(id);
+            if (checkbox) { checkbox.addEventListener('change', saveChecklistState); }
+        });
+
+        setDate();
+        initCharts();
+        restoreAccordionState();
+
+        const filterButtons = document.querySelectorAll('#history-filter-buttons button');
+        filterButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                filterButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                
+                const range = button.dataset.range;
+                if (range === 'all') {
+                    renderHistorySummary(window.__currentTrades || []);
+                    return;
+                }
+                
+                const now = new Date();
+                const startDate = new Date();
+                if (range === '1m') startDate.setMonth(now.getMonth() - 1);
+                if (range === '3m') startDate.setMonth(now.getMonth() - 3);
+                if (range === '6m') startDate.setMonth(now.getMonth() - 6);
+                if (range === '1y') startDate.setFullYear(now.getFullYear() - 1);
+                
+                const startDateStr = startDate.toISOString().slice(0, 10);
+                const filteredTrades = (window.__currentTrades || []).filter(t => t.dateStr >= startDateStr);
+                renderHistorySummary(filteredTrades);
+            });
+        });
+        
+        let reportDataForExport = [];
+
+        ; (function () {
+            const burger = document.getElementById('burger');
+            const backdrop = document.getElementById('drawerBackdrop');
+            const open = () => { document.body.classList.add('sidebar-open'); burger?.setAttribute('aria-expanded', 'true'); document.body.style.overflow = 'hidden'; };
+            const close = () => { document.body.classList.remove('sidebar-open'); burger?.setAttribute('aria-expanded', 'false'); document.body.style.overflow = ''; };
+            const toggle = () => document.body.classList.contains('sidebar-open') ? close() : open();
+            burger?.addEventListener('click', toggle);
+            backdrop?.addEventListener('click', close);
+            window.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+            $$('.nav a[data-target], .submenu a[data-target]').forEach(el => {
+                el.addEventListener('click', () => { if (window.matchMedia('(max-width:860px)').matches) close(); });
+            });
+        })();
+
+        $$('.nav a[data-target], .submenu a[data-target]').forEach(a => a.addEventListener('click', e => {
+            e.preventDefault();
+            const id = a.dataset.target;
+            if (id) setActiveSection(id);
+        }));
+
+        $$('.nav button.nav-link').forEach(clickedBtn => {
+            clickedBtn.addEventListener('click', () => {
+                const targetPanelId = clickedBtn.getAttribute('aria-controls');
+                const targetPanel = $(`#${targetPanelId}`);
+                if (!targetPanel) return;
+                const isAlreadyOpen = targetPanel.classList.contains('open');
+                $$('.submenu.open').forEach(openPanel => {
+                    if (openPanel.id !== targetPanelId) {
+                        openPanel.classList.remove('open');
+                        const correspondingBtn = $(`[aria-controls="${openPanel.id}"]`);
+                        if (correspondingBtn) correspondingBtn.setAttribute('aria-expanded', 'false');
+                    }
+                });
+                if (!isAlreadyOpen) {
+                    targetPanel.classList.add('open');
+                    clickedBtn.setAttribute('aria-expanded', 'true');
+                } else {
+                    targetPanel.classList.remove('open');
+                    clickedBtn.setAttribute('aria-expanded', 'false');
+                }
+                persistAccordionState();
+            });
+        });
+
+        $$('[data-close]').forEach(x => x.addEventListener('click', closeAllModals));
+        window.addEventListener('click', e => { if (e.target.classList && e.target.classList.contains('modal')) closeAllModals(); });
+
+        $('#analytics-strategy-filter')?.addEventListener('change', () => (window.updateAllCalculations || (() => { }))());
+
+        $('#edit-challenge')?.addEventListener('click', () => {
+            const settings = window.__currentSettings || {};
+            $('#challenge-balance').value = settings.initialBalance || 100000;
+            $('#challenge-target').value = settings.profitTarget || 10;
+            $('#challenge-max-loss').value = settings.maxLoss || 10;
+            $('#challenge-daily-loss').value = settings.dailyLoss || 5;
+            openModalById('challenge-settings-modal');
+        });
+
+        $('#save-general-settings-btn')?.addEventListener('click', () => {
+            const settings = { initialBalance: parseFloat($('#settings-initial-balance').value) || 10000 };
+            (window.saveGeneralSettings || (() => { }))(settings);
+        });
+
+        $('#refresh-distribution')?.addEventListener('click', () => (window.updateAllCalculations || (() => { }))());
+
+        $('#expand-balance-chart')?.addEventListener('click', () => {
+            openModalById('balance-chart-modal');
+            setTimeout(() => modalBalanceChart && modalBalanceChart.resize(), 50);
+        });
+        
+        $('#weekly-goal-input')?.addEventListener('input', () => {
+            (window.updateAllCalculations || (() => { }))();
+        });
+
+        $('#add-trade-btn')?.addEventListener('click', openNewTradeModal);
+        $('#floating-add-trade-btn')?.addEventListener('click', openNewTradeModal);
+        $('#quick-add-trade')?.addEventListener('click', (e) => { e.preventDefault(); openNewTradeModal(); });
+
+        $('#generate-report-btn')?.addEventListener('click', () => {
+            const startDate = $('#report-start-date').value;
+            const endDate = $('#report-end-date').value;
+            if (!startDate || !endDate) {
+                return alert('Por favor, selecciona una fecha de inicio y de fin.');
+            }
+            const allTrades = (window.__currentTrades || []);
+            const filteredTrades = allTrades.filter(t => t.dateStr >= startDate && t.dateStr <= endDate);
+
+            reportDataForExport = filteredTrades;
+
+            const wins = filteredTrades.filter(x => x.result > 0);
+            const totalProfit = filteredTrades.reduce((sum, t) => sum + (t.result || 0), 0);
+            const winRate = filteredTrades.length ? (wins.length / filteredTrades.length) * 100 : 0;
+            const totalWins = wins.reduce((s, x) => s + (x.result || 0), 0);
+            const totalLoss = Math.abs(filteredTrades.filter(x => x.result < 0).reduce((s, x) => s + (x.result || 0), 0));
+            const profitFactor = totalLoss ? totalWins / totalLoss : 0;
+            $('#report-total-profit').textContent = `$${totalProfit.toFixed(2)}`;
+            $('#report-total-trades').textContent = filteredTrades.length;
+            $('#report-win-rate').textContent = `${winRate.toFixed(1)}%`;
+            $('#report-profit-factor').textContent = profitFactor.toFixed(2);
+            const reportTbody = $('#report-table-body');
+            if (reportTbody) {
+                reportTbody.innerHTML = filteredTrades.length > 0 ? filteredTrades.map(t => {
+                    const resultColor = (t.result || 0) >= 0 ? 'var(--success)' : 'var(--danger)';
+                    return `
+                  <tr style="border-bottom: 1px solid var(--border);">
+                    <td style="padding:10px;">${t.dateStr}</td><td style="padding:10px;">${t.pair}</td>
+                    <td style="padding:10px;">${(t.type || '').toUpperCase()}</td><td style="padding:10px; text-align:right; color:${resultColor};">$${(t.result || 0).toFixed(2)}</td>
+                  </tr>`;
+                }).join('') : `<tr><td colspan="4" style="text-align:center; padding: 12px; color: var(--muted);">No hay operaciones en este rango.</td></tr>`;
+            }
+            $('#report-results').classList.remove('hidden');
+        });
+
+        $('#download-csv-btn')?.addEventListener('click', () => {
+            if (!reportDataForExport || reportDataForExport.length === 0) {
+                return alert('Primero debes generar un reporte para poder descargarlo.');
+            }
+            const headers = ['Fecha', 'Par', 'Tipo', 'Resultado ($)'];
+            const rows = reportDataForExport.map(trade =>
+                [
+                    `"${trade.dateStr}"`,
+                    `"${trade.pair}"`,
+                    `"${(trade.type || '').toUpperCase()}"`,
+                    (trade.result || 0).toFixed(2)
+                ].join(',')
+            );
+            const csvContent = [headers.join(','), ...rows].join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            const fileName = `reporte-trading-${new Date().toISOString().slice(0, 10)}.csv`;
+            link.setAttribute("download", fileName);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
     });
-  });
-
-  // Lógica para cerrar modales y otros listeners de UI
-  $$('[data-close]').forEach(x=>x.addEventListener('click', closeAllModals));
-  window.addEventListener('click', e=>{ if (e.target.classList && e.target.classList.contains('modal')) closeAllModals(); });
-  
-  $('#analytics-strategy-filter')?.addEventListener('change', () => (window.updateAllCalculations || (()=>{}))() );
-  
-  $('#edit-challenge')?.addEventListener('click', () => {
-    const settings = window.__currentSettings || {};
-    $('#challenge-balance').value = settings.initialBalance || 100000;
-    $('#challenge-target').value = settings.profitTarget || 10;
-    $('#challenge-max-loss').value = settings.maxLoss || 10;
-    $('#challenge-daily-loss').value = settings.dailyLoss || 5;
-    openModalById('challenge-settings-modal');
-  });
-
-  $('#save-general-settings-btn')?.addEventListener('click', () => {
-      const settings = { initialBalance: parseFloat($('#settings-initial-balance').value) || 10000 };
-      (window.saveGeneralSettings || (()=>{}))(settings);
-  });
-  
-  $('#refresh-distribution')?.addEventListener('click', () => (window.updateAllCalculations || (()=>{}))());
-  
-  $('#expand-balance-chart')?.addEventListener('click', () => {
-    openModalById('balance-chart-modal');
-    setTimeout(() => modalBalanceChart && modalBalanceChart.resize(), 50);
-  });
-
-      // Para que la barra de progreso se actualice mientras escribes la meta
-  $('#weekly-goal-input')?.addEventListener('input', () => {
-      (window.updateAllCalculations || (()=>{}))();
-  });
-     
-  $('#add-trade-btn')?.addEventListener('click', openNewTradeModal);
-  $('#floating-add-trade-btn')?.addEventListener('click', openNewTradeModal);
-  $('#quick-add-trade')?.addEventListener('click', (e)=>{ e.preventDefault(); openNewTradeModal(); });
-
-  // ▼▼▼ BLOQUE DE CÓDIGO PARA REPORTES Y DESCARGA ▼▼▼
-  $('#generate-report-btn')?.addEventListener('click', () => {
-    const startDate = $('#report-start-date').value;
-    const endDate = $('#report-end-date').value;
-    if (!startDate || !endDate) {
-      return alert('Por favor, selecciona una fecha de inicio y de fin.');
-    }
-    const allTrades = (window.__currentTrades || []);
-    const filteredTrades = allTrades.filter(t => t.dateStr >= startDate && t.dateStr <= endDate);
-
-    reportDataForExport = filteredTrades;
-
-    const wins = filteredTrades.filter(x => x.result > 0);
-    const totalProfit = filteredTrades.reduce((sum, t) => sum + (t.result || 0), 0);
-    const winRate = filteredTrades.length ? (wins.length / filteredTrades.length) * 100 : 0;
-    const totalWins = wins.reduce((s, x) => s + (x.result || 0), 0);
-    const totalLoss = Math.abs(filteredTrades.filter(x => x.result < 0).reduce((s, x) => s + (x.result || 0), 0));
-    const profitFactor = totalLoss ? totalWins / totalLoss : 0;
-    $('#report-total-profit').textContent = `$${totalProfit.toFixed(2)}`;
-    $('#report-total-trades').textContent = filteredTrades.length;
-    $('#report-win-rate').textContent = `${winRate.toFixed(1)}%`;
-    $('#report-profit-factor').textContent = profitFactor.toFixed(2);
-    const reportTbody = $('#report-table-body');
-    if(reportTbody){
-      reportTbody.innerHTML = filteredTrades.length > 0 ? filteredTrades.map(t => {
-        const resultColor = (t.result || 0) >= 0 ? 'var(--success)' : 'var(--danger)';
-        return `
-          <tr style="border-bottom: 1px solid var(--border);">
-            <td style="padding:10px;">${t.dateStr}</td><td style="padding:10px;">${t.pair}</td>
-            <td style="padding:10px;">${(t.type || '').toUpperCase()}</td><td style="padding:10px; text-align:right; color:${resultColor};">$${(t.result || 0).toFixed(2)}</td>
-          </tr>`;
-      }).join('') : `<tr><td colspan="4" style="text-align:center; padding: 12px; color: var(--muted);">No hay operaciones en este rango.</td></tr>`;
-    }
-    $('#report-results').classList.remove('hidden');
-  });
-
-  $('#download-csv-btn')?.addEventListener('click', () => {
-    if (!reportDataForExport || reportDataForExport.length === 0) {
-      return alert('Primero debes generar un reporte para poder descargarlo.');
-    }
-    const headers = ['Fecha', 'Par', 'Tipo', 'Resultado ($)'];
-    const rows = reportDataForExport.map(trade => 
-      [
-        `"${trade.dateStr}"`,
-        `"${trade.pair}"`,
-        `"${(trade.type || '').toUpperCase()}"`,
-        (trade.result || 0).toFixed(2)
-      ].join(',')
-    );
-    const csvContent = [headers.join(','), ...rows].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    const fileName = `reporte-trading-${new Date().toISOString().slice(0,10)}.csv`;
-    link.setAttribute("download", fileName);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  });
-  // ▲▲▲ FIN DEL BLOQUE DE REPORTE Y DESCARGA ▲▲▲
-
-}); // <-- FIN DEL DOMContentLoaded  </script>
+</script>
   
   <script type="module">
 
@@ -1883,7 +1828,7 @@ window.db = db;
             $('#settings-initial-balance').value = 10000;
             
             updateAccountsUI(empty);
-            renderTradesTable(empty);
+            //renderTradesTable(empty);
             renderAnalytics(empty);
             renderCalendar(empty);
             renderStrategiesUI(empty);
@@ -1897,10 +1842,8 @@ window.db = db;
             if ($('#admin-users-tbody')) $('#admin-users-tbody').innerHTML = '';
             if ($('#invite-codes-list')) $('#invite-codes-list').innerHTML = '';
             if ($('#admin-user-detail')) $('#admin-user-detail').textContent = 'Selecciona un usuario…';
-            // --- LÍNEAS AÑADIDAS PARA LIMPIAR EL PANEL DE ADMIN ---
             if ($('#admin-user-accounts')) $('#admin-user-accounts').innerHTML = '—';
             if ($('#admin-user-trades')) $('#admin-user-trades').innerHTML = '—';
-            // --- FIN DE LAS LÍNEAS AÑADIDAS ---
         }
     });    
 
@@ -1917,52 +1860,32 @@ window.db = db;
       updateChallengeTrackerUI(calculateChallengeProgress(allTrades, settings));
       updateWeeklyProgress();
     }
+    
+    function updateWeeklyProgress() {
+        const goal = parseFloat($('#weekly-goal-input').value) || 0;
+        const progressBar = $('#weekly-progress-bar');
+        if (!progressBar) return;
 
-    // index.html
+        if (goal <= 0) {
+            progressBar.style.width = '0%';
+            return;
+        }
 
-// Reemplaza tu función 'updateWeeklyProgress' completa con esta:
-function updateWeeklyProgress() {
-    const goal = parseFloat($('#weekly-goal-input').value) || 0;
-    const progressBar = $('#weekly-progress-bar');
-    if (!progressBar) return;
+        const trades = window.__currentTrades || [];
+        
+        const today = new Date();
+        const dayOfWeek = today.getDay();
+        const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+        const startOfWeek = new Date(new Date(today).setDate(diff)).toISOString().slice(0, 10);
 
-    // ----- INICIO DE DIAGNÓSTICO -----
-    // Abre la consola del navegador (F12 o clic derecho -> Inspeccionar -> Consola)
-    // para ver estos mensajes.
-    console.log("--- Calculando Progreso Semanal ---");
-    console.log("Meta establecida ($):", goal);
-    // ----- FIN DE DIAGNÓSTICO -----
+        const netWeeklyProfit = trades
+            .filter(t => t.dateStr >= startOfWeek)
+            .reduce((sum, t) => sum + t.result, 0);
 
-    if (goal <= 0) {
-        progressBar.style.width = '0%';
-        return;
+        const progress = Math.min(100, (Math.max(0, netWeeklyProfit) / goal) * 100);
+        
+        progressBar.style.width = `${progress}%`;
     }
-
-    const trades = window.__currentTrades || [];
-    
-    const today = new Date();
-    const dayOfWeek = today.getDay();
-    const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // Lunes como inicio de semana
-    const startOfWeek = new Date(new Date(today).setDate(diff)).toISOString().slice(0, 10);
-
-    const netWeeklyProfit = trades
-        .filter(t => t.dateStr >= startOfWeek)
-        .reduce((sum, t) => sum + t.result, 0);
-
-    // ----- INICIO DE DIAGNÓSTICO -----
-    console.log("Inicio de la semana actual:", startOfWeek);
-    console.log("Beneficio neto esta semana ($):", netWeeklyProfit);
-    // ----- FIN DE DIAGNÓSTICO -----
-
-    const progress = Math.min(100, (Math.max(0, netWeeklyProfit) / goal) * 100);
-    
-    // ----- INICIO DE DIAGNÓSTICO -----
-    console.log(`Progreso calculado (%): ${progress.toFixed(2)}%`);
-    console.log("---------------------------------");
-    // ----- FIN DE DIAGNÓSTICO -----
-    
-    progressBar.style.width = `${progress}%`;
-}
 
     function calculateChallengeProgress(trades, settings) {
       if (!settings || !settings.initialBalance) return {};
@@ -1988,10 +1911,8 @@ function updateWeeklyProgress() {
       };
     }    
     
-// REEMPLAZA TU FUNCIÓN addEventListener COMPLETA CON ESTA
     $('main')?.addEventListener('click', (e) => {
       
-      // --- Cuentas ---
       const editAccountBtn = e.target.closest('.btn-edit-account');
       if (editAccountBtn) {
         const account = window.__currentAccounts?.find(a => a.id === editAccountBtn.dataset.id);
@@ -2012,7 +1933,6 @@ function updateWeeklyProgress() {
         return; 
       }
       
-      // --- Trades ---
       const editTradeBtn = e.target.closest('.btn-edit-trade');
       if (editTradeBtn) {
         const trade = window.__currentTrades?.find(t => t.id === editTradeBtn.dataset.id);
@@ -2037,7 +1957,6 @@ function updateWeeklyProgress() {
         return; 
       }
       
-      // --- Estrategias ---
       const editStrategyBtn = e.target.closest('.btn-edit-strategy');
       if (editStrategyBtn) {
         const strategy = window.__currentStrategies?.find(s => s.id === editStrategyBtn.dataset.id);
@@ -2066,7 +1985,6 @@ function updateWeeklyProgress() {
           return;
       }
 
-      // --- Notas ---
       const deleteNoteBtn = e.target.closest('.btn-delete-note');
       if (deleteNoteBtn) {
         deleteItem('notes', deleteNoteBtn.dataset.id);
@@ -2085,7 +2003,6 @@ function updateWeeklyProgress() {
           return;
       }
 
-      // --- Panel de Admin (SOLUCIÓN) ---
       const openUserBtn = e.target.closest('.btn-open-user');
       if (openUserBtn) {
           openUserDetail(openUserBtn.dataset.uid);
@@ -2093,7 +2010,6 @@ function updateWeeklyProgress() {
       }
     });
     
-    // Modal Save Button Listeners
     $('#save-challenge-settings-btn')?.addEventListener('click', async () => {
       const settings = {
         initialBalance: parseFloat($('#challenge-balance').value) || 100000,
@@ -2183,7 +2099,6 @@ function updateWeeklyProgress() {
         }
     });
 
-    // AI Function Call
     async function evaluateStrategyWithAI(strategy) {
         const modalBody = $('#ai-response-body');
         modalBody.textContent = 'Contactando a la IA de Gemini...';
@@ -2197,7 +2112,6 @@ function updateWeeklyProgress() {
         }
     }
 
-    // Admin Panel Functions
     async function updateUserRole(uid, newRole) {
       try {
         const setRoleFunction = httpsCallable(functions, 'setAdminRole');
@@ -2214,7 +2128,6 @@ function updateWeeklyProgress() {
     loadUsersTable();
     unsubInvites && unsubInvites();
     const invitesRef = collection(db, 'invitations');
-    // ▼▼▼ CAMBIO AQUÍ ▼▼▼
     const q = query(invitesRef, where('isUsed', '==', false));
     unsubInvites = onSnapshot(q, snap => {
         const listEl = $('#invite-codes-list');
@@ -2287,15 +2200,11 @@ async function openUserDetail(uid){
   }
 }
 
-    const adminTbody = $('#admin-users-tbody');
-    
-    // SOLUCIÓN: Definimos el MutationObserver para detectar cambios en la tabla de usuarios
-    const observer = new MutationObserver((mutationsList, observer) => {
+       const adminTbody = $('#admin-users-tbody');
+       const observer = new MutationObserver((mutationsList, observer) => {
         for(const mutation of mutationsList) {
             if (mutation.type === 'childList') {
-                // Cuando se añadan nuevas filas a la tabla, buscamos los select de roles
                 $$('.admin-role-select').forEach(select => {
-                    // Evitamos añadir el mismo listener múltiples veces
                     if (!select.dataset.listenerAttached) {
                         select.addEventListener('change', (e) => {
                             const uid = e.target.dataset.uid;
@@ -2312,7 +2221,6 @@ async function openUserDetail(uid){
     });
 
     if(adminTbody) {
-        // Le decimos al observer que vigile el cuerpo de la tabla por si se añaden o quitan elementos
         observer.observe(adminTbody, { childList: true, subtree: true });
     }
 
