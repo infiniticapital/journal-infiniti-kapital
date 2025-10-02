@@ -2025,17 +2025,6 @@ async function openUserDetail(uid){
   }
 }
 
-    $('#admin-panel-container')?.addEventListener('click', (e) => { // Use a container for delegation
-        const openUserBtn = e.target.closest('.btn-open-user');
-        if(openUserBtn) { openUserDetail(openUserBtn.dataset.uid); return; }
-
-        const roleSelect = e.target.closest('.admin-role-select');
-        if(roleSelect) {
-            // Re-bind the change listener if needed, or handle it here
-            // This is complex, direct binding after render is better
-        }
-    });
-
     // Re-bind events after table is rendered
     // This is a simpler but less performant way
     const observer = new MutationObserver((mutations) => {
