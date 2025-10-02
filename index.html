@@ -2025,35 +2025,7 @@ async function openUserDetail(uid){
   }
 }
 
-    // Re-bind events after table is rendered
-    // This is a simpler but less performant way
-    const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-            if (mutation.addedNodes.length) {
-                document.querySelectorAll('.admin-role-select').forEach(select => {
-                    if(!select.dataset.listenerAttached) {
-                        select.addEventListener('change', (e) => {
-                            const uid = e.target.dataset.uid;
-                            const newRole = e.target.value;
-                            if(confirm(`¿Seguro que quieres cambiar el rol de este usuario a "${newRole}"?`)) {
-                                updateUserRole(uid, newRole);
-                            } else {
-                                loadUsersTable(); // Revert visual change
-                            }
-                        });
-                        select.dataset.listenerAttached = 'true';
-                    }
-                });
-                document.querySelectorAll('.btn-open-user').forEach(btn => {
-                     if(!btn.dataset.listenerAttached) {
-                        btn.addEventListener('click', () => openUserDetail(btn.dataset.uid));
-                        btn.dataset.listenerAttached = 'true';
-                    }
-                })
-            }
-        });
-    });
-    const adminTbody = $('#admin-users-tbody');
+       const adminTbody = $('#admin-users-tbody');
     if(adminTbody) observer.observe(adminTbody, { childList: true });
 
 
