@@ -2026,9 +2026,34 @@ async function openUserDetail(uid){
   }
 }
 
-       const adminTbody = $('#admin-users-tbody');
-    if(adminTbody) observer.observe(adminTbody, { childList: true });
+    const adminTbody = $('#admin-users-tbody');
+    
+    // SOLUCIÓN: Definimos el MutationObserver para detectar cambios en la tabla de usuarios
+    const observer = new MutationObserver((mutationsList, observer) => {
+        for(const mutation of mutationsList) {
+            if (mutation.type === 'childList') {
+                // Cuando se añadan nuevas filas a la tabla, buscamos los select de roles
+                $$('.admin-role-select').forEach(select => {
+                    // Evitamos añadir el mismo listener múltiples veces
+                    if (!select.dataset.listenerAttached) {
+                        select.addEventListener('change', (e) => {
+                            const uid = e.target.dataset.uid;
+                            const newRole = e.target.value;
+                            if (uid && newRole) {
+                                updateUserRole(uid, newRole);
+                            }
+                        });
+                        select.dataset.listenerAttached = 'true';
+                    }
+                });
+            }
+        }
+    });
 
+    if(adminTbody) {
+        // Le decimos al observer que vigile el cuerpo de la tabla por si se añaden o quitan elementos
+        observer.observe(adminTbody, { childList: true, subtree: true });
+    }
 
     $('#btn-refresh-users')?.addEventListener('click', loadUsersTable);
   </script>
