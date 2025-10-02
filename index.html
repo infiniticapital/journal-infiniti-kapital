@@ -1350,6 +1350,7 @@ function renderHistorySummary(trades) {
     localStorage.setItem('traderChecklistState', JSON.stringify(state));
   }
 
+   
   function loadChecklistState() {
     const savedState = JSON.parse(localStorage.getItem('traderChecklistState') || '{}');
     checklistIds.forEach(id => {
@@ -1374,9 +1375,36 @@ function renderHistorySummary(trades) {
   initCharts();
   restoreAccordionState();
 
-  let reportDataForExport = []; // Variable para guardar los datos del reporte
+// Dentro de DOMContentLoaded, junto a los otros listeners
+const filterButtons = document.querySelectorAll('#history-filter-buttons button');
+filterButtons.forEach(button => {
+    button.addEventListener('click', () => {
+        filterButtons.forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
 
-  // Lógica para el menú lateral en móviles
+        const range = button.dataset.range;
+        if (range === 'all') {
+            renderHistorySummary(window.__currentTrades || []);
+            return;
+        }
+
+        const now = new Date();
+        const startDate = new Date();
+        if (range === '1m') startDate.setMonth(now.getMonth() - 1);
+        if (range === '3m') startDate.setMonth(now.getMonth() - 3);
+        if (range === '6m') startDate.setMonth(now.getMonth() - 6);
+        if (range === '1y') startDate.setFullYear(now.getFullYear() - 1);
+
+        const startDateStr = startDate.toISOString().slice(0, 10);
+        const filteredTrades = (window.__currentTrades || []).filter(t => t.dateStr >= startDateStr);
+        renderHistorySummary(filteredTrades);
+    });
+});     
+
+    let reportDataForExport = []; // Variable para guardar los datos del reporte
+
+     
+ // Lógica para el menú lateral en móviles
   ;(function(){
     const burger = document.getElementById('burger');
     const backdrop = document.getElementById('drawerBackdrop');
