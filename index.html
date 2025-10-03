@@ -407,12 +407,34 @@
                             </tr>
                         </thead>
                         <tbody id="history-summary-tbody">
-                            </tbody>
+                        </tbody>
                     </table>
                 </div>
             </div>
         </div>
-    </section>
+
+        <div class="card" style="grid-column: 1 / -1; margin-top: 20px;">
+            <div class="card-header">
+                <div class="card-title">Historial de Operaciones Detallado</div>
+            </div>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid var(--border);">
+                            <th style="padding: 10px; text-align: left; color: var(--muted);">Fecha</th>
+                            <th style="padding: 10px; text-align: left; color: var(--muted);">Activo</th>
+                            <th style="padding: 10px; text-align: left; color: var(--muted);">Tipo</th>
+                            <th style="padding: 10px; text-align: right; color: var(--muted);">Lotaje</th>
+                            <th style="padding: 10px; text-align: right; color: var(--muted);">Resultado ($)</th>
+                            <th style="padding: 10px; text-align: center; color: var(--muted);">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="detailed-history-tbody">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+        </section>
     
     <section id="analiticas" class="section">
       <div class="card" style="grid-column: 1 / -1; margin-bottom: -10px;">
@@ -1434,6 +1456,41 @@ function renderHistorySummary(trades) {
     });
 }
 
+// INICIO: Nueva función para renderizar el historial detallado
+function renderDetailedHistory(trades) {
+    const tbody = $('#detailed-history-tbody');
+    if (!tbody) return;
+
+    if (!trades || trades.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="padding: 12px; text-align: center; color: var(--muted);">No hay operaciones registradas.</td></tr>`;
+        return;
+    }
+
+    // Ordenar trades del más reciente al más antiguo
+    const sortedTrades = [...trades].sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+
+    tbody.innerHTML = sortedTrades.map(trade => {
+        const resultColor = trade.result >= 0 ? 'var(--success)' : 'var(--danger)';
+        const typeText = trade.type === 'buy' ? 'Compra' : 'Venta';
+        const typeColor = trade.type === 'buy' ? 'var(--success)' : 'var(--danger)';
+        
+        return `
+            <tr style="border-bottom: 1px solid var(--border);">
+                <td style="padding: 12px;">${trade.dateStr || 'N/A'}</td>
+                <td style="padding: 12px; font-weight: bold;">${trade.pair || 'N/A'}</td>
+                <td style="padding: 12px; color: ${typeColor};">${typeText}</td>
+                <td style="padding: 12px; text-align: right;">${trade.lots || '---'}</td>
+                <td style="padding: 12px; text-align: right; color: ${resultColor}; font-weight: bold;">$${(trade.result || 0).toFixed(2)}</td>
+                <td style="padding: 12px; text-align: center; display: flex; gap: 8px; justify-content: center;">
+                    <button class="btn-icon btn-edit-trade" data-id="${trade.id}" title="Editar Operación"><i class="fa-solid fa-pen"></i></button>
+                    <button class="btn-icon btn-delete-trade" data-id="${trade.id}" title="Eliminar Operación"><i class="fa-solid fa-trash"></i></button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+// FIN: Nueva función
+
 // FUNCIÓN CORREGIDA: Calcula el progreso semanal con beneficio neto y lógica de fecha mejorada.
 function updateWeeklyProgress() {
     const goal = parseFloat($('#weekly-goal-input').value) || 0;
@@ -1580,6 +1637,7 @@ onAuthStateChanged(auth, async (user) => {
         updateChallengeTrackerUI(null);
         renderNotesHistory(empty);
         renderHistorySummary(empty);
+        renderDetailedHistory(empty); // Asegurarse de limpiar la tabla al cerrar sesión
 
         if ($('#admin-users-tbody')) $('#admin-users-tbody').innerHTML = '';
         if ($('#invite-codes-list')) $('#invite-codes-list').innerHTML = '';
@@ -1597,6 +1655,7 @@ window.updateAllCalculations = () => {
   
   recalcFromTrades(allTrades);
   renderHistorySummary(allTrades);
+  renderDetailedHistory(allTrades); // <<-- LLAMADA A LA NUEVA FUNCIÓN
   renderAnalytics(filteredTrades);
   renderCalendar(allTrades);
   updateChallengeTrackerUI(calculateChallengeProgress(allTrades, settings));
