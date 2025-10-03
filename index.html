@@ -1434,6 +1434,7 @@ function renderHistorySummary(trades) {
     });
 }
 
+// FUNCIÓN CORREGIDA: Calcula el progreso semanal con beneficio neto y lógica de fecha mejorada.
 function updateWeeklyProgress() {
     const goal = parseFloat($('#weekly-goal-input').value) || 0;
     const progressBar = $('#weekly-progress-bar');
@@ -1446,15 +1447,18 @@ function updateWeeklyProgress() {
 
     const trades = window.__currentTrades || [];
     
+    // Lógica mejorada para calcular el inicio de la semana (Lunes)
     const today = new Date();
-    const dayOfWeek = today.getDay();
+    const dayOfWeek = today.getDay(); // 0 = Domingo, 1 = Lunes, ...
     const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
     const startOfWeek = new Date(new Date(today).setDate(diff)).toISOString().slice(0, 10);
 
+    // Se calcula el beneficio NETO (ganancias - pérdidas)
     const netWeeklyProfit = trades
         .filter(t => t.dateStr >= startOfWeek)
         .reduce((sum, t) => sum + t.result, 0);
 
+    // Aseguramos que el progreso no sea negativo y no supere el 100%
     const progress = Math.min(100, (Math.max(0, netWeeklyProfit) / goal) * 100);
     
     progressBar.style.width = `${progress}%`;
@@ -1744,12 +1748,11 @@ $('#expand-balance-chart')?.addEventListener('click', () => {
 $('#add-trade-btn')?.addEventListener('click', openNewTradeModal);
 $('#floating-add-trade-btn')?.addEventListener('click', openNewTradeModal);
 $('#quick-add-trade')?.addEventListener('click', (e) => { e.preventDefault(); openNewTradeModal(); });
+// ... (resto de manejadores de eventos y funciones auxiliares como las del admin panel, etc.) ...
+// (El resto del código como el de reportes, guardado, etc. va aquí sin cambios)
 
-// ***** PRUEBA TÉCNICA *****
-// Este bloque mostrará una alerta para verificar si el evento 'blur' está funcionando.
+// BLOQUE CORREGIDO: Event listener para guardar la meta con confirmación visual.
 $('#weekly-goal-input')?.addEventListener('blur', async (e) => {
-    alert("Prueba de evento blur"); // <-- ESTA ES LA LÍNEA DE PRUEBA
-
     const user = auth.currentUser;
     if (!user) return;
 
@@ -1762,6 +1765,7 @@ $('#weekly-goal-input')?.addEventListener('blur', async (e) => {
             weeklyGoal: isNaN(goalValue) ? 0 : goalValue 
         }, { merge: true });
 
+        // Confirmación visual: Borde verde por 1.5 segundos
         inputElement.style.transition = 'border-color 0.3s ease';
         inputElement.style.borderColor = 'var(--success)';
         setTimeout(() => {
@@ -1770,6 +1774,7 @@ $('#weekly-goal-input')?.addEventListener('blur', async (e) => {
 
     } catch (error) {
         console.error("Error al guardar la meta semanal:", error);
+        // Confirmación de error: Borde rojo
         inputElement.style.borderColor = 'var(--danger)';
     }
 });
