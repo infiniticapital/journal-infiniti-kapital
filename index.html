@@ -16,6 +16,9 @@
   <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
   <link href='https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css' rel='stylesheet'>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     :root{
       --primary:#0f172a; --secondary:#1e293b; --accent:#d4af37;
@@ -333,10 +336,15 @@
             <label for="report-end-date">Fecha de Fin</label>
             <input type="date" id="report-end-date" class="form-control">
           </div>
-          <div style="display: flex; gap: 8px;">
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
             <button class="btn primary" id="generate-report-btn" style="flex-grow: 1;">Generar</button>
-            <button class="btn secondary" id="download-csv-btn" title="Descargar CSV"><i class="fa-solid fa-download"></i></button>
+            <button class="btn secondary" id="download-csv-btn" title="Descargar CSV"><i class="fa-solid fa-file-csv"></i> CSV</button>
+            <button class="btn secondary" id="download-excel-btn" title="Descargar Excel"><i class="fa-solid fa-file-excel"></i> Excel</button>
+            <button class="btn secondary" id="download-pdf-btn" title="Descargar PDF"><i class="fa-solid fa-file-pdf"></i> PDF</button>
           </div>
+        </div>
+        <div id="report-loader" class="hidden" style="margin-top: 15px; text-align: center; color: var(--muted);">
+          <i class="fa-solid fa-spinner fa-spin"></i> Generando reporte...
         </div>
       </div>
       <div id="report-results" class="hidden" style="grid-column: 1 / -1; display:contents;">
@@ -347,16 +355,17 @@
         <div class="card" style="grid-column: 1 / -1;">
           <div class="card-header"><div class="card-title">Detalle de Operaciones</div></div>
           <div style="overflow-x:auto;">
-            <table style="width:100%; border-collapse:collapse;">
+            <table id="report-table" style="width:100%; border-collapse:collapse;">
                 <thead>
                     <tr style="border-bottom: 1px solid var(--border);">
                         <th style="padding:10px; text-align:left; color:var(--muted);">Fecha</th>
-                        <th style="padding:10px; text-align:left; color:var(--muted);">Par</th>
+                        <th style="padding:10px; text-align:left; color:var(--muted);">Símbolo</th>
                         <th style="padding:10px; text-align:left; color:var(--muted);">Tipo</th>
-                        <th style="padding:10px; text-align:left; color:var(--muted);">Estrategia</th>
-                        <th style="padding:10px; text-align:right; color:var(--muted);">Riesgo (%)</th>
-                        <th style="padding:10px; text-align:right; color:var(--muted);">R/B</th>
                         <th style="padding:10px; text-align:right; color:var(--muted);">Resultado ($)</th>
+                        <th style="padding:10px; text-align:right; color:var(--muted);">Lotes</th>
+                        <th style="padding:10px; text-align:right; color:var(--muted);">Pips</th>
+                        <th style="padding:10px; text-align:left; color:var(--muted);">Estrategia/Setup</th>
+                        <th style="padding:10px; text-align:left; color:var(--muted);">Comentario</th>
                     </tr>
                 </thead>
                 <tbody id="report-table-body"></tbody>
@@ -365,7 +374,6 @@
         </div>
       </div>
     </section>
-
     <section id="cuentas" class="section">
         <div class="card" style="grid-column:1/-1">
             <div class="card-header">
@@ -664,6 +672,7 @@
                 <label>Fecha de Operación</label>
                 <input id="trade-date-input" type="date" class="form-control" />
             </div>
+
             <div class="form-group" style="grid-column: 1 / -1;"><label>Par / Activo</label>
               <select id="trade-pair-input" class="form-control">
                 <optgroup label="Pares Mayores (Majors)">
@@ -868,6 +877,7 @@ const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
 
 let distributionChart, balanceChart, riskChart, modalBalanceChart, equityCurveChart, symbolVolumeChart;
+let currentReportData = []; // Variable global para guardar los datos del reporte actual
 
 function setDate() {
     const el = $('#current-date');
@@ -1711,9 +1721,7 @@ function closeAllModals() { $$('.modal').forEach(m => m.classList.remove('show')
 function openNewTradeModal() {
     $('#trade-title').textContent = 'Agregar Operación';
     $('#editing-trade-id').value = '';
-    // INICIO: CÓDIGO MODIFICADO PARA INCLUIR FECHA
     $('#trade-date-input').value = new Date().toISOString().slice(0, 10);
-    // FIN: CÓDIGO MODIFICADO
     $('#trade-pair-input').value = 'EURUSD';
     $('#trade-type-input').value = 'buy';
     $('#trade-result-input').value = '';
@@ -2080,9 +2088,7 @@ $('main')?.addEventListener('click', (e) => {
     const trade = window.__currentTrades?.find(t => t.id === editTradeBtn.dataset.id);
     if (trade) {
         $('#trade-title').textContent = 'Editar Operación';
-        // INICIO: CÓDIGO MODIFICADO PARA CARGAR FECHA
         $('#trade-date-input').value = trade.dateStr || new Date().toISOString().slice(0, 10);
-        // FIN: CÓDIGO MODIFICADO
         $('#trade-pair-input').value = trade.pair; 
         $('#trade-type-input').value = trade.type;
         $('#trade-result-input').value = trade.result; 
@@ -2196,7 +2202,6 @@ $('#save-account-btn')?.addEventListener('click', async () => {
 });
 
 $('#save-trade-btn')?.addEventListener('click', async () => {
-    // INICIO: CÓDIGO MODIFICADO PARA INCLUIR FECHA
     const tradeDate = $('#trade-date-input').value;
     if (!tradeDate) {
       return alert('Por favor, selecciona una fecha para la operación.');
@@ -2218,7 +2223,6 @@ $('#save-trade-btn')?.addEventListener('click', async () => {
         takeProfit: parseFloat($('#trade-tp-input').value) || null,
         stopLoss: parseFloat($('#trade-sl-input').value) || null
     };
-    // FIN: CÓDIGO MODIFICADO
     try {
         await saveTrade(tradeData);
         closeAllModals();
@@ -2426,6 +2430,143 @@ filterButtons.forEach(button => {
         renderHistorySummary(filteredTrades);
     });
 });
+
+// INICIO: LÓGICA DE REPORTES
+let lastReportData = [];
+$('#generate-report-btn').addEventListener('click', async () => {
+    const startDate = $('#report-start-date').value;
+    const endDate = $('#report-end-date').value;
+    const user = auth.currentUser;
+
+    if (!startDate || !endDate) {
+        return alert('Por favor, selecciona una fecha de inicio y una fecha de fin.');
+    }
+    if (!user) {
+        return alert('Debes iniciar sesión para generar reportes.');
+    }
+
+    const tradesRef = collection(db, 'users', user.uid, 'trades');
+    const q = query(tradesRef, where('dateStr', '>=', startDate), where('dateStr', '<=', endDate));
+    
+    const reportResults = $('#report-results');
+    const tbody = $('#report-table-body');
+    tbody.innerHTML = '';
+    reportResults.classList.add('hidden');
+
+    try {
+        const snapshot = await getDocs(q);
+        const trades = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+        lastReportData = trades; // Guardar datos para exportación
+
+        if (trades.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding: 12px;">No se encontraron operaciones en este rango de fechas.</td></tr>';
+        } else {
+            // Llenar tabla y métricas
+            const wins = trades.filter(t => t.result > 0);
+            const totalProfit = trades.reduce((sum, t) => sum + t.result, 0);
+            const totalWinsValue = wins.reduce((sum, t) => sum + t.result, 0);
+            const totalLossValue = Math.abs(trades.filter(t => t.result < 0).reduce((sum, t) => sum + t.result, 0));
+
+            $('#report-total-profit').textContent = `$${totalProfit.toFixed(2)}`;
+            $('#report-total-trades').textContent = trades.length;
+            $('#report-win-rate').textContent = `${((wins.length / trades.length) * 100).toFixed(1)}%`;
+            $('#report-profit-factor').textContent = (totalLossValue > 0 ? (totalWinsValue / totalLossValue) : 0).toFixed(2);
+            
+            tbody.innerHTML = trades.map(t => `
+                <tr>
+                    <td style="padding:8px;">${t.dateStr}</td>
+                    <td style="padding:8px;">${t.pair}</td>
+                    <td style="padding:8px;">${t.type === 'buy' ? 'Compra' : 'Venta'}</td>
+                    <td style="padding:8px; text-align:right; color: ${t.result >= 0 ? 'var(--success)' : 'var(--danger)'};">$${t.result.toFixed(2)}</td>
+                    <td style="padding:8px; text-align:right;">${t.lots || '--'}</td>
+                    <td style="padding:8px; text-align:right;">${t.pips || '--'}</td>
+                    <td style="padding:8px;">${t.strategyId ? (window.__currentStrategies.find(s=>s.id === t.strategyId)?.name || 'N/A') : 'N/A'}</td>
+                    <td style="padding:8px;">${t.comment || ''}</td>
+                </tr>
+            `).join('');
+        }
+        reportResults.classList.remove('hidden');
+
+    } catch (error) {
+        console.error("Error generando el reporte: ", error);
+        alert('Hubo un error al generar el reporte.');
+    }
+});
+
+function exportToCSV() {
+    if (lastReportData.length === 0) {
+        return alert('Primero genera un reporte.');
+    }
+    const headers = ['Fecha', 'Simbolo', 'Tipo', 'Resultado ($)', 'Lotes', 'Estrategia'];
+    const rows = lastReportData.map(t => [
+        t.dateStr,
+        t.pair,
+        t.type,
+        t.result,
+        t.lots || '',
+        t.strategyId ? (window.__currentStrategies.find(s=>s.id === t.strategyId)?.name || '') : ''
+    ]);
+    
+    let csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `reporte_journal_${new Date().toISOString().slice(0,10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+function exportToExcel() {
+    if (lastReportData.length === 0) {
+        return alert('Primero genera un reporte.');
+    }
+    const headers = ['Fecha', 'Simbolo', 'Tipo', 'Resultado ($)', 'Lotes', 'Estrategia'];
+    const data = lastReportData.map(t => ({
+        Fecha: t.dateStr,
+        Simbolo: t.pair,
+        Tipo: t.type,
+        'Resultado ($)': t.result,
+        Lotes: t.lots || '',
+        Estrategia: t.strategyId ? (window.__currentStrategies.find(s=>s.id === t.strategyId)?.name || '') : ''
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Reporte");
+    XLSX.writeFile(workbook, `reporte_journal_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+
+function exportToPDF() {
+    if (lastReportData.length === 0) {
+        return alert('Primero genera un reporte.');
+    }
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    doc.text("Reporte de Operaciones", 14, 16);
+    doc.autoTable({
+        head: [['Fecha', 'Simbolo', 'Tipo', 'Resultado ($)', 'Lotes', 'Estrategia']],
+        body: lastReportData.map(t => [
+            t.dateStr,
+            t.pair,
+            t.type,
+            t.result.toFixed(2),
+            t.lots || '',
+            t.strategyId ? (window.__currentStrategies.find(s=>s.id === t.strategyId)?.name || '') : ''
+        ]),
+        startY: 20
+    });
+    
+    doc.save(`reporte_journal_${new Date().toISOString().slice(0,10)}.pdf`);
+}
+
+$('#download-csv-btn').addEventListener('click', exportToCSV);
+$('#download-excel-btn').addEventListener('click', exportToExcel);
+$('#download-pdf-btn').addEventListener('click', exportToPDF);
+// FIN: LÓGICA DE REPORTES
+
 </script>
 </body>
 </html>
