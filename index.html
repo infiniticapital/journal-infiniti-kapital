@@ -552,6 +552,20 @@
                 <button class="btn primary" id="save-general-settings-btn">Guardar Configuración</button>
             </div>
         </div>
+
+        <div class="card" style="grid-column:1/-1; margin-top: 20px;">
+            <div class="card-header">
+                <div class="card-title">Mi Perfil</div>
+            </div>
+            <div class="form-group">
+                <label>Nombre a Mostrar</label>
+                <input id="profile-name-input" type="text" class="form-control" placeholder="Tu nombre y apellido" />
+                <small style="color: var(--muted); display: block; margin-top: 4px;">Este es el nombre que aparecerá en la esquina superior derecha.</small>
+            </div>
+            <div style="text-align: right; margin-top: 20px;">
+                <button class="btn primary" id="save-profile-btn">Guardar Cambios</button>
+            </div>
+        </div>
         <div class="card" style="grid-column:1/-1; margin-top: 20px;">
             <div class="card-header">
               <div class="card-title">Conexión con MT5 (API Key)</div>
@@ -1594,6 +1608,12 @@ onAuthStateChanged(auth, async (user) => {
         
         if (userNameEl) userNameEl.textContent = user.displayName || user.email;
         $('.avatar').textContent = (user.displayName || 'U').substring(0,2).toUpperCase();
+        // INICIO: Código añadido para poblar el campo de nombre
+        const profileNameInput = $('#profile-name-input');
+        if (profileNameInput) {
+            profileNameInput.value = user.displayName || '';
+        }
+        // FIN: Código añadido
         $('#btn-login').classList.add('hidden');
         $('#btn-logout').classList.remove('hidden');
         $('#btn-open-auth').classList.add('hidden');
@@ -1795,6 +1815,46 @@ $('#save-general-settings-btn')?.addEventListener('click', () => {
     const settings = { initialBalance: parseFloat($('#settings-initial-balance').value) || 10000 };
     (window.saveGeneralSettings || (() => { }))(settings);
 });
+
+// INICIO: Event Listener para guardar perfil
+$('#save-profile-btn')?.addEventListener('click', async (e) => {
+    const user = auth.currentUser;
+    const newName = $('#profile-name-input').value.trim();
+    const button = e.target;
+
+    if (!user) {
+        return alert('Debes iniciar sesión para cambiar tu nombre.');
+    }
+    if (!newName) {
+        return alert('El nombre no puede estar vacío.');
+    }
+
+    button.disabled = true;
+    button.textContent = 'Guardando...';
+
+    try {
+        await updateProfile(user, { displayName: newName });
+        
+        // Actualiza el nombre en la base de datos de Firestore también
+        const userDocRef = doc(db, 'users', user.uid);
+        await setDoc(userDocRef, { displayName: newName }, { merge: true });
+
+        // Actualiza la UI inmediatamente
+        $('.user-name').textContent = newName;
+        $('.avatar').textContent = newName.substring(0, 2).toUpperCase();
+        
+        alert('¡Perfil actualizado correctamente!');
+
+    } catch (error) {
+        console.error('Error al actualizar el perfil:', error);
+        alert('Hubo un error al actualizar tu perfil: ' + error.message);
+    } finally {
+        button.disabled = false;
+        button.textContent = 'Guardar Cambios';
+    }
+});
+// FIN: Event Listener para guardar perfil
+
 $('#refresh-distribution')?.addEventListener('click', () => (window.updateAllCalculations || (() => { }))());
 $('#expand-balance-chart')?.addEventListener('click', () => {
     openModalById('balance-chart-modal');
