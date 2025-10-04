@@ -566,6 +566,7 @@
                 <button class="btn primary" id="save-profile-btn">Guardar Cambios</button>
             </div>
         </div>
+
         <div class="card" style="grid-column:1/-1; margin-top: 20px;">
             <div class="card-header">
               <div class="card-title">Conexión con MT5 (API Key)</div>
@@ -659,6 +660,10 @@
       </div>
       <div class="modal-body">
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <label>Fecha de Operación</label>
+                <input id="trade-date-input" type="date" class="form-control" />
+            </div>
             <div class="form-group" style="grid-column: 1 / -1;"><label>Par / Activo</label>
               <select id="trade-pair-input" class="form-control">
                 <optgroup label="Pares Mayores (Majors)">
@@ -1608,12 +1613,10 @@ onAuthStateChanged(auth, async (user) => {
         
         if (userNameEl) userNameEl.textContent = user.displayName || user.email;
         $('.avatar').textContent = (user.displayName || 'U').substring(0,2).toUpperCase();
-        // INICIO: Código añadido para poblar el campo de nombre
         const profileNameInput = $('#profile-name-input');
         if (profileNameInput) {
             profileNameInput.value = user.displayName || '';
         }
-        // FIN: Código añadido
         $('#btn-login').classList.add('hidden');
         $('#btn-logout').classList.remove('hidden');
         $('#btn-open-auth').classList.add('hidden');
@@ -1708,6 +1711,9 @@ function closeAllModals() { $$('.modal').forEach(m => m.classList.remove('show')
 function openNewTradeModal() {
     $('#trade-title').textContent = 'Agregar Operación';
     $('#editing-trade-id').value = '';
+    // INICIO: CÓDIGO MODIFICADO PARA INCLUIR FECHA
+    $('#trade-date-input').value = new Date().toISOString().slice(0, 10);
+    // FIN: CÓDIGO MODIFICADO
     $('#trade-pair-input').value = 'EURUSD';
     $('#trade-type-input').value = 'buy';
     $('#trade-result-input').value = '';
@@ -1816,7 +1822,6 @@ $('#save-general-settings-btn')?.addEventListener('click', () => {
     (window.saveGeneralSettings || (() => { }))(settings);
 });
 
-// INICIO: Event Listener para guardar perfil
 $('#save-profile-btn')?.addEventListener('click', async (e) => {
     const user = auth.currentUser;
     const newName = $('#profile-name-input').value.trim();
@@ -1835,11 +1840,9 @@ $('#save-profile-btn')?.addEventListener('click', async (e) => {
     try {
         await updateProfile(user, { displayName: newName });
         
-        // Actualiza el nombre en la base de datos de Firestore también
         const userDocRef = doc(db, 'users', user.uid);
         await setDoc(userDocRef, { displayName: newName }, { merge: true });
 
-        // Actualiza la UI inmediatamente
         $('.user-name').textContent = newName;
         $('.avatar').textContent = newName.substring(0, 2).toUpperCase();
         
@@ -1853,7 +1856,6 @@ $('#save-profile-btn')?.addEventListener('click', async (e) => {
         button.textContent = 'Guardar Cambios';
     }
 });
-// FIN: Event Listener para guardar perfil
 
 $('#refresh-distribution')?.addEventListener('click', () => (window.updateAllCalculations || (() => { }))());
 $('#expand-balance-chart')?.addEventListener('click', () => {
@@ -1863,8 +1865,6 @@ $('#expand-balance-chart')?.addEventListener('click', () => {
 $('#add-trade-btn')?.addEventListener('click', openNewTradeModal);
 $('#floating-add-trade-btn')?.addEventListener('click', openNewTradeModal);
 $('#quick-add-trade')?.addEventListener('click', (e) => { e.preventDefault(); openNewTradeModal(); });
-// ... (resto de manejadores de eventos y funciones auxiliares como las del admin panel, etc.) ...
-// (El resto del código como el de reportes, guardado, etc. va aquí sin cambios)
 
 $('#weekly-goal-input')?.addEventListener('blur', async (e) => {
     const user = auth.currentUser;
@@ -1985,7 +1985,6 @@ async function saveTrade(tradeData){
   if (id) {
     await updateDoc(doc(db, 'users', user.uid, 'trades', id), dataToSave);
   } else {
-    dataToSave.dateStr = new Date().toISOString().slice(0, 10);
     dataToSave.createdAt = serverTimestamp();
     await addDoc(collection(db, 'users', user.uid, 'trades'), dataToSave);
   }
@@ -2080,7 +2079,10 @@ $('main')?.addEventListener('click', (e) => {
   if (editTradeBtn) {
     const trade = window.__currentTrades?.find(t => t.id === editTradeBtn.dataset.id);
     if (trade) {
-        $('#trade-title').textContent = 'Editar Operación'; 
+        $('#trade-title').textContent = 'Editar Operación';
+        // INICIO: CÓDIGO MODIFICADO PARA CARGAR FECHA
+        $('#trade-date-input').value = trade.dateStr || new Date().toISOString().slice(0, 10);
+        // FIN: CÓDIGO MODIFICADO
         $('#trade-pair-input').value = trade.pair; 
         $('#trade-type-input').value = trade.type;
         $('#trade-result-input').value = trade.result; 
@@ -2194,8 +2196,14 @@ $('#save-account-btn')?.addEventListener('click', async () => {
 });
 
 $('#save-trade-btn')?.addEventListener('click', async () => {
+    // INICIO: CÓDIGO MODIFICADO PARA INCLUIR FECHA
+    const tradeDate = $('#trade-date-input').value;
+    if (!tradeDate) {
+      return alert('Por favor, selecciona una fecha para la operación.');
+    }
     const tradeData = {
         id: $('#editing-trade-id').value,
+        dateStr: tradeDate,
         pair: $('#trade-pair-input').value,
         type: $('#trade-type-input').value,
         result: parseFloat($('#trade-result-input').value) || 0,
@@ -2210,6 +2218,7 @@ $('#save-trade-btn')?.addEventListener('click', async () => {
         takeProfit: parseFloat($('#trade-tp-input').value) || null,
         stopLoss: parseFloat($('#trade-sl-input').value) || null
     };
+    // FIN: CÓDIGO MODIFICADO
     try {
         await saveTrade(tradeData);
         closeAllModals();
@@ -2381,7 +2390,6 @@ if(adminTbody) {
 
 $('#btn-refresh-users')?.addEventListener('click', loadUsersTable);
 
-// INICIO: LÓGICA DE FILTROS MODIFICADA
 const filterButtons = document.querySelectorAll('#history-filter-buttons button');
 filterButtons.forEach(button => {
     button.addEventListener('click', () => {
@@ -2395,11 +2403,11 @@ filterButtons.forEach(button => {
         }
         
         const now = new Date();
-        const startDate = new Date(now); // Clonar la fecha actual para no modificarla directamente
+        const startDate = new Date(now);
         
         if (range === '1w') {
-            const dayOfWeek = now.getDay(); // 0=Domingo, 1=Lunes,...
-            const diff = now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // Ajuste para que Lunes sea el primer día
+            const dayOfWeek = now.getDay();
+            const diff = now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
             startDate.setDate(diff);
         } else if (range === '15d') {
             startDate.setDate(now.getDate() - 15);
@@ -2418,7 +2426,6 @@ filterButtons.forEach(button => {
         renderHistorySummary(filteredTrades);
     });
 });
-// FIN: LÓGICA DE FILTROS MODIFICADA
 </script>
 </body>
 </html>
