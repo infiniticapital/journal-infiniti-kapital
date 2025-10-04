@@ -379,14 +379,16 @@
         <div class="card" style="grid-column: 1 / -1;">
             <div class="card-header" style="flex-wrap: wrap; gap: 10px;">
                 <div class="card-title">Análisis de Volumen por Símbolo</div>
-                <div id="history-filter-buttons" style="display: flex; gap: 8px;">
+                <div id="history-filter-buttons" style="display: flex; gap: 8px; flex-wrap: wrap;">
                     <button class="btn secondary active" data-range="all">Todo</button>
                     <button class="btn secondary" data-range="1y">1A</button>
                     <button class="btn secondary" data-range="6m">6M</button>
                     <button class="btn secondary" data-range="3m">3M</button>
                     <button class="btn secondary" data-range="1m">1M</button>
+                    <button class="btn secondary" data-range="15d">15D</button>
+                    <button class="btn secondary" data-range="1w">1S</button>
                 </div>
-            </div>
+                </div>
     
             <div style="display: grid; grid-template-columns: repeat(12, 1fr); gap: 18px; margin-top: 20px;">
                 <div style="grid-column: span 12; md:grid-column: span 4; min-height: 300px; display: flex; align-items: center; justify-content: center;">
@@ -434,7 +436,7 @@
                 </table>
             </div>
         </div>
-        </section>
+    </section>
     
     <section id="analiticas" class="section">
       <div class="card" style="grid-column: 1 / -1; margin-bottom: -10px;">
@@ -1456,7 +1458,6 @@ function renderHistorySummary(trades) {
     });
 }
 
-// INICIO: Nueva función para renderizar el historial detallado
 function renderDetailedHistory(trades) {
     const tbody = $('#detailed-history-tbody');
     if (!tbody) return;
@@ -1489,9 +1490,7 @@ function renderDetailedHistory(trades) {
         `;
     }).join('');
 }
-// FIN: Nueva función
 
-// FUNCIÓN CORREGIDA: Calcula el progreso semanal con beneficio neto y lógica de fecha mejorada.
 function updateWeeklyProgress() {
     const goal = parseFloat($('#weekly-goal-input').value) || 0;
     const progressBar = $('#weekly-progress-bar');
@@ -1504,18 +1503,15 @@ function updateWeeklyProgress() {
 
     const trades = window.__currentTrades || [];
     
-    // Lógica mejorada para calcular el inicio de la semana (Lunes)
     const today = new Date();
-    const dayOfWeek = today.getDay(); // 0 = Domingo, 1 = Lunes, ...
+    const dayOfWeek = today.getDay(); 
     const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
     const startOfWeek = new Date(new Date(today).setDate(diff)).toISOString().slice(0, 10);
 
-    // Se calcula el beneficio NETO (ganancias - pérdidas)
     const netWeeklyProfit = trades
         .filter(t => t.dateStr >= startOfWeek)
         .reduce((sum, t) => sum + t.result, 0);
 
-    // Aseguramos que el progreso no sea negativo y no supere el 100%
     const progress = Math.min(100, (Math.max(0, netWeeklyProfit) / goal) * 100);
     
     progressBar.style.width = `${progress}%`;
@@ -1637,7 +1633,7 @@ onAuthStateChanged(auth, async (user) => {
         updateChallengeTrackerUI(null);
         renderNotesHistory(empty);
         renderHistorySummary(empty);
-        renderDetailedHistory(empty); // Asegurarse de limpiar la tabla al cerrar sesión
+        renderDetailedHistory(empty); 
 
         if ($('#admin-users-tbody')) $('#admin-users-tbody').innerHTML = '';
         if ($('#invite-codes-list')) $('#invite-codes-list').innerHTML = '';
@@ -1655,7 +1651,7 @@ window.updateAllCalculations = () => {
   
   recalcFromTrades(allTrades);
   renderHistorySummary(allTrades);
-  renderDetailedHistory(allTrades); // <<-- LLAMADA A LA NUEVA FUNCIÓN
+  renderDetailedHistory(allTrades); 
   renderAnalytics(filteredTrades);
   renderCalendar(allTrades);
   updateChallengeTrackerUI(calculateChallengeProgress(allTrades, settings));
@@ -1810,7 +1806,6 @@ $('#quick-add-trade')?.addEventListener('click', (e) => { e.preventDefault(); op
 // ... (resto de manejadores de eventos y funciones auxiliares como las del admin panel, etc.) ...
 // (El resto del código como el de reportes, guardado, etc. va aquí sin cambios)
 
-// BLOQUE CORREGIDO: Event listener para guardar la meta con confirmación visual.
 $('#weekly-goal-input')?.addEventListener('blur', async (e) => {
     const user = auth.currentUser;
     if (!user) return;
@@ -1824,7 +1819,6 @@ $('#weekly-goal-input')?.addEventListener('blur', async (e) => {
             weeklyGoal: isNaN(goalValue) ? 0 : goalValue 
         }, { merge: true });
 
-        // Confirmación visual: Borde verde por 1.5 segundos
         inputElement.style.transition = 'border-color 0.3s ease';
         inputElement.style.borderColor = 'var(--success)';
         setTimeout(() => {
@@ -1833,7 +1827,6 @@ $('#weekly-goal-input')?.addEventListener('blur', async (e) => {
 
     } catch (error) {
         console.error("Error al guardar la meta semanal:", error);
-        // Confirmación de error: Borde rojo
         inputElement.style.borderColor = 'var(--danger)';
     }
 });
@@ -2328,6 +2321,7 @@ if(adminTbody) {
 
 $('#btn-refresh-users')?.addEventListener('click', loadUsersTable);
 
+// INICIO: LÓGICA DE FILTROS MODIFICADA
 const filterButtons = document.querySelectorAll('#history-filter-buttons button');
 filterButtons.forEach(button => {
     button.addEventListener('click', () => {
@@ -2339,18 +2333,32 @@ filterButtons.forEach(button => {
             renderHistorySummary(allTrades);
             return;
         }
+        
         const now = new Date();
-        const startDate = new Date();
-        if (range === '1m') startDate.setMonth(now.getMonth() - 1);
-        if (range === '3m') startDate.setMonth(now.getMonth() - 3);
-        if (range === '6m') startDate.setMonth(now.getMonth() - 6);
-        if (range === '1y') startDate.setFullYear(now.getFullYear() - 1);
+        const startDate = new Date(now); // Clonar la fecha actual para no modificarla directamente
+        
+        if (range === '1w') {
+            const dayOfWeek = now.getDay(); // 0=Domingo, 1=Lunes,...
+            const diff = now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // Ajuste para que Lunes sea el primer día
+            startDate.setDate(diff);
+        } else if (range === '15d') {
+            startDate.setDate(now.getDate() - 15);
+        } else if (range === '1m') {
+            startDate.setMonth(now.getMonth() - 1);
+        } else if (range === '3m') {
+            startDate.setMonth(now.getMonth() - 3);
+        } else if (range === '6m') {
+            startDate.setMonth(now.getMonth() - 6);
+        } else if (range === '1y') {
+            startDate.setFullYear(now.getFullYear() - 1);
+        }
         
         const startDateStr = startDate.toISOString().slice(0, 10);
         const filteredTrades = allTrades.filter(t => t.dateStr >= startDateStr);
         renderHistorySummary(filteredTrades);
     });
 });
+// FIN: LÓGICA DE FILTROS MODIFICADA
 </script>
 </body>
 </html>
