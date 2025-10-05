@@ -2986,6 +2986,41 @@ $('#download-pdf-btn').addEventListener('click', exportToPDF);
   }
 })();
 // === IK PATCH v3 END ===
+
+// === IK PATCH v4: Shim para window.saveTrade (inyecta accountId sin romper listeners) ===
+(function(){
+  const installShim = () => {
+    if (typeof window.saveTrade !== 'function' || window.saveTrade.__ik_shimmed__) return;
+    const original = window.saveTrade;
+    const shimmed = async function(tradeData){
+      try {
+        if (tradeData && typeof tradeData === 'object' && !tradeData.accountId) {
+          const accId = document.querySelector('#trade-account-select')?.value
+                      || document.querySelector('#trade-account-id')?.value
+                      || '';
+          tradeData.accountId = accId;
+        }
+      } catch(e){ /* no-op */ }
+      const result = await original.apply(this, arguments);
+      // Tras guardar, recomputar y refrescar UI
+      try {
+        if (typeof window.recomputeDynamicBalances === 'function') window.recomputeDynamicBalances();
+        if (typeof window.applyDynamicBalancesToDashboard === 'function') window.applyDynamicBalancesToDashboard();
+        if (typeof window.updateAccountsUI === 'function' && window.__currentAccounts) window.updateAccountsUI(window.__currentAccounts);
+        if (typeof window.updateAllCalculations === 'function') window.updateAllCalculations();
+      } catch(e){ /* no-op */ }
+      return result;
+    };
+    shimmed.__ik_shimmed__ = True;
+    window.saveTrade = shimmed;
+  };
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', installShim);
+  } else {
+    installShim();
+  }
+})();
+// === IK PATCH v4 END ===
 </script>
 </body>
 </html>
