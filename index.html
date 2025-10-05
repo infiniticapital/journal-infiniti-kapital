@@ -278,15 +278,6 @@
         <button class="btn primary" style="margin-top:10px" id="btn-open-auth"><i class="fa-solid fa-right-to-bracket"></i> Acceder</button>
       </div>
 
-      <div class="card" style="grid-column: 1 / -1; padding: 12px;">
-        <div id="dashboard-filter-buttons" style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;">
-            <button class="btn secondary active" data-range="all">Todo</button>
-            <button class="btn secondary" data-range="month">Este Mes</button>
-            <button class="btn secondary" data-range="week">Esta Semana</button>
-            <button class="btn secondary" data-range="today">Hoy</button>
-        </div>
-      </div>
-
       <div class="card metrics">
         <div class="card-header"><div class="card-title">Resumen</div></div>
         <div class="metric-card"><div class="metric-val" id="total-profit">$0.00</div><div class="metric-lab">Beneficio Total</div></div>
@@ -296,7 +287,15 @@
       <div class="card rr"><div class="card-header"><div class="card-title">R/B</div></div><div class="metric-card"><div class="metric-val" id="risk-reward">0.00</div><div class="metric-lab">Promedio</div></div></div>
       <div class="card wins"><div class="card-header"><div class="card-title">Ganadoras</div></div><div class="metric-card"><div class="metric-val" id="win-trades">0</div><div class="metric-lab">de <span id="total-trades-2">0</span></div></div></div>
       <div class="card dist">
-        <div class="card-header"><div class="card-title">Distribución</div><button class="btn-icon" id="refresh-distribution"><i class="fa-solid fa-rotate"></i></button></div>
+        <div class="card-header"><div class="card-title">Distribución</div>
+<div style="display:flex; gap:8px; align-items:center; margin-left:auto; flex-wrap:wrap;">
+  <div id="dashboard-filter-buttons" style="display:flex; gap:6px; flex-wrap:wrap;">
+    <button class="btn secondary active" data-range="all">Todo</button>
+    <button class="btn secondary" data-range="month">Este Mes</button>
+    <button class="btn secondary" data-range="week">Esta Semana</button>
+    <button class="btn secondary" data-range="today">Hoy</button>
+  </div>
+</div><button class="btn-icon" id="refresh-distribution"><i class="fa-solid fa-rotate"></i></button></div>
         <div class="chart"><canvas id="distributionChart"></canvas></div>
       </div>
       <div class="card recent">
@@ -736,6 +735,11 @@
                 <label>Fecha de Operación</label>
                 <input id="trade-date-input" type="date" class="form-control" />
             </div>
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <label for="trade-account-select">Cuenta Asociada</label>
+                <select id="trade-account-select" class="form-control"></select>
+            </div>
+
 
             <div class="form-group" style="grid-column: 1 / -1;"><label>Par / Activo</label>
               <select id="trade-pair-input" class="form-control">
@@ -2746,6 +2750,154 @@ $('#download-csv-btn').addEventListener('click', exportToCSV);
 $('#download-excel-btn').addEventListener('click', exportToExcel);
 $('#download-pdf-btn').addEventListener('click', exportToPDF);
 
+
+// === IK PATCH: Cuentas dinámicas y vinculación de operaciones ===
+(function(){
+  // Poblar desplegable de cuentas en el formulario de trade
+  window.populateTradeAccountDropdown = function(accounts){
+    const select = document.querySelector('#trade-account-select');
+    if (!select) return;
+    select.innerHTML = '<option value="">-- Selecciona una cuenta --</option>';
+    (accounts || []).forEach(a => {
+      const opt = document.createElement('option');
+      opt.value = a.id;
+      opt.textContent = `${a.name || 'Sin nombre'} (${a.broker || 'N/A'})`;
+      select.appendChild(opt);
+    });
+  };
+
+  // Hook para cuando se abra el modal de agregar operación
+  const openTradeModalHook = () => {
+    if (!document.body) return;
+    const modal = document.querySelector('#add-trade-modal');
+    if (!modal) return;
+    const observer = new MutationObserver(() => {
+      const isOpen = modal.classList.contains('show');
+      if (isOpen) {
+        // Poblamos las cuentas al abrir
+        window.populateTradeAccountDropdown(window.__currentAccounts || []);
+        // Si se edita, asegurar que se seleccione la cuenta correcta
+        try {
+          const id = document.querySelector('#editing-trade-id')?.value || '';
+          if (id && window.__currentTrades) {
+            const t = (window.__currentTrades || []).find(x => x.id === id);
+            if (t) {
+              const sel = document.querySelector('#trade-account-select');
+              if (sel) sel.value = t.accountId || '';
+            }
+          }
+        } catch(e){ /* no-op */ }
+      }
+    });
+    observer.observe(modal, { attributes:true, attributeFilter:['class'] });
+  };
+  document.addEventListener('DOMContentLoaded', openTradeModalHook);
+
+  // Interceptar el guardado para incluir accountId (y evitar doble manejador)
+  const installSaveInterceptor = () => {
+    const btn = document.querySelector('#save-trade-btn');
+    if (!btn || btn.__ik_patched__) return;
+    btn.__ik_patched__ = true;
+    btn.addEventListener('click', async (ev) => {
+      // Captura y cancela otros listeners para evitar doble envío
+      ev.stopImmediatePropagation();
+      ev.preventDefault();
+      const dateStr = document.querySelector('#trade-date-input')?.value || '';
+      const accountId = document.querySelector('#trade-account-select')?.value || '';
+      if (!dateStr) { alert('Por favor, selecciona una fecha para la operación.'); return; }
+      if (!accountId) { alert('Por favor, selecciona una cuenta para la operación.'); return; }
+
+      // Reunir datos del formulario (manteniendo compatibilidad con el resto del sistema)
+      const tradeData = {
+        id: document.querySelector('#editing-trade-id')?.value || '',
+        accountId,
+        dateStr,
+        pair: document.querySelector('#trade-pair-input')?.value || '',
+        type: document.querySelector('#trade-type-input')?.value || '',
+        result: parseFloat(document.querySelector('#trade-result-input')?.value || '0') || 0,
+        lots: parseFloat(document.querySelector('#trade-lots-input')?.value || '0') || 0,
+        entry: parseFloat(document.querySelector('#trade-entry-price-input')?.value || '0') || 0,
+        tp: parseFloat(document.querySelector('#trade-tp-input')?.value || '0') || 0,
+        sl: parseFloat(document.querySelector('#trade-sl-input')?.value || '0') || 0,
+        risk: parseFloat(document.querySelector('#trade-risk-input')?.value || '0') || 0,
+        reward: parseFloat(document.querySelector('#trade-reward-input')?.value || '0') || 0,
+        session: document.querySelector('#trade-session-input')?.value || 'N/A',
+        strategy: document.querySelector('#trade-strategy-input')?.value || '',
+        challenge: document.querySelector('#trade-challenge-input')?.value || 'no',
+      };
+
+      try {
+        if (typeof window.saveTrade === 'function') {
+          await window.saveTrade(tradeData); // Usa la misma función del sistema
+        } else {
+          // Fallback: emitir un evento para que la lógica existente lo maneje
+          document.dispatchEvent(new CustomEvent('ik:save-trade', { detail: tradeData }));
+        }
+        // Cierra el modal si hay util disponible
+        if (typeof window.closeAllModals === 'function') window.closeAllModals();
+      } catch(e){
+        alert('Hubo un error al guardar la operación.');
+        console.error(e);
+      }
+    }, true); // capture = true para interceptar antes
+  };
+  document.addEventListener('DOMContentLoaded', installSaveInterceptor);
+
+  // Sobrescribir updateAccountsUI para saldo dinámico
+  window.updateAccountsUI = function(accounts){
+    const el = document.querySelector('#accounts-container');
+    if (!el) return;
+    el.innerHTML = '';
+
+    const addAccountButton = document.createElement('div');
+    addAccountButton.className = 'btn primary';
+    addAccountButton.style = "display:inline-flex; align-items:center; gap:8px; margin-bottom: 20px; cursor: pointer;";
+    addAccountButton.innerHTML = `<i class="fa-solid fa-plus"></i> Agregar Cuenta`;
+    addAccountButton.onclick = () => {
+      const set = (s,v)=>{ const n=document.querySelector(s); if(n) n.value=v; };
+      const t = document.querySelector('#acc-title'); if (t) t.textContent = 'Agregar Nueva Cuenta';
+      set('#account-name',''); set('#account-broker',''); set('#account-balance',''); set('#account-type','principal'); set('#editing-account-id','');
+      if (typeof window.openModalById === 'function') window.openModalById('add-account-modal');
+      else document.querySelector('#add-account-modal')?.classList.add('show');
+    };
+    el.appendChild(addAccountButton);
+
+    if (!accounts || accounts.length === 0) {
+      const p = document.createElement('p');
+      p.textContent = 'Aún no tienes cuentas. ¡Agrega una para empezar!';
+      p.style.color = 'var(--muted)';
+      el.appendChild(p);
+      return;
+    }
+
+    const trades = window.__currentTrades || [];
+    const accountsWithDynamicBalance = accounts.map(acc => {
+      const related = trades.filter(t => t.accountId === acc.id);
+      const profit = related.reduce((s,t)=> s + (t.result || 0), 0);
+      return { ...acc, dynamicBalance: (acc.balance || 0) + profit };
+    });
+
+    accountsWithDynamicBalance.forEach(a => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.style.marginTop = '10px';
+      card.innerHTML = `
+        <div class="card-header">
+          <div class="card-title">${a.name || 'Cuenta sin nombre'}</div>
+          <div>
+            <button class="btn-icon btn-edit-account" data-id="${a.id}" title="Editar Cuenta"><i class="fa-solid fa-pen"></i></button>
+            <button class="btn-icon btn-delete-account" data-id="${a.id}" title="Eliminar Cuenta"><i class="fa-solid fa-trash"></i></button>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-val">$${(a.dynamicBalance || 0).toFixed(2)}</div>
+          <div class="metric-lab">${a.broker || 'Sin broker'} - (Inicial: $${(a.balance || 0).toFixed(2)})</div>
+        </div>`;
+      el.appendChild(card);
+    });
+  };
+})();
+// === IK PATCH END ===
 </script>
 </body>
 </html>
