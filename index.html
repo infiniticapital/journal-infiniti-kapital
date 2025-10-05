@@ -143,7 +143,6 @@
     textarea{min-height: 80px;}
     .modal-footer{display:flex; justify-content:flex-end; gap:8px; margin-top:10px}
     .btn{border:0; border-radius:10px; padding:10px 14px; cursor:pointer}
-    /* CAMBIO: Estilo para botones desactivados */
     .btn:disabled {
         background-color: #334155;
         color: #64748b;
@@ -278,6 +277,16 @@
         <p id="welcome-message" style="color:var(--muted)">Inicia sesión para guardar tus operaciones en la nube.</p>
         <button class="btn primary" style="margin-top:10px" id="btn-open-auth"><i class="fa-solid fa-right-to-bracket"></i> Acceder</button>
       </div>
+
+      <div class="card" style="grid-column: 1 / -1; padding: 12px;">
+        <div id="dashboard-filter-buttons" style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;">
+            <button class="btn secondary active" data-range="all">Todo</button>
+            <button class="btn secondary" data-range="month">Este Mes</button>
+            <button class="btn secondary" data-range="week">Esta Semana</button>
+            <button class="btn secondary" data-range="today">Hoy</button>
+        </div>
+      </div>
+
       <div class="card metrics">
         <div class="card-header"><div class="card-title">Resumen</div></div>
         <div class="metric-card"><div class="metric-val" id="total-profit">$0.00</div><div class="metric-lab">Beneficio Total</div></div>
@@ -1031,7 +1040,6 @@ function updateRecentTrades(trades) {
     }).join('');
 }
 
-// CAMBIO: Se separa la lógica de poblar el dropdown de reportes
 function populateReportAccountsDropdown(accounts) {
     const reportSelect = $('#report-account-select');
     if (!reportSelect) return;
@@ -1244,7 +1252,8 @@ function renderCalendar(trades) {
             }
             
             if(frame && contentHtml) {
-                 frame.innerHTML = contentHtml + frame.innerHTML;
+                 const top = frame.querySelector('.fc-daygrid-day-top');
+                 frame.innerHTML = top.outerHTML + contentHtml;
             }
         }
     });
@@ -1320,7 +1329,6 @@ function populateAnalyticsFilter(strategies) {
     });
 }
 
-// CAMBIO: Lógica de Riesgo Residual añadida
 function updateChallengeTrackerUI(trades, settings) {
     const p = calculateChallengeProgress(trades, settings);
     
@@ -1343,18 +1351,17 @@ function updateChallengeTrackerUI(trades, settings) {
         ddElement.style.backgroundColor = isViolated ? 'rgba(239, 68, 68, .4)' : '';
     }
 
-    // Lógica para Riesgo Residual Diario
     const dailyLimit = settings.dailyLoss || 5;
     const todayStr = new Date().toISOString().slice(0, 10);
     const todaysTrades = (trades || []).filter(t => t.dateStr === todayStr && t.inChallenge);
     const dailyPnl = todaysTrades.reduce((sum, trade) => sum + trade.result, 0);
-    const dailyDrawdown = dailyPnl < 0 ? (Math.abs(dailyPnl) / initialBalance) * 100 : 0;
+    const dailyDrawdown = (initialBalance > 0 && dailyPnl < 0) ? (Math.abs(dailyPnl) / initialBalance) * 100 : 0;
     const residualRisk = dailyLimit - dailyDrawdown;
 
     const residualRiskEl = $('#challenge-residual-risk');
     residualRiskEl.textContent = `${residualRisk.toFixed(2)}%`;
 
-    const riskPercentage = (residualRisk / dailyLimit) * 100;
+    const riskPercentage = dailyLimit > 0 ? (residualRisk / dailyLimit) * 100 : 100;
     if (riskPercentage <= 20) {
         residualRiskEl.style.color = 'var(--danger)';
     } else if (riskPercentage <= 40) {
@@ -1615,7 +1622,6 @@ function renderDetailedHistory(trades) {
         return;
     }
 
-    // Ordenar trades del más reciente al más antiguo
     const sortedTrades = [...trades].sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
 
     tbody.innerHTML = sortedTrades.map(trade => {
@@ -1712,7 +1718,6 @@ function bindSelfRealtime(uid){
   const unsubAccounts = onSnapshot(query(accountsRef, orderBy('createdAt', 'desc')), snap=>{
     window.__currentAccounts = snap.docs.map(d=>({id:d.id,...d.data()}));
     updateAccountsUI(window.__currentAccounts);
-    // CAMBIO: Poblar el dropdown de reportes cada vez que las cuentas se actualizan
     populateReportAccountsDropdown(window.__currentAccounts);
   });
 
@@ -1797,18 +1802,43 @@ onAuthStateChanged(auth, async (user) => {
     }
 });    
 
+// CAMBIO: La función principal de cálculo ahora acepta un filtro
 window.updateAllCalculations = () => {
   const allTrades = window.__currentTrades || [];
   const settings = window.__currentSettings || {};
-  const selectedStrategyId = $('#analytics-strategy-filter').value;
-  const filteredTrades = selectedStrategyId ? allTrades.filter(t => t.strategyId === selectedStrategyId) : allTrades;
+  const analyticsStrategyId = $('#analytics-strategy-filter').value;
   
-  recalcFromTrades(allTrades);
+  // Lógica de filtro para el Dashboard
+  const dashboardFilterRange = $('#dashboard-filter-buttons .active')?.dataset.range || 'all';
+  let dashboardTrades = allTrades;
+  
+  if (dashboardFilterRange !== 'all') {
+      const now = new Date();
+      let startDate = new Date();
+      if (dashboardFilterRange === 'today') {
+          startDate.setHours(0, 0, 0, 0);
+      } else if (dashboardFilterRange === 'week') {
+          const day = now.getDay();
+          const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+          startDate = new Date(now.setDate(diff));
+          startDate.setHours(0,0,0,0);
+      } else if (dashboardFilterRange === 'month') {
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      }
+      const startDateStr = startDate.toISOString().slice(0, 10);
+      dashboardTrades = allTrades.filter(t => t.dateStr >= startDateStr);
+  }
+
+  // Se actualiza el dashboard con los datos filtrados
+  recalcFromTrades(dashboardTrades);
+  updateChallengeTrackerUI(dashboardTrades, settings);
+  
+  // El resto de las funciones usan todos los datos como antes
+  const filteredAnalyticsTrades = analyticsStrategyId ? allTrades.filter(t => t.strategyId === analyticsStrategyId) : allTrades;
   renderHistorySummary(allTrades);
   renderDetailedHistory(allTrades); 
-  renderAnalytics(filteredTrades);
+  renderAnalytics(filteredAnalyticsTrades);
   renderCalendar(allTrades);
-  updateChallengeTrackerUI(allTrades, settings);
   updateWeeklyProgress();
 }
 
@@ -1915,6 +1945,17 @@ $$('.nav button.nav-link').forEach(clickedBtn => {
 });
 $$('[data-close]').forEach(x => x.addEventListener('click', closeAllModals));
 window.addEventListener('click', e => { if (e.target.classList && e.target.classList.contains('modal')) closeAllModals(); });
+
+// CAMBIO: Lógica para los nuevos botones de filtro del Dashboard
+const dashboardFilterButtons = $$('#dashboard-filter-buttons button');
+dashboardFilterButtons.forEach(button => {
+    button.addEventListener('click', () => {
+        dashboardFilterButtons.forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+        window.updateAllCalculations();
+    });
+});
+
 
 const checklistIds = ['checklist-calendar', 'checklist-plan', 'checklist-revenge'];
 function saveChecklistState() {
@@ -2606,7 +2647,6 @@ $('#generate-report-btn').addEventListener('click', async () => {
                 </tr>
             `).join('');
             
-            // CAMBIO: Activar botones
             reportButtons.forEach(btn => btn.disabled = false);
         }
         reportResults.classList.remove('hidden');
@@ -2693,7 +2733,6 @@ async function exportToPDF() {
     
     doc.save(`reporte_${account.name}_${new Date().toISOString().slice(0,10)}.pdf`);
 }
-
 
 $('#download-csv-btn').addEventListener('click', exportToCSV);
 $('#download-excel-btn').addEventListener('click', exportToExcel);
