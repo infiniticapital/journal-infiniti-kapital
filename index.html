@@ -2962,6 +2962,30 @@ $('#download-pdf-btn').addEventListener('click', exportToPDF);
   }
 })();
 // === IK PATCH v2 END ===
+
+// === IK PATCH v3: Restaurar guardado y asegurar accountId ===
+(function(){
+  const attachLightHook = () => {
+    const btn = document.querySelector('#save-trade-btn');
+    if (!btn || btn.__ik_light__) return;
+    btn.__ik_light__ = true;
+    btn.addEventListener('click', () => {
+      const sel = document.querySelector('#trade-account-select');
+      const accId = sel ? sel.value : '';
+      // Si existe un input oculto que tu lógica lee, lo sincronizamos.
+      const hidden = document.querySelector('#trade-account-id');
+      if (hidden) hidden.value = accId;
+      // Como respaldo, guardamos en dataset por si tu saveTrade lo toma de ahí.
+      btn.dataset.accountId = accId || '';
+    }, { capture:false });
+  };
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', attachLightHook);
+  } else {
+    attachLightHook();
+  }
+})();
+// === IK PATCH v3 END ===
 </script>
 </body>
 </html>
