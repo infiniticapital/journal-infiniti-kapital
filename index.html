@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8"/>
@@ -143,6 +143,7 @@
     textarea{min-height: 80px;}
     .modal-footer{display:flex; justify-content:flex-end; gap:8px; margin-top:10px}
     .btn{border:0; border-radius:10px; padding:10px 14px; cursor:pointer}
+    /* CAMBIO: Estilo para botones desactivados */
     .btn:disabled {
         background-color: #334155;
         color: #64748b;
@@ -272,12 +273,11 @@
 
   <main id="app">
     <section id="dashboard" class="section active">
-     <div class="card welcome">
-  <div class="card-header"><div class="card-title" id="welcome-title">Bienvenido</div></div>
+      <div class="card welcome">
+        <div class="card-header"><div class="card-title">Bienvenido</div></div>
         <p id="welcome-message" style="color:var(--muted)">Inicia sesión para guardar tus operaciones en la nube.</p>
         <button class="btn primary" style="margin-top:10px" id="btn-open-auth"><i class="fa-solid fa-right-to-bracket"></i> Acceder</button>
       </div>
-
       <div class="card metrics">
         <div class="card-header"><div class="card-title">Resumen</div></div>
         <div class="metric-card"><div class="metric-val" id="total-profit">$0.00</div><div class="metric-lab">Beneficio Total</div></div>
@@ -287,15 +287,7 @@
       <div class="card rr"><div class="card-header"><div class="card-title">R/B</div></div><div class="metric-card"><div class="metric-val" id="risk-reward">0.00</div><div class="metric-lab">Promedio</div></div></div>
       <div class="card wins"><div class="card-header"><div class="card-title">Ganadoras</div></div><div class="metric-card"><div class="metric-val" id="win-trades">0</div><div class="metric-lab">de <span id="total-trades-2">0</span></div></div></div>
       <div class="card dist">
-        <div class="card-header"><div class="card-title">Distribución</div>
-<div style="display:flex; gap:8px; align-items:center; margin-left:auto; flex-wrap:wrap;">
-  <div id="dashboard-filter-buttons" style="display:flex; gap:6px; flex-wrap:wrap;">
-    <button class="btn secondary active" data-range="all">Todo</button>
-    <button class="btn secondary" data-range="month">Este Mes</button>
-    <button class="btn secondary" data-range="week">Esta Semana</button>
-    <button class="btn secondary" data-range="today">Hoy</button>
-  </div>
-</div><button class="btn-icon" id="refresh-distribution"><i class="fa-solid fa-rotate"></i></button></div>
+        <div class="card-header"><div class="card-title">Distribución</div><button class="btn-icon" id="refresh-distribution"><i class="fa-solid fa-rotate"></i></button></div>
         <div class="chart"><canvas id="distributionChart"></canvas></div>
       </div>
       <div class="card recent">
@@ -342,26 +334,20 @@
         </div>
       </div>
       <div class="card news"><div class="card-header"><div class="card-title">Calendario Económico</div></div>
-  <div class="tradingview-widget-container">
-    <div id="economic-calendar" style="height:520px"></div>
-    <script src="https://s3.tradingview.com/external-embedding/embed-widget-events.js" async>
-    {
-      "width": "100%",
-      "height": "520",
-      "importanceFilter": "-1,0,1",
-      "locale": "es",
-      "colorTheme": "dark",
-      "isTransparent": true
-    }
-    </script>
-  </div>
-</div></div>
+        <iframe src="https://sslecal2.investing.com?columns=exc_flags,exc_currency,exc_importance,exc_actual,exc_forecast,exc_previous&features=datepicker,timezone&countries=25,32,6,37,72,22,17,39,14,48,10,35,43,5,36,110,11,26,12,4,13,42,41,29&calType=day&timeZone=8&lang=56" width="100%" height="400" frameborder="0" allowtransparency="true" marginwidth="0" marginheight="0"></iframe>
+      </div>
+      
+      <div class="card challenge"><div class="card-header"><div class="card-title">FTMO Challenge</div><button class="btn-icon" id="edit-challenge"><i class="fa-solid fa-pen"></i></button></div>
+        <div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                <span>Progreso</span><span id="challenge-progress-value">0%</span>
+            </div>
+            <div style="height:10px;background:#334155;border-radius:6px;overflow:hidden"><div id="challenge-progress-bar" style="height:100%;width:0%;background:var(--success)"></div></div>
 
             <div class="metric-card" style="margin-top: 10px;">
-  <div class="metric-val" id="challenge-current-balance">$0.00</div>
-  <div class="metric-lab" id="challenge-balance-label">Saldo Actual</div>
-  <div class="metric-sub" id="challenge-balance-pct" style="color: var(--muted); margin-top: 2px;">0.00% vs. inicial</div>
-</div>
+                <div class="metric-val" id="challenge-initial-balance">$0.00</div>
+                <div class="metric-lab">Saldo Inicial</div>
+            </div>
 
             <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:10px">
                 <div class="metric-card"><div class="metric-val" id="challenge-profit">+0.0%</div><div class="metric-lab">Beneficio</div></div>
@@ -741,11 +727,6 @@
                 <label>Fecha de Operación</label>
                 <input id="trade-date-input" type="date" class="form-control" />
             </div>
-            <div class="form-group" style="grid-column: 1 / -1;">
-                <label for="trade-account-select">Cuenta Asociada</label>
-                <select id="trade-account-select" class="form-control"></select>
-            </div>
-
 
             <div class="form-group" style="grid-column: 1 / -1;"><label>Par / Activo</label>
               <select id="trade-pair-input" class="form-control">
@@ -1050,6 +1031,7 @@ function updateRecentTrades(trades) {
     }).join('');
 }
 
+// CAMBIO: Se separa la lógica de poblar el dropdown de reportes
 function populateReportAccountsDropdown(accounts) {
     const reportSelect = $('#report-account-select');
     if (!reportSelect) return;
@@ -1262,8 +1244,7 @@ function renderCalendar(trades) {
             }
             
             if(frame && contentHtml) {
-                 const top = frame.querySelector('.fc-daygrid-day-top');
-                 frame.innerHTML = top.outerHTML + contentHtml;
+                 frame.innerHTML = contentHtml + frame.innerHTML;
             }
         }
     });
@@ -1339,6 +1320,7 @@ function populateAnalyticsFilter(strategies) {
     });
 }
 
+// CAMBIO: Lógica de Riesgo Residual añadida
 function updateChallengeTrackerUI(trades, settings) {
     const p = calculateChallengeProgress(trades, settings);
     
@@ -1361,17 +1343,18 @@ function updateChallengeTrackerUI(trades, settings) {
         ddElement.style.backgroundColor = isViolated ? 'rgba(239, 68, 68, .4)' : '';
     }
 
+    // Lógica para Riesgo Residual Diario
     const dailyLimit = settings.dailyLoss || 5;
     const todayStr = new Date().toISOString().slice(0, 10);
     const todaysTrades = (trades || []).filter(t => t.dateStr === todayStr && t.inChallenge);
     const dailyPnl = todaysTrades.reduce((sum, trade) => sum + trade.result, 0);
-    const dailyDrawdown = (initialBalance > 0 && dailyPnl < 0) ? (Math.abs(dailyPnl) / initialBalance) * 100 : 0;
+    const dailyDrawdown = dailyPnl < 0 ? (Math.abs(dailyPnl) / initialBalance) * 100 : 0;
     const residualRisk = dailyLimit - dailyDrawdown;
 
     const residualRiskEl = $('#challenge-residual-risk');
     residualRiskEl.textContent = `${residualRisk.toFixed(2)}%`;
 
-    const riskPercentage = dailyLimit > 0 ? (residualRisk / dailyLimit) * 100 : 100;
+    const riskPercentage = (residualRisk / dailyLimit) * 100;
     if (riskPercentage <= 20) {
         residualRiskEl.style.color = 'var(--danger)';
     } else if (riskPercentage <= 40) {
@@ -1632,6 +1615,7 @@ function renderDetailedHistory(trades) {
         return;
     }
 
+    // Ordenar trades del más reciente al más antiguo
     const sortedTrades = [...trades].sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
 
     tbody.innerHTML = sortedTrades.map(trade => {
@@ -1728,6 +1712,7 @@ function bindSelfRealtime(uid){
   const unsubAccounts = onSnapshot(query(accountsRef, orderBy('createdAt', 'desc')), snap=>{
     window.__currentAccounts = snap.docs.map(d=>({id:d.id,...d.data()}));
     updateAccountsUI(window.__currentAccounts);
+    // CAMBIO: Poblar el dropdown de reportes cada vez que las cuentas se actualizan
     populateReportAccountsDropdown(window.__currentAccounts);
   });
 
@@ -1759,10 +1744,6 @@ onAuthStateChanged(auth, async (user) => {
         
         if (userNameEl) userNameEl.textContent = user.displayName || user.email;
         $('.avatar').textContent = (user.displayName || 'U').substring(0,2).toUpperCase();
-        
-        // --> LÍNEA AÑADIDA <--
-        $('#welcome-title').textContent = `Bienvenido, ${user.displayName || 'Trader'}`;
-
         const profileNameInput = $('#profile-name-input');
         if (profileNameInput) {
             profileNameInput.value = user.displayName || '';
@@ -1783,10 +1764,6 @@ onAuthStateChanged(auth, async (user) => {
         
         if (userNameEl) userNameEl.textContent = 'Invitado';
         $('.avatar').textContent = 'AT';
-
-        // --> LÍNEA AÑADIDA <--
-        $('#welcome-title').textContent = 'Bienvenido';
-
         $('#btn-login').classList.remove('hidden');
         $('#btn-logout').classList.add('hidden');
         $('#btn-open-auth').classList.remove('hidden');
@@ -1818,45 +1795,20 @@ onAuthStateChanged(auth, async (user) => {
         if ($('#admin-user-accounts')) $('#admin-user-accounts').innerHTML = '—';
         if ($('#admin-user-trades')) $('#admin-user-trades').innerHTML = '—';
     }
-});
+});    
 
-// CAMBIO: La función principal de cálculo ahora acepta un filtro
 window.updateAllCalculations = () => {
   const allTrades = window.__currentTrades || [];
   const settings = window.__currentSettings || {};
-  const analyticsStrategyId = $('#analytics-strategy-filter').value;
+  const selectedStrategyId = $('#analytics-strategy-filter').value;
+  const filteredTrades = selectedStrategyId ? allTrades.filter(t => t.strategyId === selectedStrategyId) : allTrades;
   
-  // Lógica de filtro para el Dashboard
-  const dashboardFilterRange = $('#dashboard-filter-buttons .active')?.dataset.range || 'all';
-  let dashboardTrades = allTrades;
-  
-  if (dashboardFilterRange !== 'all') {
-      const now = new Date();
-      let startDate = new Date();
-      if (dashboardFilterRange === 'today') {
-          startDate.setHours(0, 0, 0, 0);
-      } else if (dashboardFilterRange === 'week') {
-          const day = now.getDay();
-          const diff = now.getDate() - day + (day === 0 ? -6 : 1);
-          startDate = new Date(now.setDate(diff));
-          startDate.setHours(0,0,0,0);
-      } else if (dashboardFilterRange === 'month') {
-          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-      }
-      const startDateStr = startDate.toISOString().slice(0, 10);
-      dashboardTrades = allTrades.filter(t => t.dateStr >= startDateStr);
-  }
-
-  // Se actualiza el dashboard con los datos filtrados
-  recalcFromTrades(dashboardTrades);
-  updateChallengeTrackerUI(dashboardTrades, settings);
-  
-  // El resto de las funciones usan todos los datos como antes
-  const filteredAnalyticsTrades = analyticsStrategyId ? allTrades.filter(t => t.strategyId === analyticsStrategyId) : allTrades;
+  recalcFromTrades(allTrades);
   renderHistorySummary(allTrades);
   renderDetailedHistory(allTrades); 
-  renderAnalytics(filteredAnalyticsTrades);
+  renderAnalytics(filteredTrades);
   renderCalendar(allTrades);
+  updateChallengeTrackerUI(allTrades, settings);
   updateWeeklyProgress();
 }
 
@@ -1963,17 +1915,6 @@ $$('.nav button.nav-link').forEach(clickedBtn => {
 });
 $$('[data-close]').forEach(x => x.addEventListener('click', closeAllModals));
 window.addEventListener('click', e => { if (e.target.classList && e.target.classList.contains('modal')) closeAllModals(); });
-
-// CAMBIO: Lógica para los nuevos botones de filtro del Dashboard
-const dashboardFilterButtons = $$('#dashboard-filter-buttons button');
-dashboardFilterButtons.forEach(button => {
-    button.addEventListener('click', () => {
-        dashboardFilterButtons.forEach(btn => btn.classList.remove('active'));
-        button.classList.add('active');
-        window.updateAllCalculations();
-    });
-});
-
 
 const checklistIds = ['checklist-calendar', 'checklist-plan', 'checklist-revenge'];
 function saveChecklistState() {
@@ -2665,6 +2606,7 @@ $('#generate-report-btn').addEventListener('click', async () => {
                 </tr>
             `).join('');
             
+            // CAMBIO: Activar botones
             reportButtons.forEach(btn => btn.disabled = false);
         }
         reportResults.classList.remove('hidden');
@@ -2752,341 +2694,11 @@ async function exportToPDF() {
     doc.save(`reporte_${account.name}_${new Date().toISOString().slice(0,10)}.pdf`);
 }
 
+
 $('#download-csv-btn').addEventListener('click', exportToCSV);
 $('#download-excel-btn').addEventListener('click', exportToExcel);
 $('#download-pdf-btn').addEventListener('click', exportToPDF);
 
-
-// === IK PATCH: Cuentas dinámicas y vinculación de operaciones ===
-(function(){
-  // Poblar desplegable de cuentas en el formulario de trade
-  window.populateTradeAccountDropdown = function(accounts){
-    const select = document.querySelector('#trade-account-select');
-    if (!select) return;
-    select.innerHTML = '<option value="">-- Selecciona una cuenta --</option>';
-    (accounts || []).forEach(a => {
-      const opt = document.createElement('option');
-      opt.value = a.id;
-      opt.textContent = `${a.name || 'Sin nombre'} (${a.broker || 'N/A'})`;
-      select.appendChild(opt);
-    });
-  };
-
-  // Hook para cuando se abra el modal de agregar operación
-  const openTradeModalHook = () => {
-    if (!document.body) return;
-    const modal = document.querySelector('#add-trade-modal');
-    if (!modal) return;
-    const observer = new MutationObserver(() => {
-      const isOpen = modal.classList.contains('show');
-      if (isOpen) {
-        // Poblamos las cuentas al abrir
-        window.populateTradeAccountDropdown(window.__currentAccounts || []);
-        // Si se edita, asegurar que se seleccione la cuenta correcta
-        try {
-          const id = document.querySelector('#editing-trade-id')?.value || '';
-          if (id && window.__currentTrades) {
-            const t = (window.__currentTrades || []).find(x => x.id === id);
-            if (t) {
-              const sel = document.querySelector('#trade-account-select');
-              if (sel) sel.value = t.accountId || '';
-            }
-          }
-        } catch(e){ /* no-op */ }
-      }
-    });
-    observer.observe(modal, { attributes:true, attributeFilter:['class'] });
-  };
-  document.addEventListener('DOMContentLoaded', openTradeModalHook);
-
-  // Interceptar el guardado para incluir accountId (y evitar doble manejador)
-  const installSaveInterceptor = () => {
-    const btn = document.querySelector('#save-trade-btn');
-    if (!btn || btn.__ik_patched__) return;
-    btn.__ik_patched__ = true;
-    btn.addEventListener('click', async (ev) => {
-      // Captura y cancela otros listeners para evitar doble envío
-      ev.stopImmediatePropagation();
-      ev.preventDefault();
-      const dateStr = document.querySelector('#trade-date-input')?.value || '';
-      const accountId = document.querySelector('#trade-account-select')?.value || '';
-      if (!dateStr) { alert('Por favor, selecciona una fecha para la operación.'); return; }
-      if (!accountId) { alert('Por favor, selecciona una cuenta para la operación.'); return; }
-
-      // Reunir datos del formulario (manteniendo compatibilidad con el resto del sistema)
-      const tradeData = {
-        id: document.querySelector('#editing-trade-id')?.value || '',
-        accountId,
-        dateStr,
-        pair: document.querySelector('#trade-pair-input')?.value || '',
-        type: document.querySelector('#trade-type-input')?.value || '',
-        result: parseFloat(document.querySelector('#trade-result-input')?.value || '0') || 0,
-        lots: parseFloat(document.querySelector('#trade-lots-input')?.value || '0') || 0,
-        entry: parseFloat(document.querySelector('#trade-entry-price-input')?.value || '0') || 0,
-        tp: parseFloat(document.querySelector('#trade-tp-input')?.value || '0') || 0,
-        sl: parseFloat(document.querySelector('#trade-sl-input')?.value || '0') || 0,
-        risk: parseFloat(document.querySelector('#trade-risk-input')?.value || '0') || 0,
-        reward: parseFloat(document.querySelector('#trade-reward-input')?.value || '0') || 0,
-        session: document.querySelector('#trade-session-input')?.value || 'N/A',
-        strategy: document.querySelector('#trade-strategy-input')?.value || '',
-        challenge: document.querySelector('#trade-challenge-input')?.value || 'no',
-      };
-
-      try {
-        if (typeof window.saveTrade === 'function') {
-          await window.saveTrade(tradeData); // Usa la misma función del sistema
-        } else {
-          // Fallback: emitir un evento para que la lógica existente lo maneje
-          document.dispatchEvent(new CustomEvent('ik:save-trade', { detail: tradeData }));
-        }
-        // Cierra el modal si hay util disponible
-        if (typeof window.closeAllModals === 'function') window.closeAllModals();
-      } catch(e){
-        alert('Hubo un error al guardar la operación.');
-        console.error(e);
-      }
-    }, true); // capture = true para interceptar antes
-  };
-  document.addEventListener('DOMContentLoaded', installSaveInterceptor);
-
-  // Sobrescribir updateAccountsUI para saldo dinámico
-  window.updateAccountsUI = function(accounts){
-    const el = document.querySelector('#accounts-container');
-    if (!el) return;
-    el.innerHTML = '';
-
-    const addAccountButton = document.createElement('div');
-    addAccountButton.className = 'btn primary';
-    addAccountButton.style = "display:inline-flex; align-items:center; gap:8px; margin-bottom: 20px; cursor: pointer;";
-    addAccountButton.innerHTML = `<i class="fa-solid fa-plus"></i> Agregar Cuenta`;
-    addAccountButton.onclick = () => {
-      const set = (s,v)=>{ const n=document.querySelector(s); if(n) n.value=v; };
-      const t = document.querySelector('#acc-title'); if (t) t.textContent = 'Agregar Nueva Cuenta';
-      set('#account-name',''); set('#account-broker',''); set('#account-balance',''); set('#account-type','principal'); set('#editing-account-id','');
-      if (typeof window.openModalById === 'function') window.openModalById('add-account-modal');
-      else document.querySelector('#add-account-modal')?.classList.add('show');
-    };
-    el.appendChild(addAccountButton);
-
-    if (!accounts || accounts.length === 0) {
-      const p = document.createElement('p');
-      p.textContent = 'Aún no tienes cuentas. ¡Agrega una para empezar!';
-      p.style.color = 'var(--muted)';
-      el.appendChild(p);
-      return;
-    }
-
-    const trades = window.__currentTrades || [];
-    const accountsWithDynamicBalance = accounts.map(acc => {
-      const related = trades.filter(t => t.accountId === acc.id);
-      const profit = related.reduce((s,t)=> s + (t.result || 0), 0);
-      return { ...acc, dynamicBalance: (acc.balance || 0) + profit };
-    });
-
-    accountsWithDynamicBalance.forEach(a => {
-      const card = document.createElement('div');
-      card.className = 'card';
-      card.style.marginTop = '10px';
-      card.innerHTML = `
-        <div class="card-header">
-          <div class="card-title">${a.name || 'Cuenta sin nombre'}</div>
-          <div>
-            <button class="btn-icon btn-edit-account" data-id="${a.id}" title="Editar Cuenta"><i class="fa-solid fa-pen"></i></button>
-            <button class="btn-icon btn-delete-account" data-id="${a.id}" title="Eliminar Cuenta"><i class="fa-solid fa-trash"></i></button>
-          </div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-val">$${(a.dynamicBalance || 0).toFixed(2)}</div>
-          <div class="metric-lab">${a.broker || 'Sin broker'} - (Inicial: $${(a.balance || 0).toFixed(2)})</div>
-        </div>`;
-      el.appendChild(card);
-    });
-  };
-})();
-// === IK PATCH END ===
-
-// === IK PATCH v2: Saldo actual y % vs. inicial ===
-(function(){
-  const fmtMoney = v => `$${(Number(v)||0).toFixed(2)}`;
-  const fmtPct = v => `${(Number(v)||0).toFixed(2)}%`;
-
-  window.recomputeDynamicBalances = function(){
-    const accounts = window.__currentAccounts || [];
-    const trades = window.__currentTrades || [];
-    const map = {};
-    accounts.forEach(acc => {
-      const related = trades.filter(t => (t.accountId || '') === (acc.id || ''));
-      const profit = related.reduce((s,t)=> s + (parseFloat(t.result)||0), 0);
-      const dyn = (parseFloat(acc.balance)||0) + profit;
-      map[acc.id] = { dynamic: dyn, initial: parseFloat(acc.balance)||0, profit };
-    });
-    window.__dynamicBalances = map;
-    return map;
-  };
-
-  window.applyDynamicBalancesToDashboard = function(){
-    const accounts = window.__currentAccounts || [];
-    if (!accounts.length) return;
-    const map = window.__dynamicBalances || window.recomputeDynamicBalances();
-    const primary = accounts[0];
-    const info = map[primary.id] || { dynamic: primary.balance || 0, initial: primary.balance || 0, profit: 0 };
-    const deltaPct = info.initial ? ( (info.dynamic - info.initial) / info.initial ) * 100 : 0;
-
-    document.querySelectorAll('.card .metric-card').forEach(mc => {
-      const lab = mc.querySelector('.metric-lab');
-      const val = mc.querySelector('.metric-val');
-      if (!lab || !val) return;
-      if (/\s*Saldo\s+Inicial\s*/i.test(lab.textContent)) {
-        lab.textContent = 'Saldo Actual';
-        val.textContent = fmtMoney(info.dynamic);
-        let pct = mc.querySelector('.metric-sub');
-        if (!pct) {
-          pct = document.createElement('div');
-          pct.className = 'metric-sub';
-          pct.style.color = 'var(--muted)';
-          pct.style.marginTop = '2px';
-          mc.appendChild(pct);
-        }
-        const sign = (deltaPct>=0?'+':''); 
-        pct.textContent = `${sign}${fmtPct(deltaPct)} vs. inicial`;
-      }
-    });
-  };
-
-  const hookUp = () => {
-    const original = window.updateAllCalculations;
-    window.updateAllCalculations = function(){
-      if (typeof original === 'function') original.apply(this, arguments);
-      window.recomputeDynamicBalances();
-      window.applyDynamicBalancesToDashboard();
-    };
-  };
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => { window.recomputeDynamicBalances(); window.applyDynamicBalancesToDashboard(); hookUp(); });
-  } else {
-    window.recomputeDynamicBalances(); window.applyDynamicBalancesToDashboard(); hookUp();
-  }
-})();
-// === IK PATCH v2 END ===
-
-// === IK PATCH v3: Restaurar guardado y asegurar accountId ===
-(function(){
-  const attachLightHook = () => {
-    const btn = document.querySelector('#save-trade-btn');
-    if (!btn || btn.__ik_light__) return;
-    btn.__ik_light__ = true;
-    btn.addEventListener('click', () => {
-      const sel = document.querySelector('#trade-account-select');
-      const accId = sel ? sel.value : '';
-      // Si existe un input oculto que tu lógica lee, lo sincronizamos.
-      const hidden = document.querySelector('#trade-account-id');
-      if (hidden) hidden.value = accId;
-      // Como respaldo, guardamos en dataset por si tu saveTrade lo toma de ahí.
-      btn.dataset.accountId = accId || '';
-    }, { capture:false });
-  };
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', attachLightHook);
-  } else {
-    attachLightHook();
-  }
-})();
-// === IK PATCH v3 END ===
-
-// === IK PATCH v4: Shim para window.saveTrade (inyecta accountId sin romper listeners) ===
-(function(){
-  const installShim = () => {
-    if (typeof window.saveTrade !== 'function' || window.saveTrade.__ik_shimmed__) return;
-    const original = window.saveTrade;
-    const shimmed = async function(tradeData){
-      try {
-        if (tradeData && typeof tradeData === 'object' && !tradeData.accountId) {
-          const accId = document.querySelector('#trade-account-select')?.value
-                      || document.querySelector('#trade-account-id')?.value
-                      || '';
-          tradeData.accountId = accId;
-        }
-      } catch(e){ /* no-op */ }
-      const result = await original.apply(this, arguments);
-      // Tras guardar, recomputar y refrescar UI
-      try {
-        if (typeof window.recomputeDynamicBalances === 'function') window.recomputeDynamicBalances();
-        if (typeof window.applyDynamicBalancesToDashboard === 'function') window.applyDynamicBalancesToDashboard();
-        if (typeof window.updateAccountsUI === 'function' && window.__currentAccounts) window.updateAccountsUI(window.__currentAccounts);
-        if (typeof window.updateAllCalculations === 'function') window.updateAllCalculations();
-      } catch(e){ /* no-op */ }
-      return result;
-    };
-    shimmed.__ik_shimmed__ = True;
-    window.saveTrade = shimmed;
-  };
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', installShim);
-  } else {
-    installShim();
-  }
-})();
-// === IK PATCH v4 END ===
 </script>
-
-<script>
-// === IK v5: Actualizar tarjeta FTMO Challenge con saldo dinámico (% incluido) ===
-(function(){
-  const fmtMoney = v => `$${(Number(v)||0).toFixed(2)}`;
-  const fmtPct   = v => `${(Number(v)||0).toFixed(2)}%`;
-
-  function pickPrimaryAccount(accounts){
-    if (!accounts || !accounts.length) return null;
-    let acc = accounts.find(a => (a.type||'').toLowerCase()==='principal');
-    if (!acc) acc = accounts.find(a => (a.name||'').toLowerCase().includes('ftmo'));
-    return acc || accounts[0];
-  }
-
-  window.updateChallengeCard = function(){
-    const accounts = window.__currentAccounts || [];
-    if (!accounts.length) return;
-    const map = (window.__dynamicBalances && Object.keys(window.__dynamicBalances).length)
-                ? window.__dynamicBalances
-                : (typeof window.recomputeDynamicBalances === 'function' ? window.recomputeDynamicBalances() : {});
-
-    const acc = pickPrimaryAccount(accounts);
-    if (!acc) return;
-    const info = map[acc.id] || { dynamic: Number(acc.balance)||0, initial: Number(acc.balance)||0, profit: 0 };
-    const deltaPct = info.initial ? ((info.dynamic - info.initial) / info.initial) * 100 : 0;
-
-    const $val = document.getElementById('challenge-current-balance');
-    const $pct = document.getElementById('challenge-balance-pct');
-    const $lab = document.getElementById('challenge-balance-label');
-
-    if ($val) $val.textContent = fmtMoney(info.dynamic);
-    if ($lab) $lab.textContent = 'Saldo Actual';
-    if ($pct) {
-      const sign = deltaPct >= 0 ? '+' : '';
-      $pct.textContent = `${sign}${fmtPct(deltaPct)} vs. inicial`;
-    }
-  };
-
-  const wire = () => {
-    const orig = window.updateAllCalculations;
-    window.updateAllCalculations = function(){
-      if (typeof orig === 'function') orig.apply(this, arguments);
-      if (typeof window.recomputeDynamicBalances === 'function') window.recomputeDynamicBalances();
-      window.updateChallengeCard();
-    };
-  };
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => { 
-      if (typeof window.recomputeDynamicBalances === 'function') window.recomputeDynamicBalances();
-      window.updateChallengeCard(); 
-      wire(); 
-    });
-  } else {
-    if (typeof window.recomputeDynamicBalances === 'function') window.recomputeDynamicBalances();
-    window.updateChallengeCard(); 
-    wire();
-  }
-})();
-</script>
-
-</body></html>
+</body>
+</html>
