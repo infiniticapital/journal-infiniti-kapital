@@ -143,6 +143,12 @@
     textarea{min-height: 80px;}
     .modal-footer{display:flex; justify-content:flex-end; gap:8px; margin-top:10px}
     .btn{border:0; border-radius:10px; padding:10px 14px; cursor:pointer}
+    /* CAMBIO: Estilo para botones desactivados */
+    .btn:disabled {
+        background-color: #334155;
+        color: #64748b;
+        cursor: not-allowed;
+    }
     .btn.primary{background:var(--accent); color:#111}
     .btn.secondary{background:#334155; color:#fff}
     .btn-link{background:none; border:none; color:var(--accent); padding:0; text-decoration:underline; cursor:pointer;}
@@ -165,7 +171,6 @@
       [style*="md:grid-column: span 8"] { grid-column: span 8; }
     }
 
-    /* CAMBIO: Estilos para el nuevo calendario */
     #calendar-container .fc-daygrid-day-frame {
         display: flex;
         flex-direction: column;
@@ -173,12 +178,19 @@
         align-items: center;
         padding: 8px;
         height: 100%;
+        position: relative;
+    }
+    #calendar-container .fc-daygrid-day-top {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        padding: 4px;
+        text-align: right;
     }
     #calendar-container .fc-daygrid-day-number {
-        position: absolute;
-        top: 5px;
-        right: 8px;
-        font-size: 12px;
+       font-size: 12px;
+       padding-right: 4px;
     }
     .calendar-day-content {
         text-align: center;
@@ -191,13 +203,12 @@
         font-size: 0.8rem;
         color: var(--muted);
     }
-    .fc-day-other .fc-daygrid-day-top {
+    .fc-day-other .calendar-day-content, .fc-day-other .fc-daygrid-day-top {
         opacity: 0.3;
     }
     .fc .fc-toolbar.fc-header-toolbar {
         margin-bottom: 1.2em;
     }
-    /* FIN CAMBIO */
 
     .hidden{display:none!important}
     .only-admin{display:none}
@@ -327,25 +338,30 @@
       </div>
       
       <div class="card challenge"><div class="card-header"><div class="card-title">FTMO Challenge</div><button class="btn-icon" id="edit-challenge"><i class="fa-solid fa-pen"></i></button></div>
-    <div>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-            <span>Progreso</span><span id="challenge-progress-value">0%</span>
-        </div>
-        <div style="height:10px;background:#334155;border-radius:6px;overflow:hidden"><div id="challenge-progress-bar" style="height:100%;width:0%;background:var(--success)"></div></div>
+        <div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                <span>Progreso</span><span id="challenge-progress-value">0%</span>
+            </div>
+            <div style="height:10px;background:#334155;border-radius:6px;overflow:hidden"><div id="challenge-progress-bar" style="height:100%;width:0%;background:var(--success)"></div></div>
 
-        <div class="metric-card" style="margin-top: 10px;">
-            <div class="metric-val" id="challenge-initial-balance">$0.00</div>
-            <div class="metric-lab">Saldo Inicial</div>
-        </div>
+            <div class="metric-card" style="margin-top: 10px;">
+                <div class="metric-val" id="challenge-initial-balance">$0.00</div>
+                <div class="metric-lab">Saldo Inicial</div>
+            </div>
 
-        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:10px">
-            <div class="metric-card"><div class="metric-val" id="challenge-profit">+0.0%</div><div class="metric-lab">Beneficio</div></div>
-            <div class="metric-card"><div class="metric-val" id="challenge-drawdown">0.0%</div><div class="metric-lab">Drawdown</div></div>
-            <div class="metric-card"><div class="metric-val" id="challenge-trades">0</div><div class="metric-lab">Operaciones</div></div>
-            <div class="metric-card"><div class="metric-val" id="challenge-win-rate">0%</div><div class="metric-lab">Acierto</div></div>
+            <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:10px">
+                <div class="metric-card"><div class="metric-val" id="challenge-profit">+0.0%</div><div class="metric-lab">Beneficio</div></div>
+                <div class="metric-card"><div class="metric-val" id="challenge-drawdown">0.0%</div><div class="metric-lab">Drawdown Total</div></div>
+                <div class="metric-card"><div class="metric-val" id="challenge-trades">0</div><div class="metric-lab">Operaciones</div></div>
+                <div class="metric-card"><div class="metric-val" id="challenge-win-rate">0%</div><div class="metric-lab">Acierto</div></div>
+            </div>
+            
+            <div class="metric-card" style="margin-top: 10px; border: 1px solid var(--warning);">
+                <div class="metric-val" id="challenge-residual-risk">0.00%</div>
+                <div class="metric-lab">Riesgo Residual Diario</div>
+            </div>
         </div>
-    </div>
-</div> 
+      </div> 
     
     </section>
 
@@ -379,9 +395,9 @@
         </div>
         <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 20px;">
             <button class="btn primary" id="generate-report-btn" style="flex-grow: 1;">Generar</button>
-            <button class="btn secondary" id="download-csv-btn" title="Descargar CSV"><i class="fa-solid fa-file-csv"></i> CSV</button>
-            <button class="btn secondary" id="download-excel-btn" title="Descargar Excel"><i class="fa-solid fa-file-excel"></i> Excel</button>
-            <button class="btn secondary" id="download-pdf-btn" title="Descargar PDF"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+            <button class="btn secondary" id="download-csv-btn" title="Descargar CSV" disabled><i class="fa-solid fa-file-csv"></i> CSV</button>
+            <button class="btn secondary" id="download-excel-btn" title="Descargar Excel" disabled><i class="fa-solid fa-file-excel"></i> Excel</button>
+            <button class="btn secondary" id="download-pdf-btn" title="Descargar PDF" disabled><i class="fa-solid fa-file-pdf"></i> PDF</button>
         </div>
         <div id="report-loader" class="hidden" style="margin-top: 15px; text-align: center; color: var(--muted);">
           <i class="fa-solid fa-spinner fa-spin"></i> Generando reporte...
@@ -917,7 +933,7 @@ const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
 
 let distributionChart, balanceChart, riskChart, modalBalanceChart, equityCurveChart, symbolVolumeChart;
-let currentReportData = []; // Variable global para guardar los datos del reporte actual
+let currentReportData = [];
 
 function setDate() {
     const el = $('#current-date');
@@ -1015,13 +1031,29 @@ function updateRecentTrades(trades) {
     }).join('');
 }
 
+// CAMBIO: Se separa la lógica de poblar el dropdown de reportes
+function populateReportAccountsDropdown(accounts) {
+    const reportSelect = $('#report-account-select');
+    if (!reportSelect) return;
+    
+    const currentVal = reportSelect.value;
+    reportSelect.innerHTML = '<option value="">-- Selecciona una cuenta --</option>';
+    
+    (accounts || []).forEach(a => {
+        const option = document.createElement('option');
+        option.value = a.id;
+        option.textContent = a.name;
+        reportSelect.appendChild(option);
+    });
+    
+    if (currentVal) reportSelect.value = currentVal;
+}
+
 function updateAccountsUI(accounts) {
     const el = $('#accounts-container');
-    const reportSelect = $('#report-account-select');
     if (!el) return;
 
     el.innerHTML = '';
-    if(reportSelect) reportSelect.innerHTML = '<option value="">-- Selecciona una cuenta --</option>';
 
     const addAccountButton = document.createElement('div');
     addAccountButton.className = 'btn primary';
@@ -1064,13 +1096,6 @@ function updateAccountsUI(accounts) {
           </div>
         `;
         el.appendChild(card);
-
-        if(reportSelect) {
-            const option = document.createElement('option');
-            option.value = a.id;
-            option.textContent = a.name;
-            reportSelect.appendChild(option);
-        }
     });
 }
 
@@ -1170,7 +1195,6 @@ function renderEquityCurve(trades) {
     });
 }
 
-// CAMBIO: Lógica del calendario completamente renovada
 function renderCalendar(trades) {
     const calendarEl = document.getElementById('calendar-container');
     if (!calendarEl) return;
@@ -1196,6 +1220,7 @@ function renderCalendar(trades) {
         dayCellDidMount: function(arg) {
             const dateStr = arg.date.toISOString().slice(0, 10);
             const dayData = dailySummary[dateStr];
+            const frame = arg.el.querySelector('.fc-daygrid-day-frame');
             
             let contentHtml = '';
             if (dayData) {
@@ -1218,13 +1243,14 @@ function renderCalendar(trades) {
                 `;
             }
             
-            if(contentHtml) {
-                 arg.el.querySelector('.fc-daygrid-day-frame').innerHTML = contentHtml;
+            if(frame && contentHtml) {
+                 frame.innerHTML = contentHtml + frame.innerHTML;
             }
         }
     });
     window.calendar.render();
 }
+
 
 function renderStrategiesUI(strategies) {
     const el = $('#strategies-container');
@@ -1294,29 +1320,50 @@ function populateAnalyticsFilter(strategies) {
     });
 }
 
-function updateChallengeTrackerUI(progress) {
-    const p = progress || {};
-    const settings = window.__currentSettings || {};
+// CAMBIO: Lógica de Riesgo Residual añadida
+function updateChallengeTrackerUI(trades, settings) {
+    const p = calculateChallengeProgress(trades, settings);
+    
+    const initialBalance = settings.initialBalance || 0;
     const profitPercent = p.profitPercent || 0;
     const target = p.profitTargetPercent || 10;
     const progressPercent = target > 0 ? (profitPercent / target) * 100 : 0;
-
-    const initialBalanceEl = $('#challenge-initial-balance');
-    if (initialBalanceEl) initialBalanceEl.textContent = `$${(settings.initialBalance || 0).toFixed(2)}`;
-
+    
+    $('#challenge-initial-balance').textContent = `$${initialBalance.toFixed(2)}`;
     $('#challenge-profit').textContent = `${profitPercent.toFixed(2)}%`;
     $('#challenge-drawdown').textContent = `${p.drawdownPercent?.toFixed(2) || 0.00}%`;
     $('#challenge-trades').textContent = p.tradeCount || 0;
     $('#challenge-win-rate').textContent = `${p.winRate?.toFixed(1) || 0}%`;
     $('#challenge-progress-value').textContent = `${progressPercent.toFixed(1)}%`;
-    const progressBar = $('#challenge-progress-bar');
-    if (progressBar) progressBar.style.width = `${Math.min(100, progressPercent)}%`;
+    $('#challenge-progress-bar').style.width = `${Math.min(100, progressPercent)}%`;
+    
     const ddElement = $('#challenge-drawdown').closest('.metric-card');
     if (ddElement) {
         const isViolated = (p.drawdownPercent || 0) >= (p.maxLossPercent || 10);
         ddElement.style.backgroundColor = isViolated ? 'rgba(239, 68, 68, .4)' : '';
     }
+
+    // Lógica para Riesgo Residual Diario
+    const dailyLimit = settings.dailyLoss || 5;
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const todaysTrades = (trades || []).filter(t => t.dateStr === todayStr && t.inChallenge);
+    const dailyPnl = todaysTrades.reduce((sum, trade) => sum + trade.result, 0);
+    const dailyDrawdown = dailyPnl < 0 ? (Math.abs(dailyPnl) / initialBalance) * 100 : 0;
+    const residualRisk = dailyLimit - dailyDrawdown;
+
+    const residualRiskEl = $('#challenge-residual-risk');
+    residualRiskEl.textContent = `${residualRisk.toFixed(2)}%`;
+
+    const riskPercentage = (residualRisk / dailyLimit) * 100;
+    if (riskPercentage <= 20) {
+        residualRiskEl.style.color = 'var(--danger)';
+    } else if (riskPercentage <= 40) {
+        residualRiskEl.style.color = 'var(--warning)';
+    } else {
+        residualRiskEl.style.color = 'var(--accent)';
+    }
 }
+
 
 function calculateRiskMetrics(trades, initialBalance) {
     if (!initialBalance || initialBalance === 0) {
@@ -1665,6 +1712,8 @@ function bindSelfRealtime(uid){
   const unsubAccounts = onSnapshot(query(accountsRef, orderBy('createdAt', 'desc')), snap=>{
     window.__currentAccounts = snap.docs.map(d=>({id:d.id,...d.data()}));
     updateAccountsUI(window.__currentAccounts);
+    // CAMBIO: Poblar el dropdown de reportes cada vez que las cuentas se actualizan
+    populateReportAccountsDropdown(window.__currentAccounts);
   });
 
   const strategiesRef = collection(db, 'users', uid, 'strategies');
@@ -1735,7 +1784,7 @@ onAuthStateChanged(auth, async (user) => {
         updateStrategiesDropdown(empty);
         populateAnalyticsFilter(empty);
         recalcFromTrades(empty);
-        updateChallengeTrackerUI(null);
+        updateChallengeTrackerUI(empty, {});
         renderNotesHistory(empty);
         renderHistorySummary(empty);
         renderDetailedHistory(empty); 
@@ -1759,16 +1808,18 @@ window.updateAllCalculations = () => {
   renderDetailedHistory(allTrades); 
   renderAnalytics(filteredTrades);
   renderCalendar(allTrades);
-  updateChallengeTrackerUI(calculateChallengeProgress(allTrades, settings));
+  updateChallengeTrackerUI(allTrades, settings);
   updateWeeklyProgress();
 }
 
 function calculateChallengeProgress(trades, settings) {
-  if (!settings || !settings.initialBalance) return {};
   const initialBalance = settings.initialBalance;
+  if (!initialBalance) return {};
+  
   let peakEquity = initialBalance;
   let currentEquity = initialBalance;
   let maxDrawdown = 0;
+  
   const challengeTrades = (trades || []).filter(t => t.inChallenge);
   challengeTrades.forEach(trade => {
     currentEquity += trade.result;
@@ -2511,20 +2562,20 @@ $('#generate-report-btn').addEventListener('click', async () => {
     const endDate = $('#report-end-date').value;
     const user = auth.currentUser;
 
-    if (!startDate || !endDate) {
-        return alert('Por favor, selecciona una fecha de inicio y una fecha de fin.');
-    }
-    if (!user) {
-        return alert('Debes iniciar sesión para generar reportes.');
-    }
+    if (!startDate || !endDate) { return alert('Por favor, selecciona un rango de fechas.'); }
+    if (!$('#report-account-select').value) { return alert('Por favor, selecciona una cuenta para el reporte.'); }
+    if (!user) { return alert('Debes iniciar sesión para generar reportes.'); }
 
     const tradesRef = collection(db, 'users', user.uid, 'trades');
     const q = query(tradesRef, where('dateStr', '>=', startDate), where('dateStr', '<=', endDate));
     
     const reportResults = $('#report-results');
     const tbody = $('#report-table-body');
+    const reportButtons = $$('#download-csv-btn, #download-excel-btn, #download-pdf-btn');
+    
     tbody.innerHTML = '';
     reportResults.classList.add('hidden');
+    reportButtons.forEach(btn => btn.disabled = true);
 
     try {
         const snapshot = await getDocs(q);
@@ -2554,6 +2605,9 @@ $('#generate-report-btn').addEventListener('click', async () => {
                     <td style="padding:8px;">${t.strategyId ? (window.__currentStrategies.find(s=>s.id === t.strategyId)?.name || 'N/A') : 'N/A'}</td>
                 </tr>
             `).join('');
+            
+            // CAMBIO: Activar botones
+            reportButtons.forEach(btn => btn.disabled = false);
         }
         reportResults.classList.remove('hidden');
 
@@ -2563,18 +2617,15 @@ $('#generate-report-btn').addEventListener('click', async () => {
     }
 });
 
-// CAMBIO: Lógica para generar Hash
 async function generateSHA256(str) {
     const textAsBuffer = new TextEncoder().encode(str);
     const hashBuffer = await crypto.subtle.digest('SHA-256', textAsBuffer);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    return hash;
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-
 function exportToCSV() {
-    if (lastReportData.length === 0) { return alert('Primero genera un reporte.'); }
+    if (lastReportData.length === 0) { return alert('Primero genera un reporte con datos.'); }
     const headers = ['Fecha', 'Simbolo', 'Tipo', 'Resultado ($)', 'Lotes', 'Estrategia'];
     const rows = lastReportData.map(t => [ t.dateStr, t.pair, t.type, t.result, t.lots || '', t.strategyId ? (window.__currentStrategies.find(s=>s.id === t.strategyId)?.name || '') : '' ]);
     let csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
@@ -2588,7 +2639,7 @@ function exportToCSV() {
 }
 
 function exportToExcel() {
-    if (lastReportData.length === 0) { return alert('Primero genera un reporte.'); }
+    if (lastReportData.length === 0) { return alert('Primero genera un reporte con datos.'); }
     const data = lastReportData.map(t => ({
         Fecha: t.dateStr, Simbolo: t.pair, Tipo: t.type, 'Resultado ($)': t.result,
         Lotes: t.lots || '', Estrategia: t.strategyId ? (window.__currentStrategies.find(s=>s.id === t.strategyId)?.name || '') : ''
@@ -2600,9 +2651,9 @@ function exportToExcel() {
 }
 
 async function exportToPDF() {
-    if (lastReportData.length === 0) { return alert('Primero genera un reporte.'); }
+    if (lastReportData.length === 0) { return alert('Primero genera un reporte con datos.'); }
     const accountId = $('#report-account-select').value;
-    if (!accountId) { return alert('Por favor, selecciona una cuenta para generar el reporte.'); }
+    if (!accountId) { return alert('Por favor, selecciona una cuenta para el reporte.'); }
 
     const account = window.__currentAccounts.find(a => a.id === accountId);
     const user = auth.currentUser;
@@ -2611,12 +2662,10 @@ async function exportToPDF() {
     const doc = new jsPDF();
     const pageHeight = doc.internal.pageSize.height;
     
-    // Generar Firma Digital
     const reportId = `REP-${user.uid.slice(0, 4)}-${Date.now()}`;
     const dataString = JSON.stringify(lastReportData);
     const reportHash = await generateSHA256(dataString);
 
-    // -- CABECERA --
     doc.setFontSize(20);
     doc.text("Reporte de Operaciones", 14, 22);
     doc.setFontSize(10);
@@ -2627,7 +2676,6 @@ async function exportToPDF() {
     doc.text(`Desde: ${$('#report-start-date').value}`, 140, 30);
     doc.text(`Hasta: ${$('#report-end-date').value}`, 140, 35);
 
-    // -- TABLA --
     doc.autoTable({
         head: [['Fecha', 'Simbolo', 'Tipo', 'Resultado ($)', 'Lotes', 'Estrategia']],
         body: lastReportData.map(t => [
@@ -2636,16 +2684,16 @@ async function exportToPDF() {
         ]),
         startY: 50,
         didDrawPage: function (data) {
-            // -- FOOTER --
             doc.setFontSize(8);
             doc.text(`Report ID: ${reportId}`, 14, pageHeight - 15);
             doc.text(`Firma Digital (SHA-256): ${reportHash.slice(0,32)}...`, 14, pageHeight - 10);
-            doc.text('Página ' + doc.internal.getNumberOfPages(), 200, pageHeight - 10, { align: 'right' });
+            doc.text('Página ' + doc.internal.getNumberOfPages(), doc.internal.pageSize.width - 14, pageHeight - 10, { align: 'right' });
         }
     });
     
     doc.save(`reporte_${account.name}_${new Date().toISOString().slice(0,10)}.pdf`);
 }
+
 
 $('#download-csv-btn').addEventListener('click', exportToCSV);
 $('#download-excel-btn').addEventListener('click', exportToExcel);
