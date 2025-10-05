@@ -2849,5 +2849,156 @@ $('#download-pdf-btn').addEventListener('click', exportToPDF);
 
 
 </script>
+
+<script>
+(function(){
+  const money = v => '$' + (Number(v)||0).toFixed(2);
+
+  function pickAccount(accounts){
+    if (!accounts || !accounts.length) return null;
+    let a = accounts.find(x => (x.type||'').toLowerCase()==='principal');
+    if (!a) a = accounts.find(x => (x.name||'').toLowerCase().includes('ftmo'));
+    return a || accounts[0];
+  }
+
+  function computeProfit(trades, accountId){
+    if (!Array.isArray(trades) || !trades.length) return 0;
+    const hasLink = trades.some(t => t && t.accountId);
+    const list = hasLink && accountId ? trades.filter(t => t.accountId === accountId) : trades;
+    return list.reduce((s,t)=> s + (parseFloat(t?.result)||0), 0);
+  }
+
+  // Solo cambia el monto (no el label) en #challenge-initial-balance
+  window.updateChallengeDynamicBalance = function(){
+    const el = document.getElementById('challenge-initial-balance');
+    if (!el) return;
+    const accounts = window.__currentAccounts || [];
+    const trades   = window.__currentTrades   || [];
+    const acc      = pickAccount(accounts);
+    const initial  = acc && typeof acc.balance !== 'undefined'
+      ? parseFloat(acc.balance)||0
+      : parseFloat(String(el.textContent).replace(/[^0-9.\-]/g,'')) || 0;
+    el.textContent = money(initial + computeProfit(trades, acc?.id));
+  };
+
+  // Run on load
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => window.updateChallengeDynamicBalance());
+  } else { window.updateChallengeDynamicBalance(); }
+
+  // Re-engánchate a recálculos globales (no cambia tu lógica, solo agrega la llamada final)
+  const hookCalc = () => {
+    if (typeof window.updateAllCalculations === 'function' &&
+        !window.updateAllCalculations.__ik_dyn_challenge__) {
+      const orig = window.updateAllCalculations;
+      window.updateAllCalculations = function(){
+        const r = orig.apply(this, arguments);
+        try { window.updateChallengeDynamicBalance(); } catch(e){}
+        return r;
+      };
+      window.updateAllCalculations.__ik_dyn_challenge__ = true;
+    }
+  };
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', hookCalc);
+  } else { hookCalc(); }
+
+  // Tras guardar operación
+  const hookSave = () => {
+    if (typeof window.saveTrade === 'function' && !window.saveTrade.__ik_dyn_challenge__) {
+      const orig = window.saveTrade;
+      window.saveTrade = async function(){
+        const r = await orig.apply(this, arguments);
+        try { window.updateChallengeDynamicBalance(); } catch(e){}
+        return r;
+      };
+      window.saveTrade.__ik_dyn_challenge__ = true;
+    }
+  };
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', hookSave);
+  } else { hookSave(); }
+})();
+</script>
+
+
+<script>
+(function(){
+  const money = v => '$' + (Number(v)||0).toFixed(2);
+
+  function computeMap(){
+    const accounts = window.__currentAccounts || [];
+    const trades   = window.__currentTrades   || [];
+    const map = {};
+    const anyLinked = trades.some(t => t && t.accountId);
+    accounts.forEach(a => {
+      const initial = parseFloat(a?.balance)||0;
+      const related = anyLinked ? trades.filter(t => t?.accountId === a?.id) : trades;
+      const profit  = related.reduce((s,t)=> s + (parseFloat(t?.result)||0), 0);
+      map[a.id] = { initial, profit, dynamic: initial + profit, name: a?.name || '' };
+    });
+    return map;
+  }
+
+  function findValueNode(card){
+    let node = card.querySelector('.metric-card .metric-val');
+    if (node) return node;
+    node = card.querySelector('.metric-val');
+    if (node) return node;
+    for (const el of card.querySelectorAll('div, span')) {
+      if (/\$\s*\d/.test((el.textContent||'').trim())) return el;
+    }
+    return null;
+  }
+
+  window.updateAccountsDynamicOnly = function(){
+    try{
+      const container = document.querySelector('#accounts-container') || document;
+      const map = computeMap();
+      Object.keys(map).forEach(id => {
+        const edit = container.querySelector(`.btn-edit-account[data-id="${id}"]`);
+        const card = edit ? edit.closest('.card') : null;
+        if (!card) return;
+        const node = findValueNode(card);
+        if (node) node.textContent = money(map[id].dynamic);
+      });
+    }catch(e){}
+  };
+
+  // Hook after your accounts UI renders
+  const hook = () => {
+    if (typeof window.updateAccountsUI === 'function' && !window.updateAccountsUI.__ik_dyn_only__) {
+      const orig = window.updateAccountsUI;
+      window.updateAccountsUI = function(){
+        const r = orig.apply(this, arguments);
+        try { window.updateAccountsDynamicOnly(); } catch(e){}
+        return r;
+      };
+      window.updateAccountsUI.__ik_dyn_only__ = true;
+    }
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => { hook(); window.updateAccountsDynamicOnly(); });
+  } else { hook(); window.updateAccountsDynamicOnly(); }
+
+  // After saving a trade
+  const wrapSave = () => {
+    if (typeof window.saveTrade === 'function' && !window.saveTrade.__ik_acc_dyn__) {
+      const orig = window.saveTrade;
+      window.saveTrade = async function(){
+        const r = await orig.apply(this, arguments);
+        try{ window.updateAccountsDynamicOnly(); }catch(e){}
+        return r;
+      };
+      window.saveTrade.__ik_acc_dyn__ = true;
+    }
+  };
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', wrapSave);
+  } else { wrapSave(); }
+})();
+</script>
+
 </body>
 </html>
