@@ -2851,25 +2851,30 @@ $('#download-pdf-btn').addEventListener('click', exportToPDF);
 </script>
 
 <script>
+// === IK SAFE: solo saldo dinámico, sin sobreescribir funciones ni interceptar eventos ===
 (function(){
   const money = v => '$' + (Number(v)||0).toFixed(2);
 
   function pickAccount(accounts){
     if (!accounts || !accounts.length) return null;
-    let a = accounts.find(x => (x.type||'').toLowerCase()==='principal');
+    let a = accounts.find(x => (x.type||'').toLowerCase() === 'principal');
     if (!a) a = accounts.find(x => (x.name||'').toLowerCase().includes('ftmo'));
     return a || accounts[0];
   }
 
-  function computeProfit(trades, accountId){
-    if (!Array.isArray(trades) || !trades.length) return 0;
-    const hasLink = trades.some(t => t && t.accountId);
-    const list = hasLink && accountId ? trades.filter(t => t.accountId === accountId) : trades;
-    return list.reduce((s,t)=> s + (parseFloat(t?.result)||0), 0);
+  function buildAccountsMap(accounts, trades){
+    const map = {};
+    const hasLink = Array.isArray(trades) && trades.some(t => t && t.accountId);
+    (accounts || []).forEach(a => {
+      const initial = parseFloat(a?.balance) || 0;
+      const related = hasLink ? (trades || []).filter(t => t?.accountId === a?.id) : (trades || []);
+      const profit  = related.reduce((s,t)=> s + (parseFloat(t?.result) || 0), 0);
+      map[a.id] = { initial, profit, dynamic: initial + profit };
+    });
+    return map;
   }
 
-  // Solo cambia el monto (no el label) en #challenge-initial-balance
-  window.updateChallengeDynamicBalance = function(){
+  function updateChallenge(){
     const el = document.getElementById('challenge-initial-balance');
     if (!el) return;
     const accounts = window.__currentAccounts || [];
@@ -2878,66 +2883,10 @@ $('#download-pdf-btn').addEventListener('click', exportToPDF);
     const initial  = acc && typeof acc.balance !== 'undefined'
       ? parseFloat(acc.balance)||0
       : parseFloat(String(el.textContent).replace(/[^0-9.\-]/g,'')) || 0;
-    el.textContent = money(initial + computeProfit(trades, acc?.id));
-  };
-
-  // Run on load
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => window.updateChallengeDynamicBalance());
-  } else { window.updateChallengeDynamicBalance(); }
-
-  // Re-engánchate a recálculos globales (no cambia tu lógica, solo agrega la llamada final)
-  const hookCalc = () => {
-    if (typeof window.updateAllCalculations === 'function' &&
-        !window.updateAllCalculations.__ik_dyn_challenge__) {
-      const orig = window.updateAllCalculations;
-      window.updateAllCalculations = function(){
-        const r = orig.apply(this, arguments);
-        try { window.updateChallengeDynamicBalance(); } catch(e){}
-        return r;
-      };
-      window.updateAllCalculations.__ik_dyn_challenge__ = true;
-    }
-  };
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', hookCalc);
-  } else { hookCalc(); }
-
-  // Tras guardar operación
-  const hookSave = () => {
-    if (typeof window.saveTrade === 'function' && !window.saveTrade.__ik_dyn_challenge__) {
-      const orig = window.saveTrade;
-      window.saveTrade = async function(){
-        const r = await orig.apply(this, arguments);
-        try { window.updateChallengeDynamicBalance(); } catch(e){}
-        return r;
-      };
-      window.saveTrade.__ik_dyn_challenge__ = true;
-    }
-  };
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', hookSave);
-  } else { hookSave(); }
-})();
-</script>
-
-
-<script>
-(function(){
-  const money = v => '$' + (Number(v)||0).toFixed(2);
-
-  function computeMap(){
-    const accounts = window.__currentAccounts || [];
-    const trades   = window.__currentTrades   || [];
-    const map = {};
-    const anyLinked = trades.some(t => t && t.accountId);
-    accounts.forEach(a => {
-      const initial = parseFloat(a?.balance)||0;
-      const related = anyLinked ? trades.filter(t => t?.accountId === a?.id) : trades;
-      const profit  = related.reduce((s,t)=> s + (parseFloat(t?.result)||0), 0);
-      map[a.id] = { initial, profit, dynamic: initial + profit, name: a?.name || '' };
-    });
-    return map;
+    const hasLink  = Array.isArray(trades) && trades.some(t => t && t.accountId);
+    const list     = hasLink && acc?.id ? trades.filter(t => t.accountId === acc.id) : trades;
+    const profit   = (list || []).reduce((s,t)=> s + (parseFloat(t?.result)||0), 0);
+    el.textContent = money(initial + profit);
   }
 
   function findValueNode(card){
@@ -2945,60 +2894,56 @@ $('#download-pdf-btn').addEventListener('click', exportToPDF);
     if (node) return node;
     node = card.querySelector('.metric-val');
     if (node) return node;
-    for (const el of card.querySelectorAll('div, span')) {
+    const candidates = card.querySelectorAll('div, span');
+    for (const el of candidates) {
       if (/\$\s*\d/.test((el.textContent||'').trim())) return el;
     }
     return null;
   }
 
-  window.updateAccountsDynamicOnly = function(){
-    try{
-      const container = document.querySelector('#accounts-container') || document;
-      const map = computeMap();
-      Object.keys(map).forEach(id => {
-        const edit = container.querySelector(`.btn-edit-account[data-id="${id}"]`);
-        const card = edit ? edit.closest('.card') : null;
-        if (!card) return;
-        const node = findValueNode(card);
-        if (node) node.textContent = money(map[id].dynamic);
-      });
-    }catch(e){}
-  };
+  function updateAccounts(){
+    const container = document.querySelector('#accounts-container');
+    if (!container) return;
+    const accounts = window.__currentAccounts || [];
+    const trades   = window.__currentTrades   || [];
+    const map = buildAccountsMap(accounts, trades);
+    Object.keys(map).forEach(id => {
+      const editBtn = container.querySelector(`.btn-edit-account[data-id="${id}"]`);
+      const card = editBtn ? editBtn.closest('.card') : null;
+      if (!card) return;
+      const node = findValueNode(card);
+      if (node) node.textContent = money(map[id].dynamic);
+    });
+  }
 
-  // Hook after your accounts UI renders
-  const hook = () => {
-    if (typeof window.updateAccountsUI === 'function' && !window.updateAccountsUI.__ik_dyn_only__) {
-      const orig = window.updateAccountsUI;
-      window.updateAccountsUI = function(){
-        const r = orig.apply(this, arguments);
-        try { window.updateAccountsDynamicOnly(); } catch(e){}
-        return r;
-      };
-      window.updateAccountsUI.__ik_dyn_only__ = true;
-    }
-  };
+  function tick(){
+    try {
+      if (Array.isArray(window.__currentAccounts)) {
+        updateChallenge();
+        updateAccounts();
+      }
+    } catch(e){ /* no-op */ }
+  }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => { hook(); window.updateAccountsDynamicOnly(); });
-  } else { hook(); window.updateAccountsDynamicOnly(); }
+  // Poll suave para evitar dependencias; no bloquea ni reescribe nada
+  let tries = 0;
+  const iv = setInterval(() => {
+    tries++;
+    tick();
+    if (tries >= 40) clearInterval(iv); // ~12s total
+  }, 300);
 
-  // After saving a trade
-  const wrapSave = () => {
-    if (typeof window.saveTrade === 'function' && !window.saveTrade.__ik_acc_dyn__) {
-      const orig = window.saveTrade;
-      window.saveTrade = async function(){
-        const r = await orig.apply(this, arguments);
-        try{ window.updateAccountsDynamicOnly(); }catch(e){}
-        return r;
-      };
-      window.saveTrade.__ik_acc_dyn__ = true;
-    }
-  };
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', wrapSave);
-  } else { wrapSave(); }
+  // Recalcular cuando cambia la vista de cuentas
+  const accContainer = document.getElementById('accounts-container');
+  if (accContainer) {
+    const mo = new MutationObserver(() => setTimeout(tick, 50));
+    mo.observe(accContainer, { childList: true, subtree: true });
+  }
+
+  // Recalcular al volver a la pestaña o después de guardar sin interceptar
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(tick, 100); }, { passive: true });
+  document.getElementById('save-trade-btn')?.addEventListener('click', () => setTimeout(tick, 800), true);
 })();
 </script>
-
 </body>
 </html>
