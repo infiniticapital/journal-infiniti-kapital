@@ -358,9 +358,10 @@
             <div style="height:10px;background:#334155;border-radius:6px;overflow:hidden"><div id="challenge-progress-bar" style="height:100%;width:0%;background:var(--success)"></div></div>
 
             <div class="metric-card" style="margin-top: 10px;">
-                <div class="metric-val" id="challenge-initial-balance">$0.00</div>
-                <div class="metric-lab">Saldo Inicial</div>
-            </div>
+  <div class="metric-val" id="challenge-current-balance">$0.00</div>
+  <div class="metric-lab" id="challenge-balance-label">Saldo Actual</div>
+  <div class="metric-sub" id="challenge-balance-pct" style="color: var(--muted); margin-top: 2px;">0.00% vs. inicial</div>
+</div>
 
             <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:10px">
                 <div class="metric-card"><div class="metric-val" id="challenge-profit">+0.0%</div><div class="metric-lab">Beneficio</div></div>
@@ -2711,6 +2712,71 @@ async function exportToPDF() {
 $('#download-csv-btn').addEventListener('click', exportToCSV);
 $('#download-excel-btn').addEventListener('click', exportToExcel);
 $('#download-pdf-btn').addEventListener('click', exportToPDF);
+
+<script>
+// === IK: Actualizar tarjeta "FTMO Challenge" con saldo dinámico y % ===
+(function(){
+  const fmtMoney = v => `$${(Number(v)||0).toFixed(2)}`;
+  const fmtPct   = v => `${(Number(v)||0).toFixed(2)}%`;
+
+  // Elige la cuenta "principal": tipo 'principal', nombre que contenga 'FTMO', o la primera.
+  function pickPrimaryAccount(accounts){
+    if (!accounts || !accounts.length) return null;
+    let acc = accounts.find(a => (a.type||'').toLowerCase()==='principal');
+    if (!acc) acc = accounts.find(a => (a.name||'').toLowerCase().includes('ftmo'));
+    return acc || accounts[0];
+  }
+
+  // Pinta el desafío con el saldo actual y % vs. inicial
+  window.updateChallengeCard = function(){
+    const accounts = window.__currentAccounts || [];
+    if (!accounts.length) return;
+
+    // Asegura mapa de balances dinámicos
+    const map = (window.__dynamicBalances && Object.keys(window.__dynamicBalances).length)
+                ? window.__dynamicBalances
+                : (typeof window.recomputeDynamicBalances === 'function' ? window.recomputeDynamicBalances() : {});
+
+    const acc = pickPrimaryAccount(accounts);
+    if (!acc) return;
+
+    const info = map[acc.id] || { dynamic: Number(acc.balance)||0, initial: Number(acc.balance)||0, profit: 0 };
+    const deltaPct = info.initial ? ((info.dynamic - info.initial) / info.initial) * 100 : 0;
+
+    const $val = document.getElementById('challenge-current-balance');
+    const $pct = document.getElementById('challenge-balance-pct');
+    const $lab = document.getElementById('challenge-balance-label');
+
+    if ($val) $val.textContent = fmtMoney(info.dynamic);
+    if ($lab) $lab.textContent = 'Saldo Actual';
+    if ($pct) {
+      const sign = deltaPct >= 0 ? '+' : '';
+      $pct.textContent = `${sign}${fmtPct(deltaPct)} vs. inicial`;
+    }
+  };
+
+  // Engancha con tu ciclo de cálculo global
+  const wire = () => {
+    const orig = window.updateAllCalculations;
+    window.updateAllCalculations = function(){
+      if (typeof orig === 'function') orig.apply(this, arguments);
+      if (typeof window.recomputeDynamicBalances === 'function') window.recomputeDynamicBalances();
+      window.updateChallengeCard();
+    };
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => { 
+      if (typeof window.recomputeDynamicBalances === 'function') window.recomputeDynamicBalances();
+      window.updateChallengeCard(); 
+      wire(); 
+    });
+  } else {
+    if (typeof window.recomputeDynamicBalances === 'function') window.recomputeDynamicBalances();
+    window.updateChallengeCard(); 
+    wire();
+  }
+})();
 
 </script>
 </body>
