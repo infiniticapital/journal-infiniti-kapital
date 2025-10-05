@@ -342,20 +342,26 @@
         </div>
       </div>
       <div class="card news"><div class="card-header"><div class="card-title">Calendario Económico</div></div>
-        <iframe src="https://sslecal2.investing.com?columns=exc_flags,exc_currency,exc_importance,exc_actual,exc_forecast,exc_previous&features=datepicker,timezone&countries=25,32,6,37,72,22,17,39,14,48,10,35,43,5,36,110,11,26,12,4,13,42,41,29&calType=day&timeZone=8&lang=56" width="100%" height="400" frameborder="0" allowtransparency="true" marginwidth="0" marginheight="0"></iframe>
-      </div>
-      
-      <div class="card challenge"><div class="card-header"><div class="card-title">FTMO Challenge</div><button class="btn-icon" id="edit-challenge"><i class="fa-solid fa-pen"></i></button></div>
-        <div>
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-                <span>Progreso</span><span id="challenge-progress-value">0%</span>
-            </div>
-            <div style="height:10px;background:#334155;border-radius:6px;overflow:hidden"><div id="challenge-progress-bar" style="height:100%;width:0%;background:var(--success)"></div></div>
+  <div class="tradingview-widget-container">
+    <div id="economic-calendar" style="height:520px"></div>
+    <script src="https://s3.tradingview.com/external-embedding/embed-widget-events.js" async>
+    {
+      "width": "100%",
+      "height": "520",
+      "importanceFilter": "-1,0,1",
+      "locale": "es",
+      "colorTheme": "dark",
+      "isTransparent": true
+    }
+    </script>
+  </div>
+</div></div>
 
             <div class="metric-card" style="margin-top: 10px;">
-                <div class="metric-val" id="challenge-initial-balance">$0.00</div>
-                <div class="metric-lab">Saldo Inicial</div>
-            </div>
+  <div class="metric-val" id="challenge-current-balance">$0.00</div>
+  <div class="metric-lab" id="challenge-balance-label">Saldo Actual</div>
+  <div class="metric-sub" id="challenge-balance-pct" style="color: var(--muted); margin-top: 2px;">0.00% vs. inicial</div>
+</div>
 
             <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:10px">
                 <div class="metric-card"><div class="metric-val" id="challenge-profit">+0.0%</div><div class="metric-lab">Beneficio</div></div>
@@ -462,11 +468,11 @@
                 </div>
     
             <div style="display: grid; grid-template-columns: repeat(12, 1fr); gap: 18px; margin-top: 20px;">
-                <div style="grid-column: span 12; min-height: 300px; display: flex; align-items: center; justify-content: center;">
+                <div style="grid-column: span 12; md:grid-column: span 4; min-height: 300px; display: flex; align-items: center; justify-content: center;">
                     <canvas id="symbol-volume-chart"></canvas>
                 </div>
-
-                <div style="grid-column: span 12; overflow-x: auto;">
+    
+                <div style="grid-column: span 12; md:grid-column: span 8; overflow-x: auto;">
                     <table style="width: 100%; border-collapse: collapse;">
                         <thead>
                             <tr style="border-bottom: 1px solid var(--border);">
@@ -3022,5 +3028,65 @@ $('#download-pdf-btn').addEventListener('click', exportToPDF);
 })();
 // === IK PATCH v4 END ===
 </script>
-</body>
-</html>
+
+<script>
+// === IK v5: Actualizar tarjeta FTMO Challenge con saldo dinámico (% incluido) ===
+(function(){
+  const fmtMoney = v => `$${(Number(v)||0).toFixed(2)}`;
+  const fmtPct   = v => `${(Number(v)||0).toFixed(2)}%`;
+
+  function pickPrimaryAccount(accounts){
+    if (!accounts || !accounts.length) return null;
+    let acc = accounts.find(a => (a.type||'').toLowerCase()==='principal');
+    if (!acc) acc = accounts.find(a => (a.name||'').toLowerCase().includes('ftmo'));
+    return acc || accounts[0];
+  }
+
+  window.updateChallengeCard = function(){
+    const accounts = window.__currentAccounts || [];
+    if (!accounts.length) return;
+    const map = (window.__dynamicBalances && Object.keys(window.__dynamicBalances).length)
+                ? window.__dynamicBalances
+                : (typeof window.recomputeDynamicBalances === 'function' ? window.recomputeDynamicBalances() : {});
+
+    const acc = pickPrimaryAccount(accounts);
+    if (!acc) return;
+    const info = map[acc.id] || { dynamic: Number(acc.balance)||0, initial: Number(acc.balance)||0, profit: 0 };
+    const deltaPct = info.initial ? ((info.dynamic - info.initial) / info.initial) * 100 : 0;
+
+    const $val = document.getElementById('challenge-current-balance');
+    const $pct = document.getElementById('challenge-balance-pct');
+    const $lab = document.getElementById('challenge-balance-label');
+
+    if ($val) $val.textContent = fmtMoney(info.dynamic);
+    if ($lab) $lab.textContent = 'Saldo Actual';
+    if ($pct) {
+      const sign = deltaPct >= 0 ? '+' : '';
+      $pct.textContent = `${sign}${fmtPct(deltaPct)} vs. inicial`;
+    }
+  };
+
+  const wire = () => {
+    const orig = window.updateAllCalculations;
+    window.updateAllCalculations = function(){
+      if (typeof orig === 'function') orig.apply(this, arguments);
+      if (typeof window.recomputeDynamicBalances === 'function') window.recomputeDynamicBalances();
+      window.updateChallengeCard();
+    };
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => { 
+      if (typeof window.recomputeDynamicBalances === 'function') window.recomputeDynamicBalances();
+      window.updateChallengeCard(); 
+      wire(); 
+    });
+  } else {
+    if (typeof window.recomputeDynamicBalances === 'function') window.recomputeDynamicBalances();
+    window.updateChallengeCard(); 
+    wire();
+  }
+})();
+</script>
+
+</body></html>
