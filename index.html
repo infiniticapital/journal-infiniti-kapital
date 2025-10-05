@@ -2898,6 +2898,70 @@ $('#download-pdf-btn').addEventListener('click', exportToPDF);
   };
 })();
 // === IK PATCH END ===
+
+// === IK PATCH v2: Saldo actual y % vs. inicial ===
+(function(){
+  const fmtMoney = v => `$${(Number(v)||0).toFixed(2)}`;
+  const fmtPct = v => `${(Number(v)||0).toFixed(2)}%`;
+
+  window.recomputeDynamicBalances = function(){
+    const accounts = window.__currentAccounts || [];
+    const trades = window.__currentTrades || [];
+    const map = {};
+    accounts.forEach(acc => {
+      const related = trades.filter(t => (t.accountId || '') === (acc.id || ''));
+      const profit = related.reduce((s,t)=> s + (parseFloat(t.result)||0), 0);
+      const dyn = (parseFloat(acc.balance)||0) + profit;
+      map[acc.id] = { dynamic: dyn, initial: parseFloat(acc.balance)||0, profit };
+    });
+    window.__dynamicBalances = map;
+    return map;
+  };
+
+  window.applyDynamicBalancesToDashboard = function(){
+    const accounts = window.__currentAccounts || [];
+    if (!accounts.length) return;
+    const map = window.__dynamicBalances || window.recomputeDynamicBalances();
+    const primary = accounts[0];
+    const info = map[primary.id] || { dynamic: primary.balance || 0, initial: primary.balance || 0, profit: 0 };
+    const deltaPct = info.initial ? ( (info.dynamic - info.initial) / info.initial ) * 100 : 0;
+
+    document.querySelectorAll('.card .metric-card').forEach(mc => {
+      const lab = mc.querySelector('.metric-lab');
+      const val = mc.querySelector('.metric-val');
+      if (!lab || !val) return;
+      if (/\s*Saldo\s+Inicial\s*/i.test(lab.textContent)) {
+        lab.textContent = 'Saldo Actual';
+        val.textContent = fmtMoney(info.dynamic);
+        let pct = mc.querySelector('.metric-sub');
+        if (!pct) {
+          pct = document.createElement('div');
+          pct.className = 'metric-sub';
+          pct.style.color = 'var(--muted)';
+          pct.style.marginTop = '2px';
+          mc.appendChild(pct);
+        }
+        const sign = (deltaPct>=0?'+':''); 
+        pct.textContent = `${sign}${fmtPct(deltaPct)} vs. inicial`;
+      }
+    });
+  };
+
+  const hookUp = () => {
+    const original = window.updateAllCalculations;
+    window.updateAllCalculations = function(){
+      if (typeof original === 'function') original.apply(this, arguments);
+      window.recomputeDynamicBalances();
+      window.applyDynamicBalancesToDashboard();
+    };
+  };
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => { window.recomputeDynamicBalances(); window.applyDynamicBalancesToDashboard(); hookUp(); });
+  } else {
+    window.recomputeDynamicBalances(); window.applyDynamicBalancesToDashboard(); hookUp();
+  }
+})();
+// === IK PATCH v2 END ===
 </script>
 </body>
 </html>
