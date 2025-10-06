@@ -3075,5 +3075,52 @@ $('#download-pdf-btn').addEventListener('click', exportToPDF);
     height: auto !important;     /* ignoramos el height del JSON */
     aspect-ratio: 3 / 1;         /* cambia 3/1 por 2/1, 16/9
 
+ /* === 1) Poner Calendario y Riesgo en dos columnas 50/50 === */
+#dashboard .card.news,
+#dashboard .card.risk{
+  width: calc(50% - 8px);     /* 50% con pequeño gap */
+  display: inline-block;      /* funciona aunque el padre no sea flex/grid */
+  vertical-align: top;
+}
+
+/* En pantallas chicas, apilar */
+@media (max-width: 1024px){
+  #dashboard .card.news,
+  #dashboard .card.risk{ width: 100%; display:block; }
+}
+
+/* === 2) Eliminar alturas mínimas que inflan la card === */
+#dashboard .card.news,
+#dashboard .card.risk{
+  min-height: 0 !important;
+  height: auto !important;
+}
+#dashboard .card.risk .card-body{ min-height: 0 !important; padding: 12px; }
+
+/* Compactar el gráfico de Riesgo */
+#dashboard .card.risk .chart{
+  height: 200px !important;   /* ajusta 180–220 a gusto */
+  max-height: 200px !important;
+}
+
+/* Calendario: más ancho que alto (alto según el ancho) */
+.tradingview-widget-container,
+.tradingview-widget-container__widget { width: 100% !important; }
+
+.tradingview-widget-container iframe{
+  width: 100% !important;
+  height: auto !important;    /* ignora el height del JSON */
+  aspect-ratio: 4 / 1;        /* más “apaisado”; prueba 5/1 si quieres aún más bajo */
+  min-height: 220px;
+  max-height: 560px;
+  display: block;
+  border: 0;
+  border-radius: 12px;
+  box-sizing: border-box;
+}
+
+/* Sin relleno extra en la card del calendario */
+.card.news .card-body{ padding: 0 !important; }
+
  </body>
 </html>
