@@ -3064,17 +3064,16 @@ $('#download-pdf-btn').addEventListener('click', exportToPDF);
   }
 })();
 </script>
-
- <!-- === Calendario (TradingView) + layout Riesgo === -->
+<!-- === Calendario (TradingView) + ajustes de Riesgo (sin tocar el layout) === -->
 <style>
-  /* Calendario: llenar ancho y alto basado en el ancho */
+  /* Calendario: llenar ancho; alto según el ancho */
   .tradingview-widget-container,
   .tradingview-widget-container__widget { width: 100% !important; }
 
   .tradingview-widget-container iframe {
     width: 100% !important;
-    height: auto !important;       /* ignora el height del JSON */
-    aspect-ratio: 4 / 1;           /* cambia 4/1 por 3/1, 5/1, 16/9, etc. */
+    height: auto !important;      /* ignora el height del JSON */
+    aspect-ratio: 4 / 1;          /* cambia 4/1 por 3/1, 5/1, 16/9, etc. */
     min-height: 220px;
     max-height: 560px;
     display: block;
@@ -3086,33 +3085,25 @@ $('#download-pdf-btn').addEventListener('click', exportToPDF);
   /* Sin padding extra en la card del calendario */
   .card.news .card-body { padding: 0 !important; }
 
-  /* Dos columnas 50/50 para Calendario y Riesgo */
+  /* NO cambiar el ancho/columna de las cards (reseteo seguro) */
   #dashboard .card.news,
   #dashboard .card.risk {
-    width: calc(50% - 8px);   /* 50% con pequeño gap */
-    display: inline-block;    /* funciona aunque el padre no sea flex/grid */
-    vertical-align: top;
+    width: auto !important;
+    max-width: none !important;
+    display: block !important;
+    vertical-align: initial !important;
     min-height: 0 !important;
     height: auto !important;
   }
 
-  /* Riesgo: compactar */
+  /* Compactar la card de Riesgo */
   #dashboard .card.risk .card-body { padding: 12px; }
   #dashboard .card.risk .chart {
-    height: 200px !important;   /* ajusta 180–220 si quieres */
+    height: 200px !important;     /* ajusta 180–220 si quieres */
     max-height: 200px !important;
   }
-
-  /* Responsive: apilar en pantallas chicas */
-  @media (max-width: 1024px){
-    #dashboard .card.news,
-    #dashboard .card.risk {
-      width: 100%;
-      display: block;
-    }
-  }
+  #dashboard .card.risk .metric-card { margin-top: 8px; } /* opcional */
 </style>
-
    
  </body>
 </html>
