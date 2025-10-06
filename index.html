@@ -277,11 +277,13 @@
         <p id="welcome-message" style="color:var(--muted)">Inicia sesión para guardar tus operaciones en la nube.</p>
         <button class="btn primary" style="margin-top:10px" id="btn-open-auth"><i class="fa-solid fa-right-to-bracket"></i> Acceder</button>
       </div>
-      <div class="card metrics">
-        <div class="card-header"><div class="card-title">Resumen</div></div>
-        <div class="metric-card"><div class="metric-val" id="total-profit">$0.00</div><div class="metric-lab">Beneficio Total</div></div>
-        <div class="metric-card" style="margin-top:10px"><div class="metric-val" id="win-rate">0%</div><div class="metric-lab">Tasa de Acierto</div></div>
-      </div>
+     <div class="metric-card">
+    <div style="display: flex; justify-content: center; align-items: baseline; gap: 8px;">
+        <div class="metric-val" id="total-profit">$0.00</div>
+        <div id="total-profit-percent" style="font-weight: 700; font-size: 1.1rem; color: var(--muted);">(0.0%)</div>
+    </div>
+    <div class="metric-lab">Beneficio Total</div>
+</div>
       <div class="card factor"><div class="card-header"><div class="card-title">Factor</div></div><div class="metric-card"><div class="metric-val" id="profit-factor">0.00</div><div class="metric-lab">Operaciones: <span id="total-trades">0</span></div></div></div>
       <div class="card rr"><div class="card-header"><div class="card-title">R/B</div></div><div class="metric-card"><div class="metric-val" id="risk-reward">0.00</div><div class="metric-lab">Promedio</div></div></div>
       <div class="card wins"><div class="card-header"><div class="card-title">Ganadoras</div></div><div class="metric-card"><div class="metric-val" id="win-trades">0</div><div class="metric-lab">de <span id="total-trades-2">0</span></div></div></div>
@@ -293,23 +295,51 @@
         <div class="card-header"><div class="card-title">Recientes</div><button class="btn-icon" id="add-trade-btn"><i class="fa-solid fa-plus"></i></button></div>
         <div id="recent-trades-container" style="color:var(--muted)">Sin registros.</div>
       </div>
-      <div class="card balance">
-        <div class="card-header"><div class="card-title">Saldo</div><button class="btn-icon" id="expand-balance-chart"><i class="fa-solid fa-expand"></i></button></div>
-        <div class="chart"><canvas id="balanceChart"></canvas></div>
-      </div>
+      <div class="card-header">
+    <div class="card-title">Saldo</div>
+    <div>
+        <span id="balance-growth-percent" style="font-weight:700; margin-right: 10px;">+0.00%</span>
+        <button class="btn-icon" id="expand-balance-chart"><i class="fa-solid fa-expand"></i></button>
+    </div>
+</div>
       <div class="card risk">
-        <div class="card-header"><div class="card-title">Riesgo</div><button class="btn-icon" id="export-risk"><i class="fa-solid fa-file-export"></i></button></div>
+        <div class="card-header">
+            <div class="card-title">Riesgo</div>
+            <button class="btn-icon" id="export-risk"><i class="fa-solid fa-file-export"></i></button>
+        </div>
+
+        <div class="metric-card" style="margin-bottom: 14px;">
+            <div class="metric-val" id="risk-profit-percent">0.00%</div>
+            <div class="metric-lab">Beneficio / Pérdida (Periodo)</div>
+        </div>
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
-          <div class="metric-card"><div class="metric-val" id="daily-risk">0.0%</div><div class="metric-lab">Diario</div></div>
-          <div class="metric-card"><div class="metric-val" id="weekly-risk">0.0%</div><div class="metric-lab">Semanal</div></div>
-          <div class="metric-card"><div class="metric-val" id="monthly-risk">0.0%</div><div class="metric-lab">Mensual</div></div>
+            <div class="metric-card">
+                <div class="metric-val" id="daily-risk">0.0%</div>
+                <div class="metric-lab">Diario</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-val" id="weekly-risk">0.0%</div>
+                <div class="metric-lab">Semanal</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-val" id="monthly-risk">0.0%</div>
+                <div class="metric-lab">Mensual</div>
+            </div>
         </div>
+
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px">
-          <div class="metric-card"><div class="metric-val" id="max-win-streak" style="color: var(--success);">0</div><div class="metric-lab">Máx. Racha Ganadora</div></div>
-          <div class="metric-card"><div class="metric-val" id="max-loss-streak" style="color: var(--danger);">0</div><div class="metric-lab">Máx. Racha Perdedora</div></div>
+            <div class="metric-card">
+                <div class="metric-val" id="max-win-streak" style="color: var(--success);">0</div>
+                <div class="metric-lab">Máx. Racha Ganadora</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-val" id="max-loss-streak" style="color: var(--danger);">0</div>
+                <div class="metric-lab">Máx. Racha Perdedora</div>
+            </div>
         </div>
-      <div class="chart" style="height: 200px;"><canvas id="riskChart"></canvas></div>
-      </div>
+
+        <div class="chart" style="height: 200px;"><canvas id="riskChart"></canvas></div>
+    </div>
       <div class="card news" style="height: 450px; padding: 0; overflow: hidden;">
         <div class="tradingview-widget-container" style="height: 100%; width: 100%;">
           <div id="tradingview_f928c" style="height: 100%; width: 100%;"></div>
@@ -1380,10 +1410,31 @@ function updateChallengeTrackerUI(trades, settings) {
 
 
 function calculateRiskMetrics(trades, initialBalance) {
+    // --- BLOQUE AÑADIDO (Paso 2) ---
+    // Calcula el beneficio total solo para el array 'trades' recibido (que respeta el filtro de tiempo)
+    const totalProfitForPeriod = trades.reduce((sum, t) => sum + (t.result || 0), 0);
+    const periodProfitPercent = initialBalance > 0 ? (totalProfitForPeriod / initialBalance) * 100 : 0;
+
+    // Actualiza el nuevo elemento de "Beneficio / Pérdida (Periodo)"
+    const riskProfitEl = $('#risk-profit-percent');
+    if (riskProfitEl) {
+        riskProfitEl.textContent = `${periodProfitPercent.toFixed(2)}%`;
+        riskProfitEl.style.color = periodProfitPercent >= 0 ? 'var(--success)' : 'var(--danger)';
+    }
+    // --- FIN DEL BLOQUE AÑADIDO ---
+
+    // --- CÓDIGO ORIGINAL (con una pequeña mejora) ---
     if (!initialBalance || initialBalance === 0) {
         $('#daily-risk').textContent = '0.0%';
         $('#weekly-risk').textContent = '0.0%';
         $('#monthly-risk').textContent = '0.0%';
+        
+        // También reiniciamos el nuevo campo si no hay balance
+        if (riskProfitEl) {
+            riskProfitEl.textContent = '0.00%';
+            riskProfitEl.style.color = 'var(--accent)';
+        }
+
         if (riskChart) {
             riskChart.data.datasets[0].data = [0, 0, 0, 0, 0, 0];
             riskChart.update();
@@ -1393,8 +1444,8 @@ function calculateRiskMetrics(trades, initialBalance) {
 
     const now = new Date();
     const today = now.toISOString().slice(0, 10);
-    const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1))).toISOString().slice(0, 10);
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+    const startOfWeek = new Date(new Date(now).setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1))).toISOString().slice(0, 10);
+    const startOfMonth = new Date(new Date(now).getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
 
     const dailyLoss = trades.filter(t => t.dateStr === today && t.result < 0).reduce((sum, t) => sum + t.result, 0);
     const weeklyLoss = trades.filter(t => t.dateStr >= startOfWeek && t.result < 0).reduce((sum, t) => sum + t.result, 0);
@@ -1409,19 +1460,19 @@ function calculateRiskMetrics(trades, initialBalance) {
     const winRate = trades.length ? (wins.length / trades.length) * 100 : 0;
     const totalWins = wins.reduce((s, x) => s + x.result, 0);
     const totalLoss = Math.abs(losses.reduce((s, x) => s + x.result, 0));
-    const totalProfit = totalWins - totalLoss;
+    // NOTA: La variable 'totalProfitForPeriod' ya la calculamos arriba, así que la reutilizamos.
     const avgRR = (wins.length && losses.length) ? (totalWins / wins.length) / (totalLoss / losses.length) : 0;
 
     const aciertoScore = Math.min(5, winRate / 15);
     const rrScore = Math.min(5, avgRR * 2);
-    const beneficioScore = Math.min(5, (totalProfit / initialBalance * 100) / 4);
+    const beneficioScore = Math.min(5, (totalProfitForPeriod / initialBalance * 100) / 4);
 
     if (riskChart) {
         riskChart.data.datasets[0].data = [3, 4, aciertoScore, rrScore, 3, beneficioScore];
         riskChart.update();
     }
 }
-
+  
 function calculateStreaks(trades) {
     let maxWinningStreak = 0;
     let currentWinningStreak = 0;
@@ -1479,10 +1530,27 @@ function recalcFromTrades(trades) {
     $('#risk-reward').textContent = rr.toFixed(2);
     $('#total-profit').textContent = `$${(totalWins - totalLoss).toFixed(2)}`;
 
+  // --- AÑADE ESTE BLOQUE ---
+const settings = window.__currentGeneralSettings || { initialBalance: 10000 };
+const initialBalance = settings.initialBalance;
+const profitPercent = initialBalance > 0 ? (totalProfit / initialBalance) * 100 : 0;
+
+const profitPercentEl = $('#total-profit-percent');
+if (profitPercentEl) {
+    profitPercentEl.textContent = `(${profitPercent.toFixed(1)}%)`;
+    profitPercentEl.style.color = profitPercent >= 0 ? 'var(--success)' : 'var(--danger)';
+}
+
+  // --- AÑADE ESTE BLOQUE ---
+const balanceGrowthEl = $('#balance-growth-percent');
+if (balanceGrowthEl) {
+    balanceGrowthEl.textContent = `${profitPercent >= 0 ? '+' : ''}${profitPercent.toFixed(2)}%`;
+    balanceGrowthEl.style.color = profitPercent >= 0 ? 'var(--success)' : 'var(--danger)';
     if (distributionChart) {
         distributionChart.data.datasets[0].data = [wins.length, losses.length, t.filter(x => x.result === 0).length];
         distributionChart.update();
     }
+  
     const settings = window.__currentGeneralSettings || { initialBalance: 10000 };
     if (balanceChart || modalBalanceChart) {
         const data = [];
