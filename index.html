@@ -3037,38 +3037,43 @@ $('#download-pdf-btn').addEventListener('click', exportToPDF);
   }
 
   let tries = 0;
-  const iv = setInterval(() => { try{ updateAccounts(); }catch(e){} if(++tries>=40) clearInterval(iv); }, 300);
+  const tick = () => { try { updateAccounts(); } catch (e) {} };
 
+  // Poll suave
+  const iv = setInterval(() => { 
+    tick(); 
+    if (++tries >= 40) clearInterval(iv); 
+  }, 300);
+
+  // Observer en el contenedor de cuentas
   const accContainer = document.getElementById('accounts-container');
   if (accContainer) {
-    const mo = new MutationObserver(() => setTimeout(()=>{ try{ updateAccounts(); }catch(e){} }, 60));
+    const mo = new MutationObserver(() => setTimeout(tick, 60));
     mo.observe(accContainer, { childList: true, subtree: true });
   }
 
-  document.addEventListener('visibilitychange', () => { if(!document.hidden) setTimeout(()=>{ try{ updateAccounts(); }catch(e){} }, 120); }, { passive:true });
-  document.getElementById('save-trade-btn')?.addEventListener('click', () => setTimeout(()=>{ try{ updateAccounts(); }catch(e){} }, 800), true);
+  // Refrescar al volver a la pestaña
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) setTimeout(tick, 120);
+  }, { passive: true });
+
+  // Refrescar después de guardar
+  const saveBtn = document.getElementById('save-trade-btn');
+  if (saveBtn) {
+    saveBtn.addEventListener('click', () => setTimeout(tick, 800), true);
+  }
 })();
+</script>
 
-<script>
-
-  <!-- === Calendario (TradingView) – estilos === -->
+<!-- === Calendario (TradingView) – estilos === -->
 <style>
   .tradingview-widget-container,
   .tradingview-widget-container__widget { width: 100% !important; }
+
   .tradingview-widget-container iframe {
     width: 100% !important;
-    height: auto !important;
-    aspect-ratio: 3 / 1;
-    min-height: 280px;
-    max-height: 800px;
-    display: block;
-    border: 0;
-    border-radius: 12px;
-    box-sizing: border-box;
-  }
-  .card.news .card-body { padding: 0 !important; }
-</style>
+    height: auto !important;     /* ignoramos el height del JSON */
+    aspect-ratio: 3 / 1;         /* cambia 3/1 por 2/1, 16/9
 
- 
  </body>
 </html>
