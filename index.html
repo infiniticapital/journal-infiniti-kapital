@@ -273,17 +273,21 @@
   <main id="app">
     <section id="dashboard" class="section active">
      <div class="card welcome">
-  <div class="card-header"><div class="card-title" id="welcome-title">Bienvenido</div></div>
+        <div class="card-header"><div class="card-title" id="welcome-title">Bienvenido</div></div>
         <p id="welcome-message" style="color:var(--muted)">Inicia sesión para guardar tus operaciones en la nube.</p>
         <button class="btn primary" style="margin-top:10px" id="btn-open-auth"><i class="fa-solid fa-right-to-bracket"></i> Acceder</button>
       </div>
-     <div class="metric-card">
-    <div style="display: flex; justify-content: center; align-items: baseline; gap: 8px;">
-        <div class="metric-val" id="total-profit">$0.00</div>
-        <div id="total-profit-percent" style="font-weight: 700; font-size: 1.1rem; color: var(--muted);">(0.0%)</div>
-    </div>
-    <div class="metric-lab">Beneficio Total</div>
-</div>
+      <div class="card metrics">
+        <div class="card-header"><div class="card-title">Resumen</div></div>
+        <div class="metric-card">
+            <div style="display: flex; justify-content: center; align-items: baseline; gap: 8px;">
+                <div class="metric-val" id="total-profit">$0.00</div>
+                <div id="total-profit-percent" style="font-weight: 700; font-size: 1.1rem; color: var(--muted);">(0.0%)</div>
+            </div>
+            <div class="metric-lab">Beneficio Total</div>
+        </div>
+        <div class="metric-card" style="margin-top:10px"><div class="metric-val" id="win-rate">0%</div><div class="metric-lab">Tasa de Acierto</div></div>
+      </div>
       <div class="card factor"><div class="card-header"><div class="card-title">Factor</div></div><div class="metric-card"><div class="metric-val" id="profit-factor">0.00</div><div class="metric-lab">Operaciones: <span id="total-trades">0</span></div></div></div>
       <div class="card rr"><div class="card-header"><div class="card-title">R/B</div></div><div class="metric-card"><div class="metric-val" id="risk-reward">0.00</div><div class="metric-lab">Promedio</div></div></div>
       <div class="card wins"><div class="card-header"><div class="card-title">Ganadoras</div></div><div class="metric-card"><div class="metric-val" id="win-trades">0</div><div class="metric-lab">de <span id="total-trades-2">0</span></div></div></div>
@@ -295,19 +299,21 @@
         <div class="card-header"><div class="card-title">Recientes</div><button class="btn-icon" id="add-trade-btn"><i class="fa-solid fa-plus"></i></button></div>
         <div id="recent-trades-container" style="color:var(--muted)">Sin registros.</div>
       </div>
-      <div class="card-header">
-    <div class="card-title">Saldo</div>
-    <div>
-        <span id="balance-growth-percent" style="font-weight:700; margin-right: 10px;">+0.00%</span>
-        <button class="btn-icon" id="expand-balance-chart"><i class="fa-solid fa-expand"></i></button>
-    </div>
-</div>
+      <div class="card balance">
+        <div class="card-header">
+            <div class="card-title">Saldo</div>
+            <div>
+                <span id="balance-growth-percent" style="font-weight:700; margin-right: 10px;">+0.00%</span>
+                <button class="btn-icon" id="expand-balance-chart"><i class="fa-solid fa-expand"></i></button>
+            </div>
+        </div>
+        <div class="chart"><canvas id="balanceChart"></canvas></div>
+      </div>
       <div class="card risk">
         <div class="card-header">
             <div class="card-title">Riesgo</div>
             <button class="btn-icon" id="export-risk"><i class="fa-solid fa-file-export"></i></button>
         </div>
-
         <div class="metric-card" style="margin-bottom: 14px;">
             <div class="metric-val" id="risk-profit-percent">0.00%</div>
             <div class="metric-lab">Beneficio / Pérdida (Periodo)</div>
@@ -326,7 +332,6 @@
                 <div class="metric-lab">Mensual</div>
             </div>
         </div>
-
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px">
             <div class="metric-card">
                 <div class="metric-val" id="max-win-streak" style="color: var(--success);">0</div>
@@ -337,9 +342,8 @@
                 <div class="metric-lab">Máx. Racha Perdedora</div>
             </div>
         </div>
-
         <div class="chart" style="height: 200px;"><canvas id="riskChart"></canvas></div>
-    </div>
+      </div>
       <div class="card news" style="height: 450px; padding: 0; overflow: hidden;">
         <div class="tradingview-widget-container" style="height: 100%; width: 100%;">
           <div id="tradingview_f928c" style="height: 100%; width: 100%;"></div>
@@ -362,8 +366,7 @@
           </script>
         </div>
       </div>
-      
-    <div class="card news">
+      <div class="card news">
         <div class="card-header">
           <div class="card-title">Calendario Económico</div>
         </div>
@@ -383,7 +386,6 @@
           </div>
         </div>
       </div>
-      ```      
       <div class="card challenge"><div class="card-header"><div class="card-title">FTMO Challenge</div><button class="btn-icon" id="edit-challenge"><i class="fa-solid fa-pen"></i></button></div>
         <div>
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
@@ -1528,30 +1530,30 @@ function recalcFromTrades(trades) {
     $('#win-rate').textContent = `${winRate.toFixed(1)}%`;
     $('#profit-factor').textContent = pf.toFixed(2);
     $('#risk-reward').textContent = rr.toFixed(2);
-    $('#total-profit').textContent = `$${(totalWins - totalLoss).toFixed(2)}`;
+    const totalProfit = totalWins - totalLoss;
+    $('#total-profit').textContent = `$${totalProfit.toFixed(2)}`;
 
-  // --- AÑADE ESTE BLOQUE ---
-const settings = window.__currentGeneralSettings || { initialBalance: 10000 };
-const initialBalance = settings.initialBalance;
-const profitPercent = initialBalance > 0 ? (totalProfit / initialBalance) * 100 : 0;
+  const settings = window.__currentGeneralSettings || { initialBalance: 10000 };
+  const initialBalance = settings.initialBalance;
+  const profitPercent = initialBalance > 0 ? (totalProfit / initialBalance) * 100 : 0;
 
-const profitPercentEl = $('#total-profit-percent');
-if (profitPercentEl) {
-    profitPercentEl.textContent = `(${profitPercent.toFixed(1)}%)`;
-    profitPercentEl.style.color = profitPercent >= 0 ? 'var(--success)' : 'var(--danger)';
-}
+  const profitPercentEl = $('#total-profit-percent');
+  if (profitPercentEl) {
+      profitPercentEl.textContent = `(${profitPercent.toFixed(1)}%)`;
+      profitPercentEl.style.color = profitPercent >= 0 ? 'var(--success)' : 'var(--danger)';
+  }
 
-  // --- AÑADE ESTE BLOQUE ---
-const balanceGrowthEl = $('#balance-growth-percent');
-if (balanceGrowthEl) {
-    balanceGrowthEl.textContent = `${profitPercent >= 0 ? '+' : ''}${profitPercent.toFixed(2)}%`;
-    balanceGrowthEl.style.color = profitPercent >= 0 ? 'var(--success)' : 'var(--danger)';
+  const balanceGrowthEl = $('#balance-growth-percent');
+  if (balanceGrowthEl) {
+      balanceGrowthEl.textContent = `${profitPercent >= 0 ? '+' : ''}${profitPercent.toFixed(2)}%`;
+      balanceGrowthEl.style.color = profitPercent >= 0 ? 'var(--success)' : 'var(--danger)';
+  }
+
     if (distributionChart) {
         distributionChart.data.datasets[0].data = [wins.length, losses.length, t.filter(x => x.result === 0).length];
         distributionChart.update();
     }
   
-    const settings = window.__currentGeneralSettings || { initialBalance: 10000 };
     if (balanceChart || modalBalanceChart) {
         const data = [];
         let bal = settings.initialBalance;
@@ -3103,27 +3105,22 @@ $('#download-pdf-btn').addEventListener('click', exportToPDF);
 </script>
 
 <style>
-  /* Le indicamos a la tarjeta de Riesgo que use Flexbox para organizar su contenido verticalmente.
-     Esto es clave para que respete el alto asignado por la cuadrícula principal. */
   #dashboard .card.risk {
     display: flex;
     flex-direction: column;
   }
 
-  /* Reducimos la altura del gráfico dentro de la tarjeta de "Riesgo" para que sea más compacta. */
   #dashboard .card.risk .chart {
     height: 180px !important;
     max-height: 180px !important;
   }
 
-  /* Nos aseguramos de que el contenedor del calendario económico ocupe todo el espacio de su tarjeta. */
   .card.news .card-body {
     padding: 0 !important;
     height: 100%;
     width: 100%;
   }
   
-  /* Hacemos que el widget de TradingView (calendario) sea flexible y llene el contenedor. */
   .card.news .tradingview-widget-container,
   .card.news .tradingview-widget-container__widget {
       height: 100%;
