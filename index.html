@@ -3048,6 +3048,25 @@ $('#download-pdf-btn').addEventListener('click', exportToPDF);
   document.addEventListener('visibilitychange', () => { if(!document.hidden) setTimeout(()=>{ try{ updateAccounts(); }catch(e){} }, 120); }, { passive:true });
   document.getElementById('save-trade-btn')?.addEventListener('click', () => setTimeout(()=>{ try{ updateAccounts(); }catch(e){} }, 800), true);
 })();
+
+ <!-- === Calendario (TradingView) – estilos === -->
+<style>
+  .tradingview-widget-container,
+  .tradingview-widget-container__widget { width: 100% !important; }
+  .tradingview-widget-container iframe {
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 3 / 1;
+    min-height: 280px;
+    max-height: 800px;
+    display: block;
+    border: 0;
+    border-radius: 12px;
+    box-sizing: border-box;
+  }
+  .card.news .card-body { padding: 0 !important; }
+</style>
+
 </script>
 
 </body>
