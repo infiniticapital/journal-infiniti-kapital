@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8"/>
@@ -143,7 +143,6 @@
     textarea{min-height: 80px;}
     .modal-footer{display:flex; justify-content:flex-end; gap:8px; margin-top:10px}
     .btn{border:0; border-radius:10px; padding:10px 14px; cursor:pointer}
-    /* CAMBIO: Estilo para botones desactivados */
     .btn:disabled {
         background-color: #334155;
         color: #64748b;
@@ -334,29 +333,25 @@
         </div>
       </div>
      <div class="card news">
-  <div class="card-header">
-    <div class="card-title">Calendario Económico</div>
-  </div>
-
-  <!-- Contenido del calendario -->
-  <div class="card-body" style="padding:0;">
-    <div class="tv-cal-wrapper" style="width:100%;max-width:100%;overflow:hidden;border-radius:12px;">
-      <div class="tradingview-widget-container">
-        <div class="tradingview-widget-container__widget"></div>
-        <script async src="https://s3.tradingview.com/external-embedding/embed-widget-events.js">
-        {
-          "width": "100%",
-          "height": "560",
-          "locale": "es",
-          "colorTheme": "dark",
-          "isTransparent": true,
-          "importanceFilter": "0,1"        // "1" solo alto impacto | "-1,0,1" todos
-        }
-        </script>
+      <div class="card-header">
+        <div class="card-title">Calendario Económico</div>
+      </div>
+      <div class="card-body" style="padding:0;">
+        <div class="tradingview-widget-container">
+          <div class="tradingview-widget-container__widget"></div>
+          <script async src="https://s3.tradingview.com/external-embedding/embed-widget-events.js">
+          {
+            "width": "100%",
+            "height": "100%",
+            "locale": "es",
+            "colorTheme": "dark",
+            "isTransparent": true,
+            "importanceFilter": "0,1"
+          }
+          </script>
+        </div>
       </div>
     </div>
-  </div>
-</div>
       
       <div class="card challenge"><div class="card-header"><div class="card-title">FTMO Challenge</div><button class="btn-icon" id="edit-challenge"><i class="fa-solid fa-pen"></i></button></div>
         <div>
@@ -1052,7 +1047,6 @@ function updateRecentTrades(trades) {
     }).join('');
 }
 
-// CAMBIO: Se separa la lógica de poblar el dropdown de reportes
 function populateReportAccountsDropdown(accounts) {
     const reportSelect = $('#report-account-select');
     if (!reportSelect) return;
@@ -1064,7 +1058,7 @@ function populateReportAccountsDropdown(accounts) {
         const option = document.createElement('option');
         option.value = a.id;
         option.textContent = a.name;
-        reportSelect.appendChild(option);
+        select.appendChild(option);
     });
     
     if (currentVal) reportSelect.value = currentVal;
@@ -1341,7 +1335,6 @@ function populateAnalyticsFilter(strategies) {
     });
 }
 
-// CAMBIO: Lógica de Riesgo Residual añadida
 function updateChallengeTrackerUI(trades, settings) {
     const p = calculateChallengeProgress(trades, settings);
     
@@ -1364,7 +1357,6 @@ function updateChallengeTrackerUI(trades, settings) {
         ddElement.style.backgroundColor = isViolated ? 'rgba(239, 68, 68, .4)' : '';
     }
 
-    // Lógica para Riesgo Residual Diario
     const dailyLimit = settings.dailyLoss || 5;
     const todayStr = new Date().toISOString().slice(0, 10);
     const todaysTrades = (trades || []).filter(t => t.dateStr === todayStr && t.inChallenge);
@@ -1636,7 +1628,6 @@ function renderDetailedHistory(trades) {
         return;
     }
 
-    // Ordenar trades del más reciente al más antiguo
     const sortedTrades = [...trades].sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
 
     tbody.innerHTML = sortedTrades.map(trade => {
@@ -1733,7 +1724,6 @@ function bindSelfRealtime(uid){
   const unsubAccounts = onSnapshot(query(accountsRef, orderBy('createdAt', 'desc')), snap=>{
     window.__currentAccounts = snap.docs.map(d=>({id:d.id,...d.data()}));
     updateAccountsUI(window.__currentAccounts);
-    // CAMBIO: Poblar el dropdown de reportes cada vez que las cuentas se actualizan
     populateReportAccountsDropdown(window.__currentAccounts);
   });
 
@@ -1766,7 +1756,6 @@ onAuthStateChanged(auth, async (user) => {
         if (userNameEl) userNameEl.textContent = user.displayName || user.email;
         $('.avatar').textContent = (user.displayName || 'U').substring(0,2).toUpperCase();
         
-        // --> LÍNEA AÑADIDA <--
         $('#welcome-title').textContent = `Bienvenido, ${user.displayName || 'Trader'}`;
 
         const profileNameInput = $('#profile-name-input');
@@ -1790,7 +1779,6 @@ onAuthStateChanged(auth, async (user) => {
         if (userNameEl) userNameEl.textContent = 'Invitado';
         $('.avatar').textContent = 'AT';
 
-        // --> LÍNEA AÑADIDA <--
         $('#welcome-title').textContent = 'Bienvenido';
 
         $('#btn-login').classList.remove('hidden');
@@ -2635,7 +2623,6 @@ $('#generate-report-btn').addEventListener('click', async () => {
                 </tr>
             `).join('');
             
-            // CAMBIO: Activar botones
             reportButtons.forEach(btn => btn.disabled = false);
         }
         reportResults.classList.remove('hidden');
@@ -2728,8 +2715,7 @@ $('#download-csv-btn').addEventListener('click', exportToCSV);
 $('#download-excel-btn').addEventListener('click', exportToExcel);
 $('#download-pdf-btn').addEventListener('click', exportToPDF);
  
-  (function(){
-  // Formato $201,460.00
+(function(){
   const money = v =>
     (Number(v) || 0).toLocaleString('en-US', {
       style: 'currency',
@@ -2751,9 +2737,7 @@ $('#download-pdf-btn').addEventListener('click', exportToPDF);
     });
     return map;
   }
-
    (function () {
-  // $1,460.00
   const money = v =>
     (Number(v) || 0).toLocaleString('en-US', {
       style: 'currency',
@@ -2769,14 +2753,12 @@ $('#download-pdf-btn').addEventListener('click', exportToPDF);
     el.textContent = money(n);
   }
 
-  // Al cargar
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', formatTotalProfit);
   } else {
     formatTotalProfit();
   }
 
-  // Después de tus recálculos globales
   const hook = () => {
     if (typeof window.updateAllCalculations === 'function' &&
         !window.updateAllCalculations.__ik_format_total__) {
@@ -2821,7 +2803,6 @@ $('#download-pdf-btn').addEventListener('click', exportToPDF);
     }catch(e){}
   };
 
-  // Llama después de renderizar las cuentas
   const hook = () => {
     if (typeof window.updateAccountsUI === 'function' && !window.updateAccountsUI.__ik_dyn_only__) {
       const orig = window.updateAccountsUI;
@@ -2834,12 +2815,10 @@ $('#download-pdf-btn').addEventListener('click', exportToPDF);
     }
   };
 
-  // Inicial
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => { hook(); window.updateAccountsDynamicOnly(); });
   } else { hook(); window.updateAccountsDynamicOnly(); }
 
-  // Tras guardar una operación, refresca montos
   const wrapSave = () => {
     if (typeof window.saveTrade === 'function' && !window.saveTrade.__ik_acc_dyn__) {
       const orig = window.saveTrade;
@@ -2853,10 +2832,11 @@ $('#download-pdf-btn').addEventListener('click', exportToPDF);
   };
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', wrapSave);
-  } else { wrapSave(); }
+  } else {
+    wrapSave();
+  }
 })();
 (function(){
-  // Formato $201,460.00
   const money = v =>
     (Number(v) || 0).toLocaleString('en-US', {
       style: 'currency',
@@ -2904,7 +2884,6 @@ $('#download-pdf-btn').addEventListener('click', exportToPDF);
     }catch(e){}
   };
 
-  // Llama después de renderizar las cuentas
   const hook = () => {
     if (typeof window.updateAccountsUI === 'function' && !window.updateAccountsUI.__ik_dyn_only__) {
       const orig = window.updateAccountsUI;
@@ -2917,14 +2896,12 @@ $('#download-pdf-btn').addEventListener('click', exportToPDF);
     }
   };
 
-  // Ejecuta al cargar
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => { hook(); window.updateAccountsDynamicOnly(); });
   } else {
     hook(); window.updateAccountsDynamicOnly();
   }
 
-  // Recalcula tras guardar una operación (sin tocar tu lógica)
   const wrapSave = () => {
     if (typeof window.saveTrade === 'function' && !window.saveTrade.__ik_acc_dyn__) {
       const orig = window.saveTrade;
@@ -2943,9 +2920,7 @@ $('#download-pdf-btn').addEventListener('click', exportToPDF);
   }
 })();
 
-// === SAFE DYNAMIC: FTMO Challenge (solo cambia el número) ===
 (function(){
-  // Formato $201,460.00
   const money = v =>
     (Number(v) || 0).toLocaleString('en-US', {
       style: 'currency',
@@ -2980,16 +2955,13 @@ $('#download-pdf-btn').addEventListener('click', exportToPDF);
     el.textContent = money(initial + computeProfit(trades, acc?.id));
   }
 
-  // Poll suave (~12s) y algunos triggers pasivos
   let tries = 0;
   const iv = setInterval(() => { try{ updateChallenge(); }catch(e){} if(++tries>=40) clearInterval(iv); }, 300);
   document.addEventListener('visibilitychange', () => { if(!document.hidden) setTimeout(()=>{try{updateChallenge();}catch(e){}}, 120); }, { passive:true });
   document.getElementById('save-trade-btn')?.addEventListener('click', () => setTimeout(()=>{ try{ updateChallenge(); }catch(e){} }, 800), true);
 })();
 
-// === SAFE DYNAMIC: Gestión de Cuentas (solo cambia el monto mostrado en cada tarjeta) ===
 (function(){
-  // Formato $201,460.00
   const money = v =>
     (Number(v) || 0).toLocaleString('en-US', {
       style: 'currency',
@@ -3039,70 +3011,54 @@ $('#download-pdf-btn').addEventListener('click', exportToPDF);
   let tries = 0;
   const tick = () => { try { updateAccounts(); } catch (e) {} };
 
-  // Poll suave
   const iv = setInterval(() => { 
     tick(); 
     if (++tries >= 40) clearInterval(iv); 
   }, 300);
 
-  // Observer en el contenedor de cuentas
   const accContainer = document.getElementById('accounts-container');
   if (accContainer) {
     const mo = new MutationObserver(() => setTimeout(tick, 60));
     mo.observe(accContainer, { childList: true, subtree: true });
   }
 
-  // Refrescar al volver a la pestaña
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) setTimeout(tick, 120);
   }, { passive: true });
 
-  // Refrescar después de guardar
   const saveBtn = document.getElementById('save-trade-btn');
   if (saveBtn) {
     saveBtn.addEventListener('click', () => setTimeout(tick, 800), true);
   }
 })();
 </script>
-<!-- === Calendario (TradingView) + ajustes de Riesgo (sin tocar el layout) === -->
+
 <style>
-  /* Calendario: llenar ancho; alto según el ancho */
-  .tradingview-widget-container,
-  .tradingview-widget-container__widget { width: 100% !important; }
-
-  .tradingview-widget-container iframe {
-    width: 100% !important;
-    height: auto !important;      /* ignora el height del JSON */
-    aspect-ratio: 4 / 1;          /* cambia 4/1 por 3/1, 5/1, 16/9, etc. */
-    min-height: 220px;
-    max-height: 560px;
-    display: block;
-    border: 0;
-    border-radius: 12px;
-    box-sizing: border-box;
-  }
-
-  /* Sin padding extra en la card del calendario */
-  .card.news .card-body { padding: 0 !important; }
-
-  /* NO cambiar el ancho/columna de las cards (reseteo seguro) */
-  #dashboard .card.news,
+  /* Le indicamos a la tarjeta de Riesgo que use Flexbox para organizar su contenido verticalmente.
+     Esto es clave para que respete el alto asignado por la cuadrícula principal. */
   #dashboard .card.risk {
-    width: auto !important;
-    max-width: none !important;
-    display: block !important;
-    vertical-align: initial !important;
-    min-height: 0 !important;
-    height: auto !important;
+    display: flex;
+    flex-direction: column;
   }
 
-  /* Compactar la card de Riesgo */
-  #dashboard .card.risk .card-body { padding: 12px; }
+  /* Reducimos la altura del gráfico dentro de la tarjeta de "Riesgo" para que sea más compacta. */
   #dashboard .card.risk .chart {
-    height: 200px !important;     /* ajusta 180–220 si quieres */
-    max-height: 200px !important;
+    height: 180px !important;
+    max-height: 180px !important;
   }
-  #dashboard .card.risk .metric-card { margin-top: 8px; } /* opcional */
+
+  /* Nos aseguramos de que el contenedor del calendario económico ocupe todo el espacio de su tarjeta. */
+  .card.news .card-body {
+    padding: 0 !important;
+    height: 100%;
+    width: 100%;
+  }
+  
+  /* Hacemos que el widget de TradingView (calendario) sea flexible y llene el contenedor. */
+  .card.news .tradingview-widget-container,
+  .card.news .tradingview-widget-container__widget {
+      height: 100%;
+  }
 </style>
    
  </body>
