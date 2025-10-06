@@ -2706,10 +2706,10 @@ async function exportToPDF() {
 $('#download-csv-btn').addEventListener('click', exportToCSV);
 $('#download-excel-btn').addEventListener('click', exportToExcel);
 $('#download-pdf-btn').addEventListener('click', exportToPDF);
-
  
-(function(){
-    const money = v =>
+  (function(){
+  // Formato $201,460.00
+  const money = v =>
     (Number(v) || 0).toLocaleString('en-US', {
       style: 'currency',
       currency: 'USD',
@@ -2924,7 +2924,14 @@ $('#download-pdf-btn').addEventListener('click', exportToPDF);
 
 // === SAFE DYNAMIC: Gestión de Cuentas (solo cambia el monto mostrado en cada tarjeta) ===
 (function(){
-  const money = v => '$' + (Number(v)||0).toFixed(2);
+  // Formato $201,460.00
+  const money = v =>
+    (Number(v) || 0).toLocaleString('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
 
   function computeMap(){
     const accounts = window.__currentAccounts || [];
