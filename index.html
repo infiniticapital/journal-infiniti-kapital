@@ -273,8 +273,8 @@
 
   <main id="app">
     <section id="dashboard" class="section active">
-      <div class="card welcome">
-        <div class="card-header"><div class="card-title">Bienvenido</div></div>
+     <div class="card welcome">
+  <div class="card-header"><div class="card-title" id="welcome-title">Bienvenido</div></div>
         <p id="welcome-message" style="color:var(--muted)">Inicia sesión para guardar tus operaciones en la nube.</p>
         <button class="btn primary" style="margin-top:10px" id="btn-open-auth"><i class="fa-solid fa-right-to-bracket"></i> Acceder</button>
       </div>
@@ -1744,6 +1744,10 @@ onAuthStateChanged(auth, async (user) => {
         
         if (userNameEl) userNameEl.textContent = user.displayName || user.email;
         $('.avatar').textContent = (user.displayName || 'U').substring(0,2).toUpperCase();
+        
+        // --> LÍNEA AÑADIDA <--
+        $('#welcome-title').textContent = `Bienvenido, ${user.displayName || 'Trader'}`;
+
         const profileNameInput = $('#profile-name-input');
         if (profileNameInput) {
             profileNameInput.value = user.displayName || '';
@@ -1764,6 +1768,10 @@ onAuthStateChanged(auth, async (user) => {
         
         if (userNameEl) userNameEl.textContent = 'Invitado';
         $('.avatar').textContent = 'AT';
+
+        // --> LÍNEA AÑADIDA <--
+        $('#welcome-title').textContent = 'Bienvenido';
+
         $('#btn-login').classList.remove('hidden');
         $('#btn-logout').classList.add('hidden');
         $('#btn-open-auth').classList.remove('hidden');
@@ -1795,9 +1803,9 @@ onAuthStateChanged(auth, async (user) => {
         if ($('#admin-user-accounts')) $('#admin-user-accounts').innerHTML = '—';
         if ($('#admin-user-trades')) $('#admin-user-trades').innerHTML = '—';
     }
-});    
-
-window.updateAllCalculations = () => {
+});
+ 
+ window.updateAllCalculations = () => {
   const allTrades = window.__currentTrades || [];
   const settings = window.__currentSettings || {};
   const selectedStrategyId = $('#analytics-strategy-filter').value;
@@ -2701,7 +2709,13 @@ $('#download-pdf-btn').addEventListener('click', exportToPDF);
 
  
 (function(){
-  const money = v => '$' + (Number(v)||0).toFixed(2);
+    const money = v =>
+    (Number(v) || 0).toLocaleString('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
 
   function computeMap(){
     const accounts = window.__currentAccounts || [];
@@ -2780,7 +2794,13 @@ $('#download-pdf-btn').addEventListener('click', exportToPDF);
 
 (function(){
   // Formatea a $0.00
-  const money = v => '$' + (Number(v)||0).toFixed(2);
+  const money = v =>
+    (Number(v) || 0).toLocaleString('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
 
   // Elegimos la cuenta del challenge:
   // 1) tipo 'principal'; 2) nombre que contenga 'ftmo'; 3) la primera.
