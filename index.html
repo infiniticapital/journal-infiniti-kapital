@@ -334,7 +334,7 @@
         </div>
       </div>
       <div class="card news"><div class="card-header"><div class="card-title">Calendario Económico</div></div>
-        <iframe src="https://sslecal2.investing.com?columns=exc_flags,exc_currency,exc_importance,exc_actual,exc_forecast,exc_previous&features=datepicker,timezone&countries=25,32,6,37,72,22,17,39,14,48,10,35,43,5,36,110,11,26,12,4,13,42,41,29&calType=day&timeZone=8&lang=56" width="100%" height="400" frameborder="0" allowtransparency="true" marginwidth="0" marginheight="0"></iframe>
+        
       </div>
       
       <div class="card challenge"><div class="card-header"><div class="card-title">FTMO Challenge</div><button class="btn-icon" id="edit-challenge"><i class="fa-solid fa-pen"></i></button></div>
@@ -2851,27 +2851,22 @@ $('#download-pdf-btn').addEventListener('click', exportToPDF);
 </script>
 
 <script>
-// === IK SAFE: solo saldo dinámico, sin sobreescribir funciones ni interceptar eventos ===
+// === SAFE DYNAMIC: FTMO Challenge (solo cambia el número) ===
 (function(){
   const money = v => '$' + (Number(v)||0).toFixed(2);
 
   function pickAccount(accounts){
     if (!accounts || !accounts.length) return null;
-    let a = accounts.find(x => (x.type||'').toLowerCase() === 'principal');
+    let a = accounts.find(x => (x.type||'').toLowerCase()==='principal');
     if (!a) a = accounts.find(x => (x.name||'').toLowerCase().includes('ftmo'));
     return a || accounts[0];
   }
 
-  function buildAccountsMap(accounts, trades){
-    const map = {};
-    const hasLink = Array.isArray(trades) && trades.some(t => t && t.accountId);
-    (accounts || []).forEach(a => {
-      const initial = parseFloat(a?.balance) || 0;
-      const related = hasLink ? (trades || []).filter(t => t?.accountId === a?.id) : (trades || []);
-      const profit  = related.reduce((s,t)=> s + (parseFloat(t?.result) || 0), 0);
-      map[a.id] = { initial, profit, dynamic: initial + profit };
-    });
-    return map;
+  function computeProfit(trades, accountId){
+    if (!Array.isArray(trades) || !trades.length) return 0;
+    const hasLink = trades.some(t => t && t.accountId);
+    const list = hasLink && accountId ? trades.filter(t => t.accountId === accountId) : trades;
+    return list.reduce((s,t)=> s + (parseFloat(t?.result)||0), 0);
   }
 
   function updateChallenge(){
@@ -2883,10 +2878,35 @@ $('#download-pdf-btn').addEventListener('click', exportToPDF);
     const initial  = acc && typeof acc.balance !== 'undefined'
       ? parseFloat(acc.balance)||0
       : parseFloat(String(el.textContent).replace(/[^0-9.\-]/g,'')) || 0;
-    const hasLink  = Array.isArray(trades) && trades.some(t => t && t.accountId);
-    const list     = hasLink && acc?.id ? trades.filter(t => t.accountId === acc.id) : trades;
-    const profit   = (list || []).reduce((s,t)=> s + (parseFloat(t?.result)||0), 0);
-    el.textContent = money(initial + profit);
+    el.textContent = money(initial + computeProfit(trades, acc?.id));
+  }
+
+  // Poll suave (~12s) y algunos triggers pasivos
+  let tries = 0;
+  const iv = setInterval(() => { try{ updateChallenge(); }catch(e){} if(++tries>=40) clearInterval(iv); }, 300);
+  document.addEventListener('visibilitychange', () => { if(!document.hidden) setTimeout(()=>{try{updateChallenge();}catch(e){}}, 120); }, { passive:true });
+  document.getElementById('save-trade-btn')?.addEventListener('click', () => setTimeout(()=>{ try{ updateChallenge(); }catch(e){} }, 800), true);
+})();
+</script>
+
+
+<script>
+// === SAFE DYNAMIC: Gestión de Cuentas (solo cambia el monto mostrado en cada tarjeta) ===
+(function(){
+  const money = v => '$' + (Number(v)||0).toFixed(2);
+
+  function computeMap(){
+    const accounts = window.__currentAccounts || [];
+    const trades   = window.__currentTrades   || [];
+    const map = {};
+    const anyLinked = trades.some(t => t && t.accountId);
+    accounts.forEach(a => {
+      const initial = parseFloat(a?.balance)||0;
+      const related = anyLinked ? trades.filter(t => t?.accountId === a?.id) : trades;
+      const profit  = related.reduce((s,t)=> s + (parseFloat(t?.result)||0), 0);
+      map[a.id] = { initial, profit, dynamic: initial + profit };
+    });
+    return map;
   }
 
   function findValueNode(card){
@@ -2894,8 +2914,7 @@ $('#download-pdf-btn').addEventListener('click', exportToPDF);
     if (node) return node;
     node = card.querySelector('.metric-val');
     if (node) return node;
-    const candidates = card.querySelectorAll('div, span');
-    for (const el of candidates) {
+    for (const el of card.querySelectorAll('div, span')) {
       if (/\$\s*\d/.test((el.textContent||'').trim())) return el;
     }
     return null;
@@ -2904,9 +2923,7 @@ $('#download-pdf-btn').addEventListener('click', exportToPDF);
   function updateAccounts(){
     const container = document.querySelector('#accounts-container');
     if (!container) return;
-    const accounts = window.__currentAccounts || [];
-    const trades   = window.__currentTrades   || [];
-    const map = buildAccountsMap(accounts, trades);
+    const map = computeMap();
     Object.keys(map).forEach(id => {
       const editBtn = container.querySelector(`.btn-edit-account[data-id="${id}"]`);
       const card = editBtn ? editBtn.closest('.card') : null;
@@ -2916,34 +2933,19 @@ $('#download-pdf-btn').addEventListener('click', exportToPDF);
     });
   }
 
-  function tick(){
-    try {
-      if (Array.isArray(window.__currentAccounts)) {
-        updateChallenge();
-        updateAccounts();
-      }
-    } catch(e){ /* no-op */ }
-  }
-
-  // Poll suave para evitar dependencias; no bloquea ni reescribe nada
   let tries = 0;
-  const iv = setInterval(() => {
-    tries++;
-    tick();
-    if (tries >= 40) clearInterval(iv); // ~12s total
-  }, 300);
+  const iv = setInterval(() => { try{ updateAccounts(); }catch(e){} if(++tries>=40) clearInterval(iv); }, 300);
 
-  // Recalcular cuando cambia la vista de cuentas
   const accContainer = document.getElementById('accounts-container');
   if (accContainer) {
-    const mo = new MutationObserver(() => setTimeout(tick, 50));
+    const mo = new MutationObserver(() => setTimeout(()=>{ try{ updateAccounts(); }catch(e){} }, 60));
     mo.observe(accContainer, { childList: true, subtree: true });
   }
 
-  // Recalcular al volver a la pestaña o después de guardar sin interceptar
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(tick, 100); }, { passive: true });
-  document.getElementById('save-trade-btn')?.addEventListener('click', () => setTimeout(tick, 800), true);
+  document.addEventListener('visibilitychange', () => { if(!document.hidden) setTimeout(()=>{ try{ updateAccounts(); }catch(e){} }, 120); }, { passive:true });
+  document.getElementById('save-trade-btn')?.addEventListener('click', () => setTimeout(()=>{ try{ updateAccounts(); }catch(e){} }, 800), true);
 })();
 </script>
+
 </body>
 </html>
