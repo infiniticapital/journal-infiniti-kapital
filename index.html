@@ -1089,7 +1089,7 @@ function populateReportAccountsDropdown(accounts) {
         const option = document.createElement('option');
         option.value = a.id;
         option.textContent = a.name;
-        select.appendChild(option);
+        reportSelect.appendChild(option);
     });
     
     if (currentVal) reportSelect.value = currentVal;
@@ -1214,7 +1214,7 @@ function renderAnalytics(trades) {
     let cumulativeProfit = 0;
     const equityData = trades.map(trade => {
         cumulativeProfit += trade.result;
-        return cumulativeProfit;
+               return cumulativeProfit;
     });
     const labels = Array.from({ length: trades.length }, (_, i) => i + 1);
     if (equityCurveChart) {
@@ -1938,11 +1938,11 @@ function openNewTradeModal() {
     $('#trade-session-input').value = "N/A";
     $('#trade-risk-input').value = '';
     $('#trade-reward-input').value = '';
-    $('#trade-challenge-input').value = 'yes';
     $('#trade-lots-input').value = '';
     $('#trade-entry-price-input').value = '';
     $('#trade-tp-input').value = '';
     $('#trade-sl-input').value = '';
+    $('#trade-challenge-input').value = 'yes';
     openModalById('add-trade-modal');
 }
 function restoreAccordionState() {
@@ -2981,3 +2981,34 @@ $('#download-pdf-btn').addEventListener('click', exportToPDF);
     saveBtn.addEventListener('click', () => setTimeout(tick, 800), true);
   }
 })();
+</script>
+<style>
+  /* Le indicamos a la tarjeta de Riesgo que use Flexbox para organizar su contenido verticalmente.
+     Esto es clave para que respete el alto asignado por la cuadrícula principal. */
+  #dashboard .card.risk {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Reducimos la altura del gráfico dentro de la tarjeta de "Riesgo" para que sea más compacta. */
+  #dashboard .card.risk .chart {
+    height: 180px !important;
+    max-height: 180px !important;
+  }
+
+  /* Nos aseguramos de que el contenedor del calendario económico ocupe todo el espacio de su tarjeta. */
+  .card.news .card-body {
+    padding: 0 !important;
+    height: 100%;
+    width: 100%;
+  }
+  
+  /* Hacemos que el widget de TradingView (calendario) sea flexible y llene el contenedor. */
+  .card.news .tradingview-widget-container,
+  .card.news .tradingview-widget-container__widget {
+      height: 100%;
+  }
+</style>
+   
+ </body>
+</html>
