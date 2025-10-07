@@ -1571,7 +1571,7 @@ function recalcFromTrades(trades) {
   updateRecentTrades(t);
   calculateRiskMetrics(t, initialBalance);
 
-  const streaks = calculateStreaks(t);
+streaks = calculateStreaks(t);
   $('#max-win-streak').textContent = streaks.maxWinningStreak;
   $('#max-loss-streak').textContent = streaks.maxLosingStreak;
 }
