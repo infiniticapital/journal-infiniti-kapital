@@ -394,9 +394,9 @@
             <div style="height:10px;background:#334155;border-radius:6px;overflow:hidden"><div id="challenge-progress-bar" style="height:100%;width:0%;background:var(--success)"></div></div>
 
             <div class="metric-card" style="margin-top: 10px;">
-                <div class="metric-val" id="challenge-initial-balance">$0.00</div>
-                <div class="metric-lab">Saldo Inicial</div>
-            </div>
+           <div class="metric-val" id="challenge-current-balance">$0.00</div>
+           <div class="metric-lab">Saldo Actual</div>
+        </div>
 
             <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:10px">
                 <div class="metric-card"><div class="metric-val" id="challenge-profit">+0.0%</div><div class="metric-lab">Beneficio</div></div>
@@ -1375,47 +1375,50 @@ function populateAnalyticsFilter(strategies) {
 }
 
 function updateChallengeTrackerUI(trades, settings) {
-    const p = calculateChallengeProgress(trades, settings);
-    
-    const initialBalance = settings.initialBalance || 0;
-    const profitPercent = p.profitPercent || 0;
-    const target = p.profitTargetPercent || 10;
-    const progressPercent = target > 0 ? (profitPercent / target) * 100 : 0;
-    
-    $('#challenge-initial-balance').textContent = `$${initialBalance.toFixed(2)}`;
-    $('#challenge-profit').textContent = `${profitPercent.toFixed(2)}%`;
-    $('#challenge-drawdown').textContent = `${p.drawdownPercent?.toFixed(2) || 0.00}%`;
-    $('#challenge-trades').textContent = p.tradeCount || 0;
-    $('#challenge-win-rate').textContent = `${p.winRate?.toFixed(1) || 0}%`;
-    $('#challenge-progress-value').textContent = `${progressPercent.toFixed(1)}%`;
-    $('#challenge-progress-bar').style.width = `${Math.min(100, progressPercent)}%`;
-    
-    const ddElement = $('#challenge-drawdown').closest('.metric-card');
-    if (ddElement) {
-        const isViolated = (p.drawdownPercent || 0) >= (p.maxLossPercent || 10);
-        ddElement.style.backgroundColor = isViolated ? 'rgba(239, 68, 68, .4)' : '';
+    const accounts = window.__currentAccounts || [];
+    // Busca la cuenta que sea de tipo 'challenge', o la primera que encuentre si no hay ninguna.
+    const challengeAccount = accounts.find(a => a.type === 'challenge') || accounts[0];
+
+    // Si no hay cuenta, no se puede calcular nada.
+    if (!challengeAccount) {
+        $('#challenge-current-balance').textContent = '$0.00';
+        return;
     }
 
+    const initialBalance = parseFloat(challengeAccount.balance) || 0;
+    const challengeTrades = (trades || []).filter(t => t.accountId === challengeAccount.id);
+    const totalProfit = challengeTrades.reduce((sum, trade) => sum + trade.result, 0);
+    const currentBalance = initialBalance + totalProfit;
+
+    const profitPercent = initialBalance > 0 ? (totalProfit / initialBalance) * 100 : 0;
+    const targetPercent = parseFloat(settings.profitTarget) || 10;
+    const progressPercent = targetPercent > 0 ? (profitPercent / targetPercent) * 100 : 0;
+    
+    // Calcula el Drawdown basado en los trades de esta cuenta
+    const { maxDrawdownValue } = calculateDrawdown(challengeTrades, initialBalance);
+    const drawdownPercent = initialBalance > 0 ? (maxDrawdownValue / initialBalance) * 100 : 0;
+    
+    const wins = challengeTrades.filter(t => t.result > 0).length;
+    const winRate = challengeTrades.length > 0 ? (wins / challengeTrades.length) * 100 : 0;
+
+    // Actualizar la interfaz
+    $('#challenge-current-balance').textContent = `$${currentBalance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+    $('#challenge-profit').textContent = `${profitPercent.toFixed(2)}%`;
+    $('#challenge-drawdown').textContent = `${drawdownPercent.toFixed(2)}%`;
+    $('#challenge-trades').textContent = challengeTrades.length;
+    $('#challenge-win-rate').textContent = `${winRate.toFixed(1)}%`;
+    $('#challenge-progress-value').textContent = `${progressPercent.toFixed(1)}%`;
+    $('#challenge-progress-bar').style.width = `${Math.min(100, Math.max(0, progressPercent))}%`;
+    
+    // Lógica del Riesgo Residual Diario (sin cambios)
     const dailyLimit = settings.dailyLoss || 5;
     const todayStr = new Date().toISOString().slice(0, 10);
-    const todaysTrades = (trades || []).filter(t => t.dateStr === todayStr && t.inChallenge);
+    const todaysTrades = challengeTrades.filter(t => t.dateStr === todayStr);
     const dailyPnl = todaysTrades.reduce((sum, trade) => sum + trade.result, 0);
     const dailyDrawdown = dailyPnl < 0 ? (Math.abs(dailyPnl) / initialBalance) * 100 : 0;
     const residualRisk = dailyLimit - dailyDrawdown;
-
-    const residualRiskEl = $('#challenge-residual-risk');
-    residualRiskEl.textContent = `${residualRisk.toFixed(2)}%`;
-
-    const riskPercentage = (residualRisk / dailyLimit) * 100;
-    if (riskPercentage <= 20) {
-        residualRiskEl.style.color = 'var(--danger)';
-    } else if (riskPercentage <= 40) {
-        residualRiskEl.style.color = 'var(--warning)';
-    } else {
-        residualRiskEl.style.color = 'var(--accent)';
-    }
+    $('#challenge-residual-risk').textContent = `${residualRisk.toFixed(2)}%`;
 }
-
 
 function calculateRiskMetrics(trades, initialBalance) {
     // --- BLOQUE AÑADIDO (Paso 2) ---
@@ -2823,37 +2826,6 @@ $('#download-csv-btn').addEventListener('click', exportToCSV);
 $('#download-excel-btn').addEventListener('click', exportToExcel);
 $('#download-pdf-btn').addEventListener('click', exportToPDF);
  
-(function(){
-  const money = v =>
-    (Number(v) || 0).toLocaleString('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
-
-  function computeMap(){
-    const accounts = window.__currentAccounts || [];
-    const trades   = window.__currentTrades   || [];
-    const map = {};
-    const anyLinked = trades.some(t => t && t.accountId);
-    accounts.forEach(a => {
-      const initial = parseFloat(a?.balance)||0;
-      const related = anyLinked ? trades.filter(t => t?.accountId === a?.id) : trades;
-      const profit  = related.reduce((s,t)=> s + (parseFloat(t?.result)||0), 0);
-      map[a.id] = { initial, profit, dynamic: initial + profit, name: a?.name || '' };
-    });
-    return map;
-  }
-   (function () {
-  const money = v =>
-    (Number(v) || 0).toLocaleString('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
-
   function formatTotalProfit() {
     const el = document.getElementById('total-profit');
     if (!el) return;
