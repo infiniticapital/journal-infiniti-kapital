@@ -273,17 +273,21 @@
   <main id="app">
     <section id="dashboard" class="section active">
      <div class="card welcome">
-  <div class="card-header"><div class="card-title" id="welcome-title">Bienvenido</div></div>
+        <div class="card-header"><div class="card-title" id="welcome-title">Bienvenido</div></div>
         <p id="welcome-message" style="color:var(--muted)">Inicia sesión para guardar tus operaciones en la nube.</p>
         <button class="btn primary" style="margin-top:10px" id="btn-open-auth"><i class="fa-solid fa-right-to-bracket"></i> Acceder</button>
       </div>
-     <div class="metric-card">
-    <div style="display: flex; justify-content: center; align-items: baseline; gap: 8px;">
-        <div class="metric-val" id="total-profit">$0.00</div>
-        <div id="total-profit-percent" style="font-weight: 700; font-size: 1.1rem; color: var(--muted);">(0.0%)</div>
-    </div>
-    <div class="metric-lab">Beneficio Total</div>
-</div>
+      <div class="card metrics">
+        <div class="card-header"><div class="card-title">Resumen</div></div>
+        <div class="metric-card">
+            <div style="display: flex; justify-content: center; align-items: baseline; gap: 8px;">
+                <div class="metric-val" id="total-profit">$0.00</div>
+                <div id="total-profit-percent" style="font-weight: 700; font-size: 1.1rem; color: var(--muted);">(0.0%)</div>
+            </div>
+            <div class="metric-lab">Beneficio Total</div>
+        </div>
+        <div class="metric-card" style="margin-top:10px"><div class="metric-val" id="win-rate">0%</div><div class="metric-lab">Tasa de Acierto</div></div>
+      </div>
       <div class="card factor"><div class="card-header"><div class="card-title">Factor</div></div><div class="metric-card"><div class="metric-val" id="profit-factor">0.00</div><div class="metric-lab">Operaciones: <span id="total-trades">0</span></div></div></div>
       <div class="card rr"><div class="card-header"><div class="card-title">R/B</div></div><div class="metric-card"><div class="metric-val" id="risk-reward">0.00</div><div class="metric-lab">Promedio</div></div></div>
       <div class="card wins"><div class="card-header"><div class="card-title">Ganadoras</div></div><div class="metric-card"><div class="metric-val" id="win-trades">0</div><div class="metric-lab">de <span id="total-trades-2">0</span></div></div></div>
@@ -295,19 +299,21 @@
         <div class="card-header"><div class="card-title">Recientes</div><button class="btn-icon" id="add-trade-btn"><i class="fa-solid fa-plus"></i></button></div>
         <div id="recent-trades-container" style="color:var(--muted)">Sin registros.</div>
       </div>
-      <div class="card-header">
-    <div class="card-title">Saldo</div>
-    <div>
-        <span id="balance-growth-percent" style="font-weight:700; margin-right: 10px;">+0.00%</span>
-        <button class="btn-icon" id="expand-balance-chart"><i class="fa-solid fa-expand"></i></button>
-    </div>
-</div>
+      <div class="card balance">
+        <div class="card-header">
+            <div class="card-title">Saldo</div>
+            <div>
+                <span id="balance-growth-percent" style="font-weight:700; margin-right: 10px;">+0.00%</span>
+                <button class="btn-icon" id="expand-balance-chart"><i class="fa-solid fa-expand"></i></button>
+            </div>
+        </div>
+        <div class="chart"><canvas id="balanceChart"></canvas></div>
+      </div>
       <div class="card risk">
         <div class="card-header">
             <div class="card-title">Riesgo</div>
             <button class="btn-icon" id="export-risk"><i class="fa-solid fa-file-export"></i></button>
         </div>
-
         <div class="metric-card" style="margin-bottom: 14px;">
             <div class="metric-val" id="risk-profit-percent">0.00%</div>
             <div class="metric-lab">Beneficio / Pérdida (Periodo)</div>
@@ -326,7 +332,6 @@
                 <div class="metric-lab">Mensual</div>
             </div>
         </div>
-
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px">
             <div class="metric-card">
                 <div class="metric-val" id="max-win-streak" style="color: var(--success);">0</div>
@@ -337,9 +342,8 @@
                 <div class="metric-lab">Máx. Racha Perdedora</div>
             </div>
         </div>
-
         <div class="chart" style="height: 200px;"><canvas id="riskChart"></canvas></div>
-    </div>
+      </div>
       <div class="card news" style="height: 450px; padding: 0; overflow: hidden;">
         <div class="tradingview-widget-container" style="height: 100%; width: 100%;">
           <div id="tradingview_f928c" style="height: 100%; width: 100%;"></div>
@@ -362,8 +366,7 @@
           </script>
         </div>
       </div>
-      
-    <div class="card news">
+      <div class="card news">
         <div class="card-header">
           <div class="card-title">Calendario Económico</div>
         </div>
@@ -383,7 +386,6 @@
           </div>
         </div>
       </div>
-      ```      
       <div class="card challenge"><div class="card-header"><div class="card-title">FTMO Challenge</div><button class="btn-icon" id="edit-challenge"><i class="fa-solid fa-pen"></i></button></div>
         <div>
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
@@ -762,7 +764,7 @@
     </div>
   </div>
 
-  <div id="add-trade-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="trade-title">
+ <div id="add-trade-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="trade-title">
     <div class="modal-content">
       <div class="modal-header">
         <h2 id="trade-title">Agregar Operación</h2>
@@ -804,6 +806,12 @@
                     <option value="USOIL">USOIL (Petróleo WTI)</option>
                 </optgroup>
               </select>
+            </div>
+            
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <label for="trade-account-input">Cuenta Asociada</label>
+                <select id="trade-account-input" class="form-control">
+                    </select>
             </div>
             <div class="form-group"><label>Tipo</label>
               <select id="trade-type-input" class="form-control"><option value="buy">Compra</option><option value="sell">Venta</option></select>
@@ -1089,7 +1097,7 @@ function populateReportAccountsDropdown(accounts) {
         const option = document.createElement('option');
         option.value = a.id;
         option.textContent = a.name;
-        reportSelect.appendChild(option);
+        select.appendChild(option);
     });
     
     if (currentVal) reportSelect.value = currentVal;
@@ -1214,7 +1222,7 @@ function renderAnalytics(trades) {
     let cumulativeProfit = 0;
     const equityData = trades.map(trade => {
         cumulativeProfit += trade.result;
-               return cumulativeProfit;
+        return cumulativeProfit;
     });
     const labels = Array.from({ length: trades.length }, (_, i) => i + 1);
     if (equityCurveChart) {
@@ -1408,174 +1416,177 @@ function updateChallengeTrackerUI(trades, settings) {
     }
 }
 
+
 function calculateRiskMetrics(trades, initialBalance) {
-  // --- BLOQUE AÑADIDO (Paso 2) ---
-  const totalProfitForPeriod = (trades || []).reduce((sum, t) => sum + (t.result || 0), 0);
-  const periodProfitPercent = initialBalance > 0 ? (totalProfitForPeriod / initialBalance) * 100 : 0;
+    // --- BLOQUE AÑADIDO (Paso 2) ---
+    // Calcula el beneficio total solo para el array 'trades' recibido (que respeta el filtro de tiempo)
+    const totalProfitForPeriod = trades.reduce((sum, t) => sum + (t.result || 0), 0);
+    const periodProfitPercent = initialBalance > 0 ? (totalProfitForPeriod / initialBalance) * 100 : 0;
 
-  const riskProfitEl = $('#risk-profit-percent');
-  if (riskProfitEl) {
-    riskProfitEl.textContent = `${periodProfitPercent.toFixed(2)}%`;
-    riskProfitEl.style.color = periodProfitPercent >= 0 ? 'var(--success)' : 'var(--danger)';
-  }
-  // --- FIN BLOQUE AÑADIDO ---
-
-  // --- CÓDIGO ORIGINAL ---
-  if (!initialBalance || initialBalance === 0) {
-    $('#daily-risk').textContent = '0.0%';
-    $('#weekly-risk').textContent = '0.0%';
-    $('#monthly-risk').textContent = '0.0%';
-
+    // Actualiza el nuevo elemento de "Beneficio / Pérdida (Periodo)"
+    const riskProfitEl = $('#risk-profit-percent');
     if (riskProfitEl) {
-      riskProfitEl.textContent = '0.00%';
-      riskProfitEl.style.color = 'var(--accent)';
+        riskProfitEl.textContent = `${periodProfitPercent.toFixed(2)}%`;
+        riskProfitEl.style.color = periodProfitPercent >= 0 ? 'var(--success)' : 'var(--danger)';
     }
+    // --- FIN DEL BLOQUE AÑADIDO ---
+
+    // --- CÓDIGO ORIGINAL (con una pequeña mejora) ---
+    if (!initialBalance || initialBalance === 0) {
+        $('#daily-risk').textContent = '0.0%';
+        $('#weekly-risk').textContent = '0.0%';
+        $('#monthly-risk').textContent = '0.0%';
+        
+        // También reiniciamos el nuevo campo si no hay balance
+        if (riskProfitEl) {
+            riskProfitEl.textContent = '0.00%';
+            riskProfitEl.style.color = 'var(--accent)';
+        }
+
+        if (riskChart) {
+            riskChart.data.datasets[0].data = [0, 0, 0, 0, 0, 0];
+            riskChart.update();
+        }
+        return;
+    }
+
+    const now = new Date();
+    const today = now.toISOString().slice(0, 10);
+    const startOfWeek = new Date(new Date(now).setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1))).toISOString().slice(0, 10);
+    const startOfMonth = new Date(new Date(now).getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+
+    const dailyLoss = trades.filter(t => t.dateStr === today && t.result < 0).reduce((sum, t) => sum + t.result, 0);
+    const weeklyLoss = trades.filter(t => t.dateStr >= startOfWeek && t.result < 0).reduce((sum, t) => sum + t.result, 0);
+    const monthlyLoss = trades.filter(t => t.dateStr >= startOfMonth && t.result < 0).reduce((sum, t) => sum + t.result, 0);
+
+    $('#daily-risk').textContent = `${(Math.abs(dailyLoss) / initialBalance * 100).toFixed(1)}%`;
+    $('#weekly-risk').textContent = `${(Math.abs(weeklyLoss) / initialBalance * 100).toFixed(1)}%`;
+    $('#monthly-risk').textContent = `${(Math.abs(monthlyLoss) / initialBalance * 100).toFixed(1)}%`;
+
+    const wins = trades.filter(x => x.result > 0);
+    const losses = trades.filter(x => x.result < 0);
+    const winRate = trades.length ? (wins.length / trades.length) * 100 : 0;
+    const totalWins = wins.reduce((s, x) => s + x.result, 0);
+    const totalLoss = Math.abs(losses.reduce((s, x) => s + x.result, 0));
+    // NOTA: La variable 'totalProfitForPeriod' ya la calculamos arriba, así que la reutilizamos.
+    const avgRR = (wins.length && losses.length) ? (totalWins / wins.length) / (totalLoss / losses.length) : 0;
+
+    const aciertoScore = Math.min(5, winRate / 15);
+    const rrScore = Math.min(5, avgRR * 2);
+    const beneficioScore = Math.min(5, (totalProfitForPeriod / initialBalance * 100) / 4);
 
     if (riskChart) {
-      riskChart.data.datasets[0].data = [0, 0, 0, 0, 0, 0];
-      riskChart.update();
+        riskChart.data.datasets[0].data = [3, 4, aciertoScore, rrScore, 3, beneficioScore];
+        riskChart.update();
     }
-    return;
-  }
-
-  const now = new Date();
-  const today = now.toISOString().slice(0, 10);
-  const startOfWeek = new Date(new Date(now).setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1))).toISOString().slice(0, 10);
-  const startOfMonth = new Date(new Date(now).getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
-
-  const dailyLoss = trades.filter(t => t.dateStr === today && t.result < 0).reduce((s, t) => s + t.result, 0);
-  const weeklyLoss = trades.filter(t => t.dateStr >= startOfWeek && t.result < 0).reduce((s, t) => s + t.result, 0);
-  const monthlyLoss = trades.filter(t => t.dateStr >= startOfMonth && t.result < 0).reduce((s, t) => s + t.result, 0);
-
-  $('#daily-risk').textContent = `${(Math.abs(dailyLoss) / initialBalance * 100).toFixed(1)}%`;
-  $('#weekly-risk').textContent = `${(Math.abs(weeklyLoss) / initialBalance * 100).toFixed(1)}%`;
-  $('#monthly-risk').textContent = `${(Math.abs(monthlyLoss) / initialBalance * 100).toFixed(1)}%`;
-
-  const wins = trades.filter(x => x.result > 0);
-  const losses = trades.filter(x => x.result < 0);
-  const winRate = trades.length ? (wins.length / trades.length) * 100 : 0;
-  const totalWins = wins.reduce((s, x) => s + x.result, 0);
-  const totalLoss = Math.abs(losses.reduce((s, x) => s + x.result, 0));
-  const avgRR = (wins.length && losses.length) ? (totalWins / wins.length) / (totalLoss / losses.length) : 0;
-
-  const aciertoScore = Math.min(5, winRate / 15);
-  const rrScore = Math.min(5, avgRR * 2);
-  const beneficioScore = Math.min(5, (totalProfitForPeriod / initialBalance * 100) / 4);
-
-  if (riskChart) {
-    riskChart.data.datasets[0].data = [3, 4, aciertoScore, rrScore, 3, beneficioScore];
-    riskChart.update();
-  }
 }
-
+  
 function calculateStreaks(trades) {
-  let maxWinningStreak = 0, currentWinningStreak = 0;
-  let maxLosingStreak = 0, currentLosingStreak = 0;
+    let maxWinningStreak = 0;
+    let currentWinningStreak = 0;
+    let maxLosingStreak = 0;
+    let currentLosingStreak = 0;
 
-  (trades || []).forEach(trade => {
-    if (trade.result > 0) { currentWinningStreak++; currentLosingStreak = 0; }
-    else if (trade.result < 0) { currentLosingStreak++; currentWinningStreak = 0; }
-    if (currentWinningStreak > maxWinningStreak) maxWinningStreak = currentWinningStreak;
-    if (currentLosingStreak > maxLosingStreak) maxLosingStreak = currentLosingStreak;
-  });
-  return { maxWinningStreak, maxLosingStreak };
+    (trades || []).forEach(trade => {
+        if (trade.result > 0) {
+            currentWinningStreak++;
+            currentLosingStreak = 0;
+        } else if (trade.result < 0) {
+            currentLosingStreak++;
+            currentWinningStreak = 0;
+        }
+        if (currentWinningStreak > maxWinningStreak) {
+            maxWinningStreak = currentWinningStreak;
+        }
+        if (currentLosingStreak > maxLosingStreak) {
+            maxLosingStreak = currentLosingStreak;
+        }
+    });
+    return { maxWinningStreak, maxLosingStreak };
 }
 
 function recalcFromTrades(trades) {
-  const getSafeTimestamp = (trade) => {
-    if (!trade || !trade.createdAt) return 0;
-    if (typeof trade.createdAt.toMillis === 'function') return trade.createdAt.toMillis();
-    if (trade.createdAt instanceof Date) return trade.createdAt.getTime();
-    if (typeof trade.createdAt === 'number') return trade.createdAt;
-    return 0;
-  };
+    const getSafeTimestamp = (trade) => {
+        if (!trade || !trade.createdAt) return 0;
+        if (typeof trade.createdAt.toMillis === 'function') {
+            return trade.createdAt.toMillis();
+        }
+        if (trade.createdAt instanceof Date) {
+            return trade.createdAt.getTime();
+        }
+        if (typeof trade.createdAt === 'number') {
+            return trade.createdAt;
+        }
+        return 0;
+    };
 
-  const t = (trades || []).sort((a, b) => getSafeTimestamp(a) - getSafeTimestamp(b));
+    const t = (trades || []).sort((a, b) => getSafeTimestamp(a) - getSafeTimestamp(b));
 
-  const wins = t.filter(x => x.result > 0);
-  const losses = t.filter(x => x.result < 0);
-  const total = t.length;
-  const totalWins = wins.reduce((s, x) => s + (x.result || 0), 0);
-  const totalLoss = Math.abs(losses.reduce((s, x) => s + (x.result || 0), 0));
-  const totalProfit = totalWins - totalLoss;
-  const winRate = total ? (wins.length / total) * 100 : 0;
-  const pf = totalLoss ? totalWins / totalLoss : 0;
-  const rr = (wins.length && losses.length)
-    ? (totalWins / wins.length) / (totalLoss / losses.length)
-    : 0;
+    const wins = t.filter(x => x.result > 0), losses = t.filter(x => x.result < 0);
+    const total = t.length;
+    const totalWins = wins.reduce((s, x) => s + x.result, 0);
+    const totalLoss = Math.abs(losses.reduce((s, x) => s + x.result, 0));
+    const winRate = total ? (wins.length / total) * 100 : 0;
+    const pf = totalLoss ? totalWins / totalLoss : 0;
+    const rr = (wins.length && losses.length) ? (totalWins / wins.length) / (totalLoss / losses.length) : 0;
 
-  // 👇 Usar helpers seguros
-  setText('#total-trades', total);
-  setText('#total-trades-2', total);
-  setText('#win-trades', wins.length);
-  setText('#win-rate', `${winRate.toFixed(1)}%`);
-  setText('#profit-factor', pf.toFixed(2));
-  setText('#risk-reward', rr.toFixed(2));
-  setText('#total-profit', `$${totalProfit.toFixed(2)}`);
+    $('#total-trades').textContent = total;
+    $('#total-trades-2').textContent = total;
+    $('#win-trades').textContent = wins.length;
+    $('#win-rate').textContent = `${winRate.toFixed(1)}%`;
+    $('#profit-factor').textContent = pf.toFixed(2);
+    $('#risk-reward').textContent = rr.toFixed(2);
+    const totalProfit = totalWins - totalLoss;
+    $('#total-profit').textContent = `$${totalProfit.toFixed(2)}`;
 
-  // % sobre balance inicial
   const settings = window.__currentGeneralSettings || { initialBalance: 10000 };
-  const initialBalance = Number(settings.initialBalance) || 0;
+  const initialBalance = settings.initialBalance;
   const profitPercent = initialBalance > 0 ? (totalProfit / initialBalance) * 100 : 0;
 
   const profitPercentEl = $('#total-profit-percent');
   if (profitPercentEl) {
-    profitPercentEl.textContent = `(${profitPercent.toFixed(1)}%)`;
-    profitPercentEl.style.color = profitPercent >= 0 ? 'var(--success)' : 'var(--danger)';
+      profitPercentEl.textContent = `(${profitPercent.toFixed(1)}%)`;
+      profitPercentEl.style.color = profitPercent >= 0 ? 'var(--success)' : 'var(--danger)';
   }
 
   const balanceGrowthEl = $('#balance-growth-percent');
   if (balanceGrowthEl) {
-    balanceGrowthEl.textContent = `${profitPercent >= 0 ? '+' : ''}${profitPercent.toFixed(2)}%`;
-    balanceGrowthEl.style.color = profitPercent >= 0 ? 'var(--success)' : 'var(--danger)';
+      balanceGrowthEl.textContent = `${profitPercent >= 0 ? '+' : ''}${profitPercent.toFixed(2)}%`;
+      balanceGrowthEl.style.color = profitPercent >= 0 ? 'var(--success)' : 'var(--danger)';
   }
 
-  if (typeof distributionChart !== 'undefined' && distributionChart) {
-    distributionChart.data.datasets[0].data = [
-      wins.length,
-      losses.length,
-      t.filter(x => x.result === 0).length
-    ];
-    distributionChart.update();
-  }
-
-  if ((typeof balanceChart !== 'undefined' && balanceChart) ||
-      (typeof modalBalanceChart !== 'undefined' && modalBalanceChart)) {
-    const data = [];
-    let bal = initialBalance;
-    data.push(bal);
-    t.forEach(trade => { bal += trade.result || 0; data.push(bal); });
-    const labels = ['Inicio', ...Array.from({ length: t.length }, (_, i) => i + 1)];
-
-    if (balanceChart) {
-      balanceChart.data.datasets[0].data = data;
-      balanceChart.data.labels = labels;
-      balanceChart.update();
+    if (distributionChart) {
+        distributionChart.data.datasets[0].data = [wins.length, losses.length, t.filter(x => x.result === 0).length];
+        distributionChart.update();
     }
-    if (modalBalanceChart) {
-      modalBalanceChart.data.datasets[0].data = data;
-      modalBalanceChart.data.labels = labels;
-      modalBalanceChart.update();
+  
+    if (balanceChart || modalBalanceChart) {
+        const data = [];
+        let bal = settings.initialBalance;
+        data.push(bal);
+        t.forEach(trade => {
+            bal += trade.result || 0;
+            data.push(bal);
+        });
+        const labels = ['Inicio', ...Array.from({ length: t.length }, (_, i) => i + 1)];
+        if (balanceChart) {
+            balanceChart.data.datasets[0].data = data;
+            balanceChart.data.labels = labels;
+            balanceChart.update();
+        }
+        if (modalBalanceChart) {
+            modalBalanceChart.data.datasets[0].data = data;
+            modalBalanceChart.data.labels = labels;
+            modalBalanceChart.update();
+        }
     }
-  }
+    updateRecentTrades(t);
+    calculateRiskMetrics(t, settings.initialBalance);
 
-  if (typeof updateRecentTrades === 'function') updateRecentTrades(t);
-
-  if (typeof calculateRiskMetrics === 'function')
-    calculateRiskMetrics(t, initialBalance);
-
-  const streaks = calculateStreaks(t);
-  setText('#max-win-streak', streaks.maxWinningStreak);
-  setText('#max-loss-streak', streaks.maxLosingStreak);
-
-  updateRecentTrades(t);
-  calculateRiskMetrics(t, initialBalance);
-
-streaks = calculateStreaks(t);
-  $('#max-win-streak').textContent = streaks.maxWinningStreak;
-  $('#max-loss-streak').textContent = streaks.maxLosingStreak;
+    const streaks = calculateStreaks(t);
+    $('#max-win-streak').textContent = streaks.maxWinningStreak;
+    $('#max-loss-streak').textContent = streaks.maxLosingStreak;
 }
-
 
 function renderHistorySummary(trades) {
     if (!trades) return;
@@ -1935,13 +1946,34 @@ function openNewTradeModal() {
     $('#trade-session-input').value = "N/A";
     $('#trade-risk-input').value = '';
     $('#trade-reward-input').value = '';
+    $('#trade-challenge-input').value = 'yes';
     $('#trade-lots-input').value = '';
     $('#trade-entry-price-input').value = '';
     $('#trade-tp-input').value = '';
     $('#trade-sl-input').value = '';
-    $('#trade-challenge-input').value = 'yes';
+    updateAccountsDropdown(); // <--- AÑADIR ESTA LÍNEA
     openModalById('add-trade-modal');
 }
+
+function updateAccountsDropdown() {
+    const select = $('#trade-account-input');
+    if (!select) return;
+
+    const accounts = window.__currentAccounts || [];
+    const currentVal = select.value; // Guardar valor por si estamos editando
+
+    select.innerHTML = '<option value="">-- Selecciona una Cuenta --</option>'; // Opción por defecto
+    
+    accounts.forEach(acc => {
+        const option = document.createElement('option');
+        option.value = acc.id;
+        option.textContent = `${acc.name} (${acc.broker})`;
+        select.appendChild(option);
+    });
+
+    if (currentVal) select.value = currentVal;
+}
+
 function restoreAccordionState() {
     const state = JSON.parse(sessionStorage.getItem('nav-acc-state') || '{}');
     Object.entries(state).forEach(([id, open]) => {
@@ -2414,8 +2446,17 @@ $('#save-trade-btn')?.addEventListener('click', async () => {
     if (!tradeDate) {
       return alert('Por favor, selecciona una fecha para la operación.');
     }
+
+    // --- MEJORA INTEGRADA ---
+    const selectedAccountId = $('#trade-account-input').value;
+    if (!selectedAccountId) {
+      return alert('Por favor, selecciona la cuenta asociada a esta operación.');
+    }
+    // -------------------------
+
     const tradeData = {
         id: $('#editing-trade-id').value,
+        accountId: selectedAccountId, // <-- LÍNEA AÑADIDA
         dateStr: tradeDate,
         pair: $('#trade-pair-input').value,
         type: $('#trade-type-input').value,
@@ -2431,6 +2472,7 @@ $('#save-trade-btn')?.addEventListener('click', async () => {
         takeProfit: parseFloat($('#trade-tp-input').value) || null,
         stopLoss: parseFloat($('#trade-sl-input').value) || null
     };
+    
     try {
         await saveTrade(tradeData);
         closeAllModals();
@@ -2784,7 +2826,127 @@ $('#download-pdf-btn').addEventListener('click', exportToPDF);
 (function(){
   const money = v =>
     (Number(v) || 0).toLocaleString('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
 
+  function computeMap(){
+    const accounts = window.__currentAccounts || [];
+    const trades   = window.__currentTrades   || [];
+    const map = {};
+    const anyLinked = trades.some(t => t && t.accountId);
+    accounts.forEach(a => {
+      const initial = parseFloat(a?.balance)||0;
+      const related = anyLinked ? trades.filter(t => t?.accountId === a?.id) : trades;
+      const profit  = related.reduce((s,t)=> s + (parseFloat(t?.result)||0), 0);
+      map[a.id] = { initial, profit, dynamic: initial + profit, name: a?.name || '' };
+    });
+    return map;
+  }
+   (function () {
+  const money = v =>
+    (Number(v) || 0).toLocaleString('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+
+  function formatTotalProfit() {
+    const el = document.getElementById('total-profit');
+    if (!el) return;
+    const n = parseFloat(String(el.textContent).replace(/[^0-9.\-]/g, '')) || 0;
+    el.textContent = money(n);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', formatTotalProfit);
+  } else {
+    formatTotalProfit();
+  }
+
+  const hook = () => {
+    if (typeof window.updateAllCalculations === 'function' &&
+        !window.updateAllCalculations.__ik_format_total__) {
+      const orig = window.updateAllCalculations;
+      window.updateAllCalculations = function () {
+        const r = orig.apply(this, arguments);
+        try { formatTotalProfit(); } catch (e) {}
+        return r;
+      };
+      window.updateAllCalculations.__ik_format_total__ = true;
+    }
+  };
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', hook);
+  } else {
+    hook();
+  }
+})();
+   
+   function findValueNode(card){
+    let node = card.querySelector('.metric-card .metric-val');
+    if (node) return node;
+    node = card.querySelector('.metric-val');
+    if (node) return node;
+    for (const el of card.querySelectorAll('div, span')) {
+      if (/\$\s*\d/.test((el.textContent||'').trim())) return el;
+    }
+    return null;
+  }
+
+  window.updateAccountsDynamicOnly = function(){
+    try{
+      const container = document.querySelector('#accounts-container') || document;
+      const map = computeMap();
+      Object.keys(map).forEach(id => {
+        const edit = container.querySelector(`.btn-edit-account[data-id="${id}"]`);
+        const card = edit ? edit.closest('.card') : null;
+        if (!card) return;
+        const node = findValueNode(card);
+        if (node) node.textContent = money(map[id].dynamic);
+      });
+    }catch(e){}
+  };
+
+  const hook = () => {
+    if (typeof window.updateAccountsUI === 'function' && !window.updateAccountsUI.__ik_dyn_only__) {
+      const orig = window.updateAccountsUI;
+      window.updateAccountsUI = function(){
+        const r = orig.apply(this, arguments);
+        try { window.updateAccountsDynamicOnly(); } catch(e){}
+        return r;
+      };
+      window.updateAccountsUI.__ik_dyn_only__ = true;
+    }
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => { hook(); window.updateAccountsDynamicOnly(); });
+  } else { hook(); window.updateAccountsDynamicOnly(); }
+
+  const wrapSave = () => {
+    if (typeof window.saveTrade === 'function' && !window.saveTrade.__ik_acc_dyn__) {
+      const orig = window.saveTrade;
+      window.saveTrade = async function(){
+        const r = await orig.apply(this, arguments);
+        try{ window.updateAccountsDynamicOnly(); }catch(e){}
+        return r;
+      };
+      window.saveTrade.__ik_acc_dyn__ = true;
+    }
+  };
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', wrapSave);
+  } else {
+    wrapSave();
+  }
+})();
+(function(){
+  const money = v =>
+    (Number(v) || 0).toLocaleString('en-US', {
       style: 'currency',
       currency: 'USD',
       minimumFractionDigits: 2,
@@ -2978,28 +3140,24 @@ $('#download-pdf-btn').addEventListener('click', exportToPDF);
   }
 })();
 </script>
+
 <style>
-  /* Le indicamos a la tarjeta de Riesgo que use Flexbox para organizar su contenido verticalmente.
-     Esto es clave para que respete el alto asignado por la cuadrícula principal. */
   #dashboard .card.risk {
     display: flex;
     flex-direction: column;
   }
 
-  /* Reducimos la altura del gráfico dentro de la tarjeta de "Riesgo" para que sea más compacta. */
   #dashboard .card.risk .chart {
     height: 180px !important;
     max-height: 180px !important;
   }
 
-  /* Nos aseguramos de que el contenedor del calendario económico ocupe todo el espacio de su tarjeta. */
   .card.news .card-body {
     padding: 0 !important;
     height: 100%;
     width: 100%;
   }
   
-  /* Hacemos que el widget de TradingView (calendario) sea flexible y llene el contenedor. */
   .card.news .tradingview-widget-container,
   .card.news .tradingview-widget-container__widget {
       height: 100%;
