@@ -1492,26 +1492,30 @@ function recalcFromTrades(trades) {
 
   const t = (trades || []).sort((a, b) => getSafeTimestamp(a) - getSafeTimestamp(b));
 
-  const wins = t.filter(x => x.result > 0), losses = t.filter(x => x.result < 0);
+  const wins = t.filter(x => x.result > 0);
+  const losses = t.filter(x => x.result < 0);
   const total = t.length;
-  const totalWins = wins.reduce((s, x) => s + x.result, 0);
-  const totalLoss = Math.abs(losses.reduce((s, x) => s + x.result, 0));
-  const totalProfit = totalWins - totalLoss;            // <-- FIX: definir totalProfit
+  const totalWins = wins.reduce((s, x) => s + (x.result || 0), 0);
+  const totalLoss = Math.abs(losses.reduce((s, x) => s + (x.result || 0), 0));
+  const totalProfit = totalWins - totalLoss;
   const winRate = total ? (wins.length / total) * 100 : 0;
   const pf = totalLoss ? totalWins / totalLoss : 0;
-  const rr = (wins.length && losses.length) ? (totalWins / wins.length) / (totalLoss / losses.length) : 0;
+  const rr = (wins.length && losses.length)
+    ? (totalWins / wins.length) / (totalLoss / losses.length)
+    : 0;
 
-  $('#total-trades').textContent = total;
-  $('#total-trades-2').textContent = total;
-  $('#win-trades').textContent = wins.length;
-  $('#win-rate').textContent = `${winRate.toFixed(1)}%`;
-  $('#profit-factor').textContent = pf.toFixed(2);
-  $('#risk-reward').textContent = rr.toFixed(2);
-  $('#total-profit').textContent = `$${totalProfit.toFixed(2)}`;
+  // 👇 Usar helpers seguros
+  setText('#total-trades', total);
+  setText('#total-trades-2', total);
+  setText('#win-trades', wins.length);
+  setText('#win-rate', `${winRate.toFixed(1)}%`);
+  setText('#profit-factor', pf.toFixed(2));
+  setText('#risk-reward', rr.toFixed(2));
+  setText('#total-profit', `$${totalProfit.toFixed(2)}`);
 
-  // --- NUEVO BLOQUE: % sobre balance inicial ---
+  // % sobre balance inicial
   const settings = window.__currentGeneralSettings || { initialBalance: 10000 };
-  const initialBalance = settings.initialBalance;
+  const initialBalance = Number(settings.initialBalance) || 0;
   const profitPercent = initialBalance > 0 ? (totalProfit / initialBalance) * 100 : 0;
 
   const profitPercentEl = $('#total-profit-percent');
@@ -1520,27 +1524,29 @@ function recalcFromTrades(trades) {
     profitPercentEl.style.color = profitPercent >= 0 ? 'var(--success)' : 'var(--danger)';
   }
 
-  // Balance growth y charts (sin re-declarar settings)
   const balanceGrowthEl = $('#balance-growth-percent');
   if (balanceGrowthEl) {
     balanceGrowthEl.textContent = `${profitPercent >= 0 ? '+' : ''}${profitPercent.toFixed(2)}%`;
     balanceGrowthEl.style.color = profitPercent >= 0 ? 'var(--success)' : 'var(--danger)';
   }
 
-  if (distributionChart) {
-    distributionChart.data.datasets[0].data = [wins.length, losses.length, t.filter(x => x.result === 0).length];
+  if (typeof distributionChart !== 'undefined' && distributionChart) {
+    distributionChart.data.datasets[0].data = [
+      wins.length,
+      losses.length,
+      t.filter(x => x.result === 0).length
+    ];
     distributionChart.update();
   }
 
-  if (balanceChart || modalBalanceChart) {
+  if ((typeof balanceChart !== 'undefined' && balanceChart) ||
+      (typeof modalBalanceChart !== 'undefined' && modalBalanceChart)) {
     const data = [];
     let bal = initialBalance;
     data.push(bal);
-    t.forEach(trade => {
-      bal += trade.result || 0;
-      data.push(bal);
-    });
+    t.forEach(trade => { bal += trade.result || 0; data.push(bal); });
     const labels = ['Inicio', ...Array.from({ length: t.length }, (_, i) => i + 1)];
+
     if (balanceChart) {
       balanceChart.data.datasets[0].data = data;
       balanceChart.data.labels = labels;
@@ -1552,6 +1558,16 @@ function recalcFromTrades(trades) {
       modalBalanceChart.update();
     }
   }
+
+  if (typeof updateRecentTrades === 'function') updateRecentTrades(t);
+
+  if (typeof calculateRiskMetrics === 'function')
+    calculateRiskMetrics(t, initialBalance);
+
+  const streaks = calculateStreaks(t);
+  setText('#max-win-streak', streaks.maxWinningStreak);
+  setText('#max-loss-streak', streaks.maxLosingStreak);
+}
 
   updateRecentTrades(t);
   calculateRiskMetrics(t, initialBalance);
