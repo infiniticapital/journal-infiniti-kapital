@@ -1097,7 +1097,7 @@ function populateReportAccountsDropdown(accounts) {
         const option = document.createElement('option');
         option.value = a.id;
         option.textContent = a.name;
-        select.appendChild(option);
+        reportSelect.appendChild(option); // <-- La variable correcta es reportSelect
     });
     
     if (currentVal) reportSelect.value = currentVal;
