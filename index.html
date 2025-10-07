@@ -1408,177 +1408,159 @@ function updateChallengeTrackerUI(trades, settings) {
     }
 }
 
-
 function calculateRiskMetrics(trades, initialBalance) {
-    // --- BLOQUE AÑADIDO (Paso 2) ---
-    // Calcula el beneficio total solo para el array 'trades' recibido (que respeta el filtro de tiempo)
-    const totalProfitForPeriod = trades.reduce((sum, t) => sum + (t.result || 0), 0);
-    const periodProfitPercent = initialBalance > 0 ? (totalProfitForPeriod / initialBalance) * 100 : 0;
+  // --- BLOQUE AÑADIDO (Paso 2) ---
+  const totalProfitForPeriod = (trades || []).reduce((sum, t) => sum + (t.result || 0), 0);
+  const periodProfitPercent = initialBalance > 0 ? (totalProfitForPeriod / initialBalance) * 100 : 0;
 
-    // Actualiza el nuevo elemento de "Beneficio / Pérdida (Periodo)"
-    const riskProfitEl = $('#risk-profit-percent');
+  const riskProfitEl = $('#risk-profit-percent');
+  if (riskProfitEl) {
+    riskProfitEl.textContent = `${periodProfitPercent.toFixed(2)}%`;
+    riskProfitEl.style.color = periodProfitPercent >= 0 ? 'var(--success)' : 'var(--danger)';
+  }
+  // --- FIN BLOQUE AÑADIDO ---
+
+  // --- CÓDIGO ORIGINAL ---
+  if (!initialBalance || initialBalance === 0) {
+    $('#daily-risk').textContent = '0.0%';
+    $('#weekly-risk').textContent = '0.0%';
+    $('#monthly-risk').textContent = '0.0%';
+
     if (riskProfitEl) {
-        riskProfitEl.textContent = `${periodProfitPercent.toFixed(2)}%`;
-        riskProfitEl.style.color = periodProfitPercent >= 0 ? 'var(--success)' : 'var(--danger)';
+      riskProfitEl.textContent = '0.00%';
+      riskProfitEl.style.color = 'var(--accent)';
     }
-    // --- FIN DEL BLOQUE AÑADIDO ---
-
-    // --- CÓDIGO ORIGINAL (con una pequeña mejora) ---
-    if (!initialBalance || initialBalance === 0) {
-        $('#daily-risk').textContent = '0.0%';
-        $('#weekly-risk').textContent = '0.0%';
-        $('#monthly-risk').textContent = '0.0%';
-        
-        // También reiniciamos el nuevo campo si no hay balance
-        if (riskProfitEl) {
-            riskProfitEl.textContent = '0.00%';
-            riskProfitEl.style.color = 'var(--accent)';
-        }
-
-        if (riskChart) {
-            riskChart.data.datasets[0].data = [0, 0, 0, 0, 0, 0];
-            riskChart.update();
-        }
-        return;
-    }
-
-    const now = new Date();
-    const today = now.toISOString().slice(0, 10);
-    const startOfWeek = new Date(new Date(now).setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1))).toISOString().slice(0, 10);
-    const startOfMonth = new Date(new Date(now).getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
-
-    const dailyLoss = trades.filter(t => t.dateStr === today && t.result < 0).reduce((sum, t) => sum + t.result, 0);
-    const weeklyLoss = trades.filter(t => t.dateStr >= startOfWeek && t.result < 0).reduce((sum, t) => sum + t.result, 0);
-    const monthlyLoss = trades.filter(t => t.dateStr >= startOfMonth && t.result < 0).reduce((sum, t) => sum + t.result, 0);
-
-    $('#daily-risk').textContent = `${(Math.abs(dailyLoss) / initialBalance * 100).toFixed(1)}%`;
-    $('#weekly-risk').textContent = `${(Math.abs(weeklyLoss) / initialBalance * 100).toFixed(1)}%`;
-    $('#monthly-risk').textContent = `${(Math.abs(monthlyLoss) / initialBalance * 100).toFixed(1)}%`;
-
-    const wins = trades.filter(x => x.result > 0);
-    const losses = trades.filter(x => x.result < 0);
-    const winRate = trades.length ? (wins.length / trades.length) * 100 : 0;
-    const totalWins = wins.reduce((s, x) => s + x.result, 0);
-    const totalLoss = Math.abs(losses.reduce((s, x) => s + x.result, 0));
-    // NOTA: La variable 'totalProfitForPeriod' ya la calculamos arriba, así que la reutilizamos.
-    const avgRR = (wins.length && losses.length) ? (totalWins / wins.length) / (totalLoss / losses.length) : 0;
-
-    const aciertoScore = Math.min(5, winRate / 15);
-    const rrScore = Math.min(5, avgRR * 2);
-    const beneficioScore = Math.min(5, (totalProfitForPeriod / initialBalance * 100) / 4);
 
     if (riskChart) {
-        riskChart.data.datasets[0].data = [3, 4, aciertoScore, rrScore, 3, beneficioScore];
-        riskChart.update();
+      riskChart.data.datasets[0].data = [0, 0, 0, 0, 0, 0];
+      riskChart.update();
     }
-}
-  
-function calculateStreaks(trades) {
-    let maxWinningStreak = 0;
-    let currentWinningStreak = 0;
-    let maxLosingStreak = 0;
-    let currentLosingStreak = 0;
+    return;
+  }
 
-    (trades || []).forEach(trade => {
-        if (trade.result > 0) {
-            currentWinningStreak++;
-            currentLosingStreak = 0;
-        } else if (trade.result < 0) {
-            currentLosingStreak++;
-            currentWinningStreak = 0;
-        }
-        if (currentWinningStreak > maxWinningStreak) {
-            maxWinningStreak = currentWinningStreak;
-        }
-        if (currentLosingStreak > maxLosingStreak) {
-            maxLosingStreak = currentLosingStreak;
-        }
-    });
-    return { maxWinningStreak, maxLosingStreak };
+  const now = new Date();
+  const today = now.toISOString().slice(0, 10);
+  const startOfWeek = new Date(new Date(now).setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1))).toISOString().slice(0, 10);
+  const startOfMonth = new Date(new Date(now).getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+
+  const dailyLoss = trades.filter(t => t.dateStr === today && t.result < 0).reduce((s, t) => s + t.result, 0);
+  const weeklyLoss = trades.filter(t => t.dateStr >= startOfWeek && t.result < 0).reduce((s, t) => s + t.result, 0);
+  const monthlyLoss = trades.filter(t => t.dateStr >= startOfMonth && t.result < 0).reduce((s, t) => s + t.result, 0);
+
+  $('#daily-risk').textContent = `${(Math.abs(dailyLoss) / initialBalance * 100).toFixed(1)}%`;
+  $('#weekly-risk').textContent = `${(Math.abs(weeklyLoss) / initialBalance * 100).toFixed(1)}%`;
+  $('#monthly-risk').textContent = `${(Math.abs(monthlyLoss) / initialBalance * 100).toFixed(1)}%`;
+
+  const wins = trades.filter(x => x.result > 0);
+  const losses = trades.filter(x => x.result < 0);
+  const winRate = trades.length ? (wins.length / trades.length) * 100 : 0;
+  const totalWins = wins.reduce((s, x) => s + x.result, 0);
+  const totalLoss = Math.abs(losses.reduce((s, x) => s + x.result, 0));
+  const avgRR = (wins.length && losses.length) ? (totalWins / wins.length) / (totalLoss / losses.length) : 0;
+
+  const aciertoScore = Math.min(5, winRate / 15);
+  const rrScore = Math.min(5, avgRR * 2);
+  const beneficioScore = Math.min(5, (totalProfitForPeriod / initialBalance * 100) / 4);
+
+  if (riskChart) {
+    riskChart.data.datasets[0].data = [3, 4, aciertoScore, rrScore, 3, beneficioScore];
+    riskChart.update();
+  }
+}
+
+function calculateStreaks(trades) {
+  let maxWinningStreak = 0, currentWinningStreak = 0;
+  let maxLosingStreak = 0, currentLosingStreak = 0;
+
+  (trades || []).forEach(trade => {
+    if (trade.result > 0) { currentWinningStreak++; currentLosingStreak = 0; }
+    else if (trade.result < 0) { currentLosingStreak++; currentWinningStreak = 0; }
+    if (currentWinningStreak > maxWinningStreak) maxWinningStreak = currentWinningStreak;
+    if (currentLosingStreak > maxLosingStreak) maxLosingStreak = currentLosingStreak;
+  });
+  return { maxWinningStreak, maxLosingStreak };
 }
 
 function recalcFromTrades(trades) {
-    const getSafeTimestamp = (trade) => {
-        if (!trade || !trade.createdAt) return 0;
-        if (typeof trade.createdAt.toMillis === 'function') {
-            return trade.createdAt.toMillis();
-        }
-        if (trade.createdAt instanceof Date) {
-            return trade.createdAt.getTime();
-        }
-        if (typeof trade.createdAt === 'number') {
-            return trade.createdAt;
-        }
-        return 0;
-    };
+  const getSafeTimestamp = (trade) => {
+    if (!trade || !trade.createdAt) return 0;
+    if (typeof trade.createdAt.toMillis === 'function') return trade.createdAt.toMillis();
+    if (trade.createdAt instanceof Date) return trade.createdAt.getTime();
+    if (typeof trade.createdAt === 'number') return trade.createdAt;
+    return 0;
+  };
 
-    const t = (trades || []).sort((a, b) => getSafeTimestamp(a) - getSafeTimestamp(b));
+  const t = (trades || []).sort((a, b) => getSafeTimestamp(a) - getSafeTimestamp(b));
 
-    const wins = t.filter(x => x.result > 0), losses = t.filter(x => x.result < 0);
-    const total = t.length;
-    const totalWins = wins.reduce((s, x) => s + x.result, 0);
-    const totalLoss = Math.abs(losses.reduce((s, x) => s + x.result, 0));
-    const winRate = total ? (wins.length / total) * 100 : 0;
-    const pf = totalLoss ? totalWins / totalLoss : 0;
-    const rr = (wins.length && losses.length) ? (totalWins / wins.length) / (totalLoss / losses.length) : 0;
+  const wins = t.filter(x => x.result > 0), losses = t.filter(x => x.result < 0);
+  const total = t.length;
+  const totalWins = wins.reduce((s, x) => s + x.result, 0);
+  const totalLoss = Math.abs(losses.reduce((s, x) => s + x.result, 0));
+  const totalProfit = totalWins - totalLoss;            // <-- FIX: definir totalProfit
+  const winRate = total ? (wins.length / total) * 100 : 0;
+  const pf = totalLoss ? totalWins / totalLoss : 0;
+  const rr = (wins.length && losses.length) ? (totalWins / wins.length) / (totalLoss / losses.length) : 0;
 
-    $('#total-trades').textContent = total;
-    $('#total-trades-2').textContent = total;
-    $('#win-trades').textContent = wins.length;
-    $('#win-rate').textContent = `${winRate.toFixed(1)}%`;
-    $('#profit-factor').textContent = pf.toFixed(2);
-    $('#risk-reward').textContent = rr.toFixed(2);
-    $('#total-profit').textContent = `$${(totalWins - totalLoss).toFixed(2)}`;
+  $('#total-trades').textContent = total;
+  $('#total-trades-2').textContent = total;
+  $('#win-trades').textContent = wins.length;
+  $('#win-rate').textContent = `${winRate.toFixed(1)}%`;
+  $('#profit-factor').textContent = pf.toFixed(2);
+  $('#risk-reward').textContent = rr.toFixed(2);
+  $('#total-profit').textContent = `$${totalProfit.toFixed(2)}`;
 
-  // --- AÑADE ESTE BLOQUE ---
-const settings = window.__currentGeneralSettings || { initialBalance: 10000 };
-const initialBalance = settings.initialBalance;
-const profitPercent = initialBalance > 0 ? (totalProfit / initialBalance) * 100 : 0;
+  // --- NUEVO BLOQUE: % sobre balance inicial ---
+  const settings = window.__currentGeneralSettings || { initialBalance: 10000 };
+  const initialBalance = settings.initialBalance;
+  const profitPercent = initialBalance > 0 ? (totalProfit / initialBalance) * 100 : 0;
 
-const profitPercentEl = $('#total-profit-percent');
-if (profitPercentEl) {
+  const profitPercentEl = $('#total-profit-percent');
+  if (profitPercentEl) {
     profitPercentEl.textContent = `(${profitPercent.toFixed(1)}%)`;
     profitPercentEl.style.color = profitPercent >= 0 ? 'var(--success)' : 'var(--danger)';
-}
+  }
 
-  // --- AÑADE ESTE BLOQUE ---
-const balanceGrowthEl = $('#balance-growth-percent');
-if (balanceGrowthEl) {
+  // Balance growth y charts (sin re-declarar settings)
+  const balanceGrowthEl = $('#balance-growth-percent');
+  if (balanceGrowthEl) {
     balanceGrowthEl.textContent = `${profitPercent >= 0 ? '+' : ''}${profitPercent.toFixed(2)}%`;
     balanceGrowthEl.style.color = profitPercent >= 0 ? 'var(--success)' : 'var(--danger)';
-    if (distributionChart) {
-        distributionChart.data.datasets[0].data = [wins.length, losses.length, t.filter(x => x.result === 0).length];
-        distributionChart.update();
-    }
-  
-    const settings = window.__currentGeneralSettings || { initialBalance: 10000 };
-    if (balanceChart || modalBalanceChart) {
-        const data = [];
-        let bal = settings.initialBalance;
-        data.push(bal);
-        t.forEach(trade => {
-            bal += trade.result || 0;
-            data.push(bal);
-        });
-        const labels = ['Inicio', ...Array.from({ length: t.length }, (_, i) => i + 1)];
-        if (balanceChart) {
-            balanceChart.data.datasets[0].data = data;
-            balanceChart.data.labels = labels;
-            balanceChart.update();
-        }
-        if (modalBalanceChart) {
-            modalBalanceChart.data.datasets[0].data = data;
-            modalBalanceChart.data.labels = labels;
-            modalBalanceChart.update();
-        }
-    }
-    updateRecentTrades(t);
-    calculateRiskMetrics(t, settings.initialBalance);
+  }
 
-    const streaks = calculateStreaks(t);
-    $('#max-win-streak').textContent = streaks.maxWinningStreak;
-    $('#max-loss-streak').textContent = streaks.maxLosingStreak;
+  if (distributionChart) {
+    distributionChart.data.datasets[0].data = [wins.length, losses.length, t.filter(x => x.result === 0).length];
+    distributionChart.update();
+  }
+
+  if (balanceChart || modalBalanceChart) {
+    const data = [];
+    let bal = initialBalance;
+    data.push(bal);
+    t.forEach(trade => {
+      bal += trade.result || 0;
+      data.push(bal);
+    });
+    const labels = ['Inicio', ...Array.from({ length: t.length }, (_, i) => i + 1)];
+    if (balanceChart) {
+      balanceChart.data.datasets[0].data = data;
+      balanceChart.data.labels = labels;
+      balanceChart.update();
+    }
+    if (modalBalanceChart) {
+      modalBalanceChart.data.datasets[0].data = data;
+      modalBalanceChart.data.labels = labels;
+      modalBalanceChart.update();
+    }
+  }
+
+  updateRecentTrades(t);
+  calculateRiskMetrics(t, initialBalance);
+
+  const streaks = calculateStreaks(t);
+  $('#max-win-streak').textContent = streaks.maxWinningStreak;
+  $('#max-loss-streak').textContent = streaks.maxLosingStreak;
 }
+
 
 function renderHistorySummary(trades) {
     if (!trades) return;
