@@ -1097,7 +1097,7 @@ function populateReportAccountsDropdown(accounts) {
         const option = document.createElement('option');
         option.value = a.id;
         option.textContent = a.name;
-        reportSelect.appendChild(option); // <-- La variable correcta es reportSelect
+        reportSelect.appendChild(option);
     });
     
     if (currentVal) reportSelect.value = currentVal;
@@ -1132,10 +1132,16 @@ function updateAccountsUI(accounts) {
         return;
     }
 
-    (accounts || []).forEach(a => {
+    const trades = window.__currentTrades || [];
+    accounts.forEach(a => {
         const card = document.createElement('div');
         card.className = 'card';
         card.style.marginTop = '10px';
+
+        const accountTrades = trades.filter(t => t.accountId === a.id);
+        const profit = accountTrades.reduce((sum, t) => sum + t.result, 0);
+        const dynamicBalance = (parseFloat(a.balance) || 0) + profit;
+
         card.innerHTML = `
           <div class="card-header">
             <div class="card-title">${a.name || 'Cuenta sin nombre'}</div>
@@ -1145,7 +1151,7 @@ function updateAccountsUI(accounts) {
             </div>
           </div>
           <div class="metric-card">
-            <div class="metric-val">$${(a.balance || 0).toFixed(2)}</div>
+            <div class="metric-val">$${dynamicBalance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
             <div class="metric-lab">${a.broker || 'Sin broker'} - ${a.type || 'Tipo no definido'}</div>
           </div>
         `;
@@ -1376,10 +1382,8 @@ function populateAnalyticsFilter(strategies) {
 
 function updateChallengeTrackerUI(trades, settings) {
     const accounts = window.__currentAccounts || [];
-    // Busca la cuenta que sea de tipo 'challenge', o la primera que encuentre si no hay ninguna.
     const challengeAccount = accounts.find(a => a.type === 'challenge') || accounts[0];
 
-    // Si no hay cuenta, no se puede calcular nada.
     if (!challengeAccount) {
         $('#challenge-current-balance').textContent = '$0.00';
         return;
@@ -1394,14 +1398,12 @@ function updateChallengeTrackerUI(trades, settings) {
     const targetPercent = parseFloat(settings.profitTarget) || 10;
     const progressPercent = targetPercent > 0 ? (profitPercent / targetPercent) * 100 : 0;
     
-    // Calcula el Drawdown basado en los trades de esta cuenta
     const { maxDrawdownValue } = calculateDrawdown(challengeTrades, initialBalance);
     const drawdownPercent = initialBalance > 0 ? (maxDrawdownValue / initialBalance) * 100 : 0;
     
     const wins = challengeTrades.filter(t => t.result > 0).length;
     const winRate = challengeTrades.length > 0 ? (wins / challengeTrades.length) * 100 : 0;
 
-    // Actualizar la interfaz
     $('#challenge-current-balance').textContent = `$${currentBalance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
     $('#challenge-profit').textContent = `${profitPercent.toFixed(2)}%`;
     $('#challenge-drawdown').textContent = `${drawdownPercent.toFixed(2)}%`;
@@ -1410,7 +1412,6 @@ function updateChallengeTrackerUI(trades, settings) {
     $('#challenge-progress-value').textContent = `${progressPercent.toFixed(1)}%`;
     $('#challenge-progress-bar').style.width = `${Math.min(100, Math.max(0, progressPercent))}%`;
     
-    // Lógica del Riesgo Residual Diario (sin cambios)
     const dailyLimit = settings.dailyLoss || 5;
     const todayStr = new Date().toISOString().slice(0, 10);
     const todaysTrades = challengeTrades.filter(t => t.dateStr === todayStr);
@@ -1421,31 +1422,23 @@ function updateChallengeTrackerUI(trades, settings) {
 }
 
 function calculateRiskMetrics(trades, initialBalance) {
-    // --- BLOQUE AÑADIDO (Paso 2) ---
-    // Calcula el beneficio total solo para el array 'trades' recibido (que respeta el filtro de tiempo)
     const totalProfitForPeriod = trades.reduce((sum, t) => sum + (t.result || 0), 0);
     const periodProfitPercent = initialBalance > 0 ? (totalProfitForPeriod / initialBalance) * 100 : 0;
 
-    // Actualiza el nuevo elemento de "Beneficio / Pérdida (Periodo)"
     const riskProfitEl = $('#risk-profit-percent');
     if (riskProfitEl) {
         riskProfitEl.textContent = `${periodProfitPercent.toFixed(2)}%`;
         riskProfitEl.style.color = periodProfitPercent >= 0 ? 'var(--success)' : 'var(--danger)';
     }
-    // --- FIN DEL BLOQUE AÑADIDO ---
-
-    // --- CÓDIGO ORIGINAL (con una pequeña mejora) ---
+    
     if (!initialBalance || initialBalance === 0) {
         $('#daily-risk').textContent = '0.0%';
         $('#weekly-risk').textContent = '0.0%';
         $('#monthly-risk').textContent = '0.0%';
-        
-        // También reiniciamos el nuevo campo si no hay balance
         if (riskProfitEl) {
             riskProfitEl.textContent = '0.00%';
             riskProfitEl.style.color = 'var(--accent)';
         }
-
         if (riskChart) {
             riskChart.data.datasets[0].data = [0, 0, 0, 0, 0, 0];
             riskChart.update();
@@ -1471,7 +1464,6 @@ function calculateRiskMetrics(trades, initialBalance) {
     const winRate = trades.length ? (wins.length / trades.length) * 100 : 0;
     const totalWins = wins.reduce((s, x) => s + x.result, 0);
     const totalLoss = Math.abs(losses.reduce((s, x) => s + x.result, 0));
-    // NOTA: La variable 'totalProfitForPeriod' ya la calculamos arriba, así que la reutilizamos.
     const avgRR = (wins.length && losses.length) ? (totalWins / wins.length) / (totalLoss / losses.length) : 0;
 
     const aciertoScore = Math.min(5, winRate / 15);
@@ -1542,21 +1534,21 @@ function recalcFromTrades(trades) {
     const totalProfit = totalWins - totalLoss;
     $('#total-profit').textContent = `$${totalProfit.toFixed(2)}`;
 
-  const settings = window.__currentGeneralSettings || { initialBalance: 10000 };
-  const initialBalance = settings.initialBalance;
-  const profitPercent = initialBalance > 0 ? (totalProfit / initialBalance) * 100 : 0;
+    const settings = window.__currentGeneralSettings || { initialBalance: 10000 };
+    const initialBalance = settings.initialBalance;
+    const profitPercent = initialBalance > 0 ? (totalProfit / initialBalance) * 100 : 0;
 
-  const profitPercentEl = $('#total-profit-percent');
-  if (profitPercentEl) {
-      profitPercentEl.textContent = `(${profitPercent.toFixed(1)}%)`;
-      profitPercentEl.style.color = profitPercent >= 0 ? 'var(--success)' : 'var(--danger)';
-  }
+    const profitPercentEl = $('#total-profit-percent');
+    if (profitPercentEl) {
+        profitPercentEl.textContent = `(${profitPercent.toFixed(1)}%)`;
+        profitPercentEl.style.color = profitPercent >= 0 ? 'var(--success)' : 'var(--danger)';
+    }
 
-  const balanceGrowthEl = $('#balance-growth-percent');
-  if (balanceGrowthEl) {
-      balanceGrowthEl.textContent = `${profitPercent >= 0 ? '+' : ''}${profitPercent.toFixed(2)}%`;
-      balanceGrowthEl.style.color = profitPercent >= 0 ? 'var(--success)' : 'var(--danger)';
-  }
+    const balanceGrowthEl = $('#balance-growth-percent');
+    if (balanceGrowthEl) {
+        balanceGrowthEl.textContent = `${profitPercent >= 0 ? '+' : ''}${profitPercent.toFixed(2)}%`;
+        balanceGrowthEl.style.color = profitPercent >= 0 ? 'var(--success)' : 'var(--danger)';
+    }
 
     if (distributionChart) {
         distributionChart.data.datasets[0].data = [wins.length, losses.length, t.filter(x => x.result === 0).length];
@@ -1906,6 +1898,7 @@ onAuthStateChanged(auth, async (user) => {
   renderAnalytics(filteredTrades);
   renderCalendar(allTrades);
   updateChallengeTrackerUI(allTrades, settings);
+  updateAccountsUI(window.__currentAccounts);
   updateWeeklyProgress();
 }
 
@@ -1954,7 +1947,7 @@ function openNewTradeModal() {
     $('#trade-entry-price-input').value = '';
     $('#trade-tp-input').value = '';
     $('#trade-sl-input').value = '';
-    updateAccountsDropdown(); // <--- AÑADIR ESTA LÍNEA
+    updateAccountsDropdown();
     openModalById('add-trade-modal');
 }
 
@@ -1963,9 +1956,9 @@ function updateAccountsDropdown() {
     if (!select) return;
 
     const accounts = window.__currentAccounts || [];
-    const currentVal = select.value; // Guardar valor por si estamos editando
+    const currentVal = select.value;
 
-    select.innerHTML = '<option value="">-- Selecciona una Cuenta --</option>'; // Opción por defecto
+    select.innerHTML = '<option value="">-- Selecciona una Cuenta --</option>';
     
     accounts.forEach(acc => {
         const option = document.createElement('option');
@@ -2450,16 +2443,14 @@ $('#save-trade-btn')?.addEventListener('click', async () => {
       return alert('Por favor, selecciona una fecha para la operación.');
     }
 
-    // --- MEJORA INTEGRADA ---
     const selectedAccountId = $('#trade-account-input').value;
     if (!selectedAccountId) {
       return alert('Por favor, selecciona la cuenta asociada a esta operación.');
     }
-    // -------------------------
 
     const tradeData = {
         id: $('#editing-trade-id').value,
-        accountId: selectedAccountId, // <-- LÍNEA AÑADIDA
+        accountId: selectedAccountId,
         dateStr: tradeDate,
         pair: $('#trade-pair-input').value,
         type: $('#trade-type-input').value,
@@ -2825,292 +2816,6 @@ async function exportToPDF() {
 $('#download-csv-btn').addEventListener('click', exportToCSV);
 $('#download-excel-btn').addEventListener('click', exportToExcel);
 $('#download-pdf-btn').addEventListener('click', exportToPDF);
- 
-  function formatTotalProfit() {
-    const el = document.getElementById('total-profit');
-    if (!el) return;
-    const n = parseFloat(String(el.textContent).replace(/[^0-9.\-]/g, '')) || 0;
-    el.textContent = money(n);
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', formatTotalProfit);
-  } else {
-    formatTotalProfit();
-  }
-
-  const hook = () => {
-    if (typeof window.updateAllCalculations === 'function' &&
-        !window.updateAllCalculations.__ik_format_total__) {
-      const orig = window.updateAllCalculations;
-      window.updateAllCalculations = function () {
-        const r = orig.apply(this, arguments);
-        try { formatTotalProfit(); } catch (e) {}
-        return r;
-      };
-      window.updateAllCalculations.__ik_format_total__ = true;
-    }
-  };
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', hook);
-  } else {
-    hook();
-  }
-})();
-   
-   function findValueNode(card){
-    let node = card.querySelector('.metric-card .metric-val');
-    if (node) return node;
-    node = card.querySelector('.metric-val');
-    if (node) return node;
-    for (const el of card.querySelectorAll('div, span')) {
-      if (/\$\s*\d/.test((el.textContent||'').trim())) return el;
-    }
-    return null;
-  }
-
-  window.updateAccountsDynamicOnly = function(){
-    try{
-      const container = document.querySelector('#accounts-container') || document;
-      const map = computeMap();
-      Object.keys(map).forEach(id => {
-        const edit = container.querySelector(`.btn-edit-account[data-id="${id}"]`);
-        const card = edit ? edit.closest('.card') : null;
-        if (!card) return;
-        const node = findValueNode(card);
-        if (node) node.textContent = money(map[id].dynamic);
-      });
-    }catch(e){}
-  };
-
-  const hook = () => {
-    if (typeof window.updateAccountsUI === 'function' && !window.updateAccountsUI.__ik_dyn_only__) {
-      const orig = window.updateAccountsUI;
-      window.updateAccountsUI = function(){
-        const r = orig.apply(this, arguments);
-        try { window.updateAccountsDynamicOnly(); } catch(e){}
-        return r;
-      };
-      window.updateAccountsUI.__ik_dyn_only__ = true;
-    }
-  };
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => { hook(); window.updateAccountsDynamicOnly(); });
-  } else { hook(); window.updateAccountsDynamicOnly(); }
-
-  const wrapSave = () => {
-    if (typeof window.saveTrade === 'function' && !window.saveTrade.__ik_acc_dyn__) {
-      const orig = window.saveTrade;
-      window.saveTrade = async function(){
-        const r = await orig.apply(this, arguments);
-        try{ window.updateAccountsDynamicOnly(); }catch(e){}
-        return r;
-      };
-      window.saveTrade.__ik_acc_dyn__ = true;
-    }
-  };
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', wrapSave);
-  } else {
-    wrapSave();
-  }
-})();
-(function(){
-  const money = v =>
-    (Number(v) || 0).toLocaleString('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
-
-  function computeMap(){
-    const accounts = window.__currentAccounts || [];
-    const trades   = window.__currentTrades   || [];
-    const map = {};
-    const anyLinked = trades.some(t => t && t.accountId);
-    accounts.forEach(a => {
-      const initial = parseFloat(a?.balance)||0;
-      const related = anyLinked ? trades.filter(t => t?.accountId === a?.id) : trades;
-      const profit  = related.reduce((s,t)=> s + (parseFloat(t?.result)||0), 0);
-      map[a.id] = { initial, profit, dynamic: initial + profit, name: a?.name || '' };
-    });
-    return map;
-  }
-
-  function findValueNode(card){
-    let node = card.querySelector('.metric-card .metric-val');
-    if (node) return node;
-    node = card.querySelector('.metric-val');
-    if (node) return node;
-    for (const el of card.querySelectorAll('div, span')) {
-      if (/\$\s*\d/.test((el.textContent||'').trim())) return el;
-    }
-    return null;
-  }
-
-  window.updateAccountsDynamicOnly = function(){
-    try{
-      const container = document.querySelector('#accounts-container') || document;
-      const map = computeMap();
-      Object.keys(map).forEach(id => {
-        const edit = container.querySelector(`.btn-edit-account[data-id="${id}"]`);
-        const card = edit ? edit.closest('.card') : null;
-        if (!card) return;
-        const node = findValueNode(card);
-        if (node) node.textContent = money(map[id].dynamic);
-      });
-    }catch(e){}
-  };
-
-  const hook = () => {
-    if (typeof window.updateAccountsUI === 'function' && !window.updateAccountsUI.__ik_dyn_only__) {
-      const orig = window.updateAccountsUI;
-      window.updateAccountsUI = function(){
-        const r = orig.apply(this, arguments);
-        try { window.updateAccountsDynamicOnly(); } catch(e){}
-        return r;
-      };
-      window.updateAccountsUI.__ik_dyn_only__ = true;
-    }
-  };
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => { hook(); window.updateAccountsDynamicOnly(); });
-  } else {
-    hook(); window.updateAccountsDynamicOnly();
-  }
-
-  const wrapSave = () => {
-    if (typeof window.saveTrade === 'function' && !window.saveTrade.__ik_acc_dyn__) {
-      const orig = window.saveTrade;
-      window.saveTrade = async function(){
-        const r = await orig.apply(this, arguments);
-        try{ window.updateAccountsDynamicOnly(); }catch(e){}
-        return r;
-      };
-      window.saveTrade.__ik_acc_dyn__ = true;
-    }
-  };
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', wrapSave);
-  } else {
-    wrapSave();
-  }
-})();
-
-(function(){
-  const money = v =>
-    (Number(v) || 0).toLocaleString('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
-
-  function pickAccount(accounts){
-    if (!accounts || !accounts.length) return null;
-    let a = accounts.find(x => (x.type||'').toLowerCase()==='principal');
-    if (!a) a = accounts.find(x => (x.name||'').toLowerCase().includes('ftmo'));
-    return a || accounts[0];
-  }
-
-  function computeProfit(trades, accountId){
-    if (!Array.isArray(trades) || !trades.length) return 0;
-    const hasLink = trades.some(t => t && t.accountId);
-    const list = hasLink && accountId ? trades.filter(t => t.accountId === accountId) : trades;
-    return list.reduce((s,t)=> s + (parseFloat(t?.result)||0), 0);
-  }
-
-  function updateChallenge(){
-    const el = document.getElementById('challenge-initial-balance');
-    if (!el) return;
-    const accounts = window.__currentAccounts || [];
-    const trades   = window.__currentTrades   || [];
-    const acc      = pickAccount(accounts);
-    const initial  = acc && typeof acc.balance !== 'undefined'
-      ? parseFloat(acc.balance)||0
-      : parseFloat(String(el.textContent).replace(/[^0-9.\-]/g,'')) || 0;
-    el.textContent = money(initial + computeProfit(trades, acc?.id));
-  }
-
-  let tries = 0;
-  const iv = setInterval(() => { try{ updateChallenge(); }catch(e){} if(++tries>=40) clearInterval(iv); }, 300);
-  document.addEventListener('visibilitychange', () => { if(!document.hidden) setTimeout(()=>{try{updateChallenge();}catch(e){}}, 120); }, { passive:true });
-  document.getElementById('save-trade-btn')?.addEventListener('click', () => setTimeout(()=>{ try{ updateChallenge(); }catch(e){} }, 800), true);
-})();
-
-(function(){
-  const money = v =>
-    (Number(v) || 0).toLocaleString('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
-
-  function computeMap(){
-    const accounts = window.__currentAccounts || [];
-    const trades   = window.__currentTrades   || [];
-    const map = {};
-    const anyLinked = trades.some(t => t && t.accountId);
-    accounts.forEach(a => {
-      const initial = parseFloat(a?.balance)||0;
-      const related = anyLinked ? trades.filter(t => t?.accountId === a?.id) : trades;
-      const profit  = related.reduce((s,t)=> s + (parseFloat(t?.result)||0), 0);
-      map[a.id] = { initial, profit, dynamic: initial + profit };
-    });
-    return map;
-  }
-
-  function findValueNode(card){
-    let node = card.querySelector('.metric-card .metric-val');
-    if (node) return node;
-    node = card.querySelector('.metric-val');
-    if (node) return node;
-    for (const el of card.querySelectorAll('div, span')) {
-      if (/\$\s*\d/.test((el.textContent||'').trim())) return el;
-    }
-    return null;
-  }
-
-  function updateAccounts(){
-    const container = document.querySelector('#accounts-container');
-    if (!container) return;
-    const map = computeMap();
-    Object.keys(map).forEach(id => {
-      const editBtn = container.querySelector(`.btn-edit-account[data-id="${id}"]`);
-      const card = editBtn ? editBtn.closest('.card') : null;
-      if (!card) return;
-      const node = findValueNode(card);
-      if (node) node.textContent = money(map[id].dynamic);
-    });
-  }
-
-  let tries = 0;
-  const tick = () => { try { updateAccounts(); } catch (e) {} };
-
-  const iv = setInterval(() => { 
-    tick(); 
-    if (++tries >= 40) clearInterval(iv); 
-  }, 300);
-
-  const accContainer = document.getElementById('accounts-container');
-  if (accContainer) {
-    const mo = new MutationObserver(() => setTimeout(tick, 60));
-    mo.observe(accContainer, { childList: true, subtree: true });
-  }
-
-  document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) setTimeout(tick, 120);
-  }, { passive: true });
-
-  const saveBtn = document.getElementById('save-trade-btn');
-  if (saveBtn) {
-    saveBtn.addEventListener('click', () => setTimeout(tick, 800), true);
-  }
-})();
 </script>
 
 <style>
@@ -3138,3 +2843,5 @@ $('#download-pdf-btn').addEventListener('click', exportToPDF);
    
  </body>
 </html>
+}
+un error mas y te dejo en paz, en la seccion de cuentas, no se actualiza, he creado 2 cuentas, una principal y otra challenge, he gregago operaciones a las 2 y no se refresca el balance, cuando le doy al boton de editar si me sale el balance inicial correcto
