@@ -2484,41 +2484,58 @@ $('#save-account-btn')?.addEventListener('click', async () => {
   }
 });
 
+// Búsca y reemplaza el bloque del botón 'save-trade-btn' en tu index.html con este:
+
 $('#save-trade-btn')?.addEventListener('click', async () => {
-    const tradeDate = $('#trade-date-input').value;
-    if (!tradeDate) {
-      return alert('Por favor, selecciona una fecha para la operación.');
-    }
+    const button = $('#save-trade-btn');
+    button.disabled = true;
+    button.textContent = 'Guardando...';
 
-    const selectedAccountId = $('#trade-account-input').value;
-    if (!selectedAccountId) {
-      return alert('Por favor, selecciona la cuenta asociada a esta operación.');
-    }
-
-    const tradeData = {
-        id: $('#editing-trade-id').value,
-        accountId: selectedAccountId,
-        dateStr: tradeDate,
-        pair: $('#trade-pair-input').value,
-        type: $('#trade-type-input').value,
-        result: parseFloat($('#trade-result-input').value) || 0,
-        strategyId: $('#trade-strategy-input').value,
-        session: $('#trade-session-input').value,
-        risk: parseFloat($('#trade-risk-input').value) || 0,
-        reward: parseFloat($('#trade-reward-input').value) || 0,
-        inChallenge: $('#trade-challenge-input').value === 'yes',
-        
-        lots: parseFloat($('#trade-lots-input').value) || null,
-        entryPrice: parseFloat($('#trade-entry-price-input').value) || null,
-        takeProfit: parseFloat($('#trade-tp-input').value) || null,
-        stopLoss: parseFloat($('#trade-sl-input').value) || null
-    };
-    
     try {
+        // ✅ LECTURA CORRECTA DE LA CUENTA
+        const selectedAccountId = $('#trade-account-input').value;
+        
+        // ✅ VALIDACIÓN MEJORADA
+        if (!selectedAccountId) {
+            // Lanza un error controlado en lugar de solo una alerta
+            throw new Error('Por favor, selecciona la cuenta asociada a esta operación.');
+        }
+        
+        // ✅ RECOLECCIÓN COMPLETA DE TODOS LOS DATOS DEL FORMULARIO
+        // Este objeto ahora coincide con lo que la función 'saveTrade' espera
+        const tradeData = {
+            id: $('#editing-trade-id').value,
+            accountId: selectedAccountId,
+            dateStr: $('#trade-date-input').value,
+            pair: $('#trade-pair-input').value,
+            type: $('#trade-type-input').value,
+            result: $('#trade-result-input').value,
+            strategyId: $('#trade-strategy-input').value, // Ojo, en tu HTML el ID es 'trade-strategy-input'
+            session: $('#trade-session-input').value,
+            risk: $('#trade-risk-input').value,
+            reward: $('#trade-reward-input').value,
+            inChallenge: $('#trade-challenge-input').value === 'yes',
+            lots: $('#trade-lots-input').value,
+            entryPrice: $('#trade-entry-price-input').value,
+            takeProfit: $('#trade-tp-input').value,
+            stopLoss: $('#trade-sl-input').value
+        };
+        
+        // Llamamos a la función `saveTrade` que ya está corregida
         await saveTrade(tradeData);
+        
+        // Mostramos el éxito solo después de que todo se haya completado
+        alert('¡Operación guardada con éxito!');
         closeAllModals();
+
     } catch (error) {
-        alert('Hubo un error al guardar la operación.');
+        // Mostramos un mensaje de error más detallado
+        console.error("Error detallado al guardar:", error);
+        alert('Hubo un error: ' + error.message);
+    } finally {
+        // Esto se ejecuta siempre, haya éxito o error
+        button.disabled = false;
+        button.textContent = 'Guardar Operación';
     }
 });
     
