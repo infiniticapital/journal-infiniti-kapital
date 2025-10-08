@@ -2246,29 +2246,6 @@ $('#btn-save-note')?.addEventListener('click', async (e) => {
     }
 });
 
-async function saveTrade(tradeData){
-  const user = auth.currentUser; if (!user) return;
-  const { id, ...dataToSave } = tradeData;
-  dataToSave.result = Number(dataToSave.result || 0);
-  dataToSave.risk = Number(dataToSave.risk || 0);
-  dataToSave.reward = Number(dataToSave.reward || 0);
-  
-  if (id) {
-    await updateDoc(doc(db, 'users', user.uid, 'trades', id), dataToSave);
-  } else {
-    dataToSave.createdAt = serverTimestamp();
-    await (collection(db, 'users', user.uid, 'trades'), dataToSave);
-  }
-}
-// **Paso 1: Agrega esta función auxiliar al principio de tu archivo**
-// Te ayudará a manejar los campos que pueden ser nulos.
-const formatNumberOrNull = (value) => {
-  if (value === "" || value === undefined || value === null) {
-    return null; // Devuelve null si el campo está vacío
-  }
-  return Number(value); // Devuelve el número si hay un valor
-};
-
 // **Paso 2: Reemplaza tu función saveTrade con esta versión corregida**
 async function saveTrade(tradeData) {
     const user = auth.currentUser;
