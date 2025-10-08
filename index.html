@@ -1395,12 +1395,24 @@ function populateAnalyticsFilter(strategies) {
     });
 }
 
-function updateChallengeTrackerUI(trades, settings) {
+  function updateChallengeTrackerUI(trades, settings) {
     const accounts = window.__currentAccounts || [];
-    const challengeAccount = accounts.find(a => a.type === 'challenge') || accounts[0];
+
+    // --- LÍNEA CORREGIDA ---
+    // Ahora busca 'challenge' sin importar si es mayúscula o minúscula.
+    const challengeAccount = accounts.find(a => a.type && a.type.toLowerCase() === 'challenge') || accounts[0];
+    // -------------------------
 
     if (!challengeAccount) {
+        // Bloque mejorado para reiniciar toda la tarjeta si no se encuentra la cuenta
         $('#challenge-current-balance').textContent = '$0.00';
+        $('#challenge-profit').textContent = `+0.0%`;
+        $('#challenge-drawdown').textContent = `0.0%`;
+        $('#challenge-trades').textContent = '0';
+        $('#challenge-win-rate').textContent = `0%`;
+        $('#challenge-progress-value').textContent = `0%`;
+        $('#challenge-progress-bar').style.width = `0%`;
+        $('#challenge-residual-risk').textContent = `0.00%`;
         return;
     }
 
