@@ -2334,17 +2334,17 @@ $('main')?.addEventListener('click', (e) => {
   }
   
   const editTradeBtn = e.target.closest('.btn-edit-trade');
-  if (editTradeBtn) {
+if (editTradeBtn) {
     const trade = window.__currentTrades?.find(t => t.id === editTradeBtn.dataset.id);
     if (trade) {
         $('#trade-title').textContent = 'Editar Operación';
         $('#trade-date-input').value = trade.dateStr || new Date().toISOString().slice(0, 10);
-        $('#trade-pair-input').value = trade.pair; 
+        $('#trade-pair-input').value = trade.pair;
         $('#trade-type-input').value = trade.type;
-        $('#trade-result-input').value = trade.result; 
-        $('#trade-risk-input').value = trade.risk; 
+        $('#trade-result-input').value = trade.result;
+        $('#trade-risk-input').value = trade.risk;
         $('#trade-reward-input').value = trade.reward;
-        $('#trade-challenge-input').value = trade.inChallenge ? 'yes' : 'no'; 
+        $('#trade-challenge-input').value = trade.inChallenge ? 'yes' : 'no';
         $('#trade-strategy-input').value = trade.strategyId || "";
         $('#trade-session-input').value = trade.session || "N/A";
         $('#editing-trade-id').value = trade.id;
@@ -2353,12 +2353,16 @@ $('main')?.addEventListener('click', (e) => {
         $('#trade-entry-price-input').value = trade.entryPrice || '';
         $('#trade-tp-input').value = trade.takeProfit || '';
         $('#trade-sl-input').value = trade.stopLoss || '';
-        
+
+        // --- LÍNEAS AÑADIDAS PARA EVITAR EL ERROR ---
+        updateAccountsDropdown(); // 1. Esto llena el menú con tus cuentas.
+        $('#trade-account-input').value = trade.accountId || ""; // 2. Esto selecciona la cuenta que ya tenía la operación.
+        // -----------------------------------------
+
         openModalById('add-trade-modal');
     }
     return;
-  }
-
+}
   const deleteTradeBtn = e.target.closest('.btn-delete-trade');
   if (deleteTradeBtn) { 
     deleteItem('trades', deleteTradeBtn.dataset.id); 
