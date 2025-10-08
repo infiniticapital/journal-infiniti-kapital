@@ -2262,26 +2262,26 @@ async function saveTrade(tradeData) {
         return isNaN(num) ? 0 : num;
     };
 
-    // 2. PREPARAR DATOS CON ESTRUCTURA CORRECTA
-    const operationData = {
-        // Campos básicos
-        pair: tradeData.pair,
-        type: tradeData.type, // 'buy' o 'sell'
-        strategy: tradeData.strategyId || "Ninguna",
-        session: tradeData.session || "N/A",
-        inChallenge: tradeData.inChallenge === true,
-        account: tradeData.accountId || "FTMO Challenge 100K",
-        dateStr: tradeData.dateStr,
-        
-        // Campos numéricos - CONVERTIR EXPLÍCITAMENTE
-        lots: sanitizeNumber(tradeData.lots),
-        result: sanitizeNumber(tradeData.result),
-        entryPrice: sanitizeNumber(tradeData.entryPrice),
-        takeProfit: sanitizeNumber(tradeData.takeProfit),
-        stopLoss: sanitizeNumber(tradeData.stopLoss),
-        risk: sanitizeNumber(tradeData.risk),
-        reward: sanitizeNumber(tradeData.reward)
-    };
+        // 2. PREPARAR DATOS CON ESTRUCTURA CORRECTA
+const operationData = {
+    // Campos básicos
+    pair: tradeData.pair,
+    type: tradeData.type, // 'buy' o 'sell'
+    strategy: tradeData.strategyId ? (window.__currentStrategies?.find(s => s.id === tradeData.strategyId)?.name || "Ninguna") : "Ninguna",
+    session: tradeData.session || "N/A",
+    inChallenge: tradeData.inChallenge === true,
+    account: tradeData.accountId || "FTMO Challenge 100K",
+    dateStr: tradeData.dateStr,
+    
+    // Campos numéricos - CONVERTIR EXPLÍCITAMENTE
+    lots: sanitizeNumber(tradeData.lots),
+    result: sanitizeNumber(tradeData.result),
+    entryPrice: sanitizeNumber(tradeData.entryPrice),
+    takeProfit: sanitizeNumber(tradeData.takeProfit),
+    stopLoss: sanitizeNumber(tradeData.stopLoss),
+    risk: sanitizeNumber(tradeData.risk),
+    reward: sanitizeNumber(tradeData.reward)
+};
 
     console.log('Enviando a Cloud Function:', operationData);
 
