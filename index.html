@@ -1398,13 +1398,13 @@ function populateAnalyticsFilter(strategies) {
   function updateChallengeTrackerUI(trades, settings) {
     const accounts = window.__currentAccounts || [];
 
-    // --- LÍNEA CORREGIDA ---
-    // Ahora busca 'challenge' sin importar si es mayúscula o minúscula.
-    const challengeAccount = accounts.find(a => a.type && a.type.toLowerCase() === 'challenge') || accounts[0];
-    // -------------------------
+    // --- LÓGICA MEJORADA Y MÁS ESTRICTA ---
+    // 1. Busca explícitamente la cuenta designada como 'challenge'.
+    const challengeAccount = accounts.find(acc => acc.type && acc.type.toLowerCase() === 'challenge');
 
+    // 2. Si NO se encuentra NINGUNA cuenta de tipo 'challenge', reinicia la tarjeta y detiene la función.
+    //    Esto evita que se muestren datos incorrectos o de otra cuenta.
     if (!challengeAccount) {
-        // Bloque mejorado para reiniciar toda la tarjeta si no se encuentra la cuenta
         $('#challenge-current-balance').textContent = '$0.00';
         $('#challenge-profit').textContent = `+0.0%`;
         $('#challenge-drawdown').textContent = `0.0%`;
@@ -1416,6 +1416,7 @@ function populateAnalyticsFilter(strategies) {
         return;
     }
 
+    // --- El resto de la función ahora tiene la garantía de tener la cuenta correcta ---
     const initialBalance = parseFloat(challengeAccount.balance) || 0;
     const challengeTrades = (trades || []).filter(t => t.accountId === challengeAccount.id);
     const totalProfit = challengeTrades.reduce((sum, trade) => sum + trade.result, 0);
@@ -1431,6 +1432,7 @@ function populateAnalyticsFilter(strategies) {
     const wins = challengeTrades.filter(t => t.result > 0).length;
     const winRate = challengeTrades.length > 0 ? (wins / challengeTrades.length) * 100 : 0;
 
+    // Actualizar la interfaz
     $('#challenge-current-balance').textContent = `$${currentBalance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
     $('#challenge-profit').textContent = `${profitPercent.toFixed(2)}%`;
     $('#challenge-drawdown').textContent = `${drawdownPercent.toFixed(2)}%`;
