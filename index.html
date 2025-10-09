@@ -1174,6 +1174,27 @@ function updateAccountsUI(accounts) {
     });
 }
 
+function calculateDrawdown(trades, initialBalance) {
+    let peakEquity = initialBalance;
+    let maxDrawdownValue = 0;
+
+    let currentEquity = initialBalance;
+    (trades || []).forEach(trade => {
+        currentEquity += trade.result;
+        if (currentEquity > peakEquity) {
+            peakEquity = currentEquity;
+        }
+        const drawdown = peakEquity - currentEquity;
+        if (drawdown > maxDrawdownValue) {
+            maxDrawdownValue = drawdown;
+        }
+    });
+
+    const maxDrawdownPercent = peakEquity > 0 ? (maxDrawdownValue / peakEquity) * 100 : 0;
+    return { maxDrawdownValue, maxDrawdownPercent };
+}
+
+
 function renderAnalytics(trades) {
     const t = trades || [];
     const wins = t.filter(x => x.result > 0);
@@ -1484,129 +1505,28 @@ function calculateRiskMetrics(trades, initialBalance) {
     }
 }
   
-// Pega este bloque completo en tu <script type="module">
-
 function calculateStreaks(trades) {
-    let maxWinning = 0, currentWinning = 0, maxLosing = 0, currentLosing = 0;
-    // Variables para el valor monetario de las rachas
-    let maxWinningValue = 0, currentWinningValue = 0;
-    let maxLosingValue = 0, currentLosingValue = 0;
+    let maxWinningStreak = 0;
+    let currentWinningStreak = 0;
+    let maxLosingStreak = 0;
+    let currentLosingStreak = 0;
 
     (trades || []).forEach(trade => {
         if (trade.result > 0) {
-            currentWinning++;
-            currentWinningValue += trade.result;
+            currentWinningStreak++;
             currentLosingStreak = 0;
-            currentLosingValue = 0;
         } else if (trade.result < 0) {
             currentLosingStreak++;
-            currentLosingValue += trade.result;
             currentWinningStreak = 0;
-            currentWinningValue = 0;
         }
-        
-        if (currentWinningStreak > maxWinning) {
-            maxWinning = currentWinningStreak;
-            maxWinningValue = currentWinningValue;
+        if (currentWinningStreak > maxWinningStreak) {
+            maxWinningStreak = currentWinningStreak;
         }
-        if (currentLosingStreak > maxLosing) {
-            maxLosing = currentLosingStreak;
-            maxLosingValue = currentLosingValue;
+        if (currentLosingStreak > maxLosingStreak) {
+            maxLosingStreak = currentLosingStreak;
         }
     });
-    return { maxWinningStreak: maxWinning, maxLosingStreak: maxLosing, maxWinningValue, maxLosingValue };
-}
-
-function calculateDrawdown(trades, initialBalance) {
-    let peakEquity = initialBalance;
-    let maxDrawdownValue = 0;
-    let currentEquity = initialBalance;
-    (trades || []).forEach(trade => {
-        currentEquity += trade.result;
-        if (currentEquity > peakEquity) peakEquity = currentEquity;
-        const drawdown = peakEquity - currentEquity;
-        if (drawdown > maxDrawdownValue) maxDrawdownValue = drawdown;
-    });
-    const maxDrawdownPercent = initialBalance > 0 ? (maxDrawdownValue / initialBalance) * 100 : 0;
-    return { maxDrawdownValue, maxDrawdownPercent };
-}
-
-function calculateReportStats(trades, initialBalance) {
-    const wins = trades.filter(t => t.result > 0);
-    const losses = trades.filter(t => t.result < 0);
-    
-    const grossProfit = wins.reduce((sum, t) => sum + t.result, 0);
-    const grossLoss = losses.reduce((sum, t) => sum + t.result, 0);
-    const netProfit = grossProfit + grossLoss;
-
-    const profitFactor = Math.abs(grossLoss) > 0 ? grossProfit / Math.abs(grossLoss) : 0;
-    const streaks = calculateStreaks(trades);
-    const drawdown = calculateDrawdown(trades, initialBalance);
-
-    return {
-        netProfit,
-        finalBalance: initialBalance + netProfit,
-        totalTrades: trades.length,
-        winningTrades: wins.length,
-        losingTrades: losses.length,
-        winRate: trades.length > 0 ? (wins.length / trades.length) * 100 : 0,
-        grossProfit,
-        grossLoss,
-        profitFactor,
-        maxWinningStreak: streaks.maxWinningStreak,
-        maxLosingStreak: streaks.maxLosingStreak,
-        maxWinningValue: streaks.maxWinningValue,
-        maxLosingValue: streaks.maxLosingValue,
-        maxDrawdownValue: drawdown.maxDrawdownValue,
-        maxDrawdownPercent: drawdown.maxDrawdownPercent,
-    };
-}
-
-async function exportToPDF() {
-    if (lastReportData.length === 0) { return alert('Primero genera un reporte con datos.'); }
-    const accountId = $('#report-account-select').value;
-    if (!accountId) { return alert('Por favor, selecciona una cuenta para el reporte.'); }
-
-    const account = window.__currentAccounts.find(a => a.id === accountId);
-    if (!account) { return alert('No se encontró la cuenta seleccionada.'); }
-
-    const stats = calculateReportStats(lastReportData, account.balance);
-    
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    
-    doc.setFontSize(20);
-    doc.text("Reporte de Rendimiento", 14, 22);
-    doc.setFontSize(10);
-    doc.text(`Cuenta: ${account.name}`, 14, 30);
-    doc.text(`Desde: ${$('#report-start-date').value} | Hasta: ${$('#report-end-date').value}`, 14, 35);
-
-    doc.setFontSize(12);
-    doc.text("Resumen de Rendimiento", 14, 50);
-    doc.setFontSize(10);
-    
-    doc.text("Beneficio Neto:", 14, 58); doc.text(`$${stats.netProfit.toFixed(2)}`, 60, 58);
-    doc.text("Balance Final:", 14, 64); doc.text(`$${stats.finalBalance.toFixed(2)}`, 60, 64);
-    doc.text("Total de Operaciones:", 14, 70); doc.text(`${stats.totalTrades}`, 60, 70);
-    doc.text("Tasa de Acierto:", 14, 76); doc.text(`${stats.winRate.toFixed(1)}%`, 60, 76);
-    doc.text("Profit Factor:", 14, 82); doc.text(`${stats.profitFactor.toFixed(2)}`, 60, 82);
-    
-    doc.text("Beneficio Bruto:", 110, 58); doc.text(`$${stats.grossProfit.toFixed(2)}`, 160, 58);
-    doc.text("Pérdida Bruta:", 110, 64); doc.text(`-$${Math.abs(stats.grossLoss).toFixed(2)}`, 160, 64);
-    doc.text("Racha Ganadora Máx.:", 110, 70); doc.text(`${stats.maxWinningStreak} ($${stats.maxWinningValue.toFixed(2)})`, 160, 70);
-    doc.text("Racha Perdedora Máx.:", 110, 76); doc.text(`${stats.maxLosingStreak} (-$${Math.abs(stats.maxLosingValue).toFixed(2)})`, 160, 76);
-    doc.text("Drawdown Máximo:", 110, 82); doc.text(`-$${stats.maxDrawdownValue.toFixed(2)} (${stats.maxDrawdownPercent.toFixed(2)}%)`, 160, 82);
-    
-    doc.autoTable({
-        head: [['Fecha', 'Símbolo', 'Tipo', 'Resultado ($)', 'Lotes', 'Estrategia']],
-        body: lastReportData.map(t => [
-            t.dateStr, t.pair, t.type, t.result.toFixed(2), t.lots || '',
-            t.strategyId ? (window.__currentStrategies.find(s=>s.id === t.strategyId)?.name || '') : ''
-        ]),
-        startY: 90,
-    });
-    
-    doc.save(`reporte_${account.name}_${new Date().toISOString().slice(0,10)}.pdf`);
+    return { maxWinningStreak, maxLosingStreak };
 }
 
 function recalcFromTrades(trades) {
@@ -2926,6 +2846,66 @@ function exportToCSV() {
     document.body.removeChild(link);
 }
 
+function exportToExcel() {
+    if (lastReportData.length === 0) { return alert('Primero genera un reporte con datos.'); }
+    const data = lastReportData.map(t => ({
+        Fecha: t.dateStr, Simbolo: t.pair, Tipo: t.type, 'Resultado ($)': t.result,
+        Lotes: t.lots || '', Estrategia: t.strategyId ? (window.__currentStrategies.find(s=>s.id === t.strategyId)?.name || '') : ''
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Reporte");
+    XLSX.writeFile(workbook, `reporte_journal_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+
+async function exportToPDF() {
+    if (lastReportData.length === 0) { return alert('Primero genera un reporte con datos.'); }
+    const accountId = $('#report-account-select').value;
+    if (!accountId) { return alert('Por favor, selecciona una cuenta para el reporte.'); }
+
+    const account = window.__currentAccounts.find(a => a.id === accountId);
+    const user = auth.currentUser;
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const pageHeight = doc.internal.pageSize.height;
+    
+    const reportId = `REP-${user.uid.slice(0, 4)}-${Date.now()}`;
+    const dataString = JSON.stringify(lastReportData);
+    const reportHash = await generateSHA256(dataString);
+
+    doc.setFontSize(20);
+    doc.text("Reporte de Operaciones", 14, 22);
+    doc.setFontSize(10);
+    doc.text(`Cuenta: ${account.name}`, 14, 30);
+    doc.text(`Broker: ${account.broker || 'No especificado'}`, 14, 35);
+    doc.text(`Balance Inicial: $${account.balance.toFixed(2)}`, 14, 40);
+    
+    doc.text(`Desde: ${$('#report-start-date').value}`, 140, 30);
+    doc.text(`Hasta: ${$('#report-end-date').value}`, 140, 35);
+
+    doc.autoTable({
+        head: [['Fecha', 'Simbolo', 'Tipo', 'Resultado ($)', 'Lotes', 'Estrategia']],
+        body: lastReportData.map(t => [
+            t.dateStr, t.pair, t.type, t.result.toFixed(2), t.lots || '',
+            t.strategyId ? (window.__currentStrategies.find(s=>s.id === t.strategyId)?.name || '') : ''
+        ]),
+        startY: 50,
+        didDrawPage: function (data) {
+            doc.setFontSize(8);
+            doc.text(`Report ID: ${reportId}`, 14, pageHeight - 15);
+            doc.text(`Firma Digital (SHA-256): ${reportHash.slice(0,32)}...`, 14, pageHeight - 10);
+            doc.text('Página ' + doc.internal.getNumberOfPages(), doc.internal.pageSize.width - 14, pageHeight - 10, { align: 'right' });
+        }
+    });
+    
+    doc.save(`reporte_${account.name}_${new Date().toISOString().slice(0,10)}.pdf`);
+}
+
+
+$('#download-csv-btn').addEventListener('click', exportToCSV);
+$('#download-excel-btn').addEventListener('click', exportToExcel);
+$('#download-pdf-btn').addEventListener('click', exportToPDF);
 </script>
 
 <style>
