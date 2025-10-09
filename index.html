@@ -2865,7 +2865,6 @@ function exportToExcel() {
     XLSX.writeFile(workbook, `reporte_journal_${new Date().toISOString().slice(0,10)}.xlsx`);
 }
 
-<script type="module">
 // === Guardas para que no falle si las helpers no existen en este módulo ===
 if (typeof calculateStreaks !== 'function') {
   function calculateStreaks(trades) {
