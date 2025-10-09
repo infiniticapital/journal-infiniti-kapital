@@ -2866,71 +2866,98 @@ function exportToExcel() {
 }
 
 async function exportToPDF() {
-    if (lastReportData.length === 0) { return alert('Primero genera un reporte con datos.'); }
-    const accountId = $('#report-account-select').value;
-    if (!accountId) { return alert('Por favor, selecciona una cuenta para el reporte.'); }
+  // 1) Datos de origen
+  const trades = (window.currentReportData && Array.isArray(window.currentReportData)
+                  ? window.currentReportData
+                  : (window.__currentTrades || [])).slice();
+  if (!trades.length) { alert('Primero genera un reporte con datos.'); return; }
 
-    const account = window.__currentAccounts.find(a => a.id === accountId);
-    const user = auth.currentUser;
+  const accSelect = document.querySelector('#report-account-select');
+  if (!accSelect || !accSelect.value) { alert('Por favor, selecciona una cuenta para el reporte.'); return; }
 
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    const pageHeight = doc.internal.pageSize.height;
-    
-    const reportId = `REP-${user.uid.slice(0, 4)}-${Date.now()}`;
-    const dataString = JSON.stringify(lastReportData);
-    const reportHash = await generateSHA256(dataString);
+  const accounts = window.__currentAccounts || window.currentAccounts || [];
+  const account = accounts.find(a => a.id === accSelect.value) || { name: accSelect.value, balance: 0 };
+  const initialBalance = parseFloat(account.balance || 0);
 
-    doc.setFontSize(20);
-    doc.text("Reporte de Operaciones", 14, 22);
-    doc.setFontSize(10);
-    doc.text(`Cuenta: ${account.name}`, 14, 30);
-    doc.text(`Broker: ${account.broker || 'No especificado'}`, 14, 35);
-    doc.text(`Balance Inicial: $${account.balance.toFixed(2)}`, 14, 40);
-    
-    doc.text(`Desde: ${$('#report-start-date').value}`, 140, 30);
-    doc.text(`Hasta: ${$('#report-end-date').value}`, 140, 35);
+  // 2) Cálculo de estadísticas (DEBE IR ANTES de usar "stats")
+  const stats = calculateReportStats(trades, initialBalance);
+  const pctChange = initialBalance > 0 ? (stats.netProfit / initialBalance) * 100 : 0;
 
-    // --- Preparar Firma Digital (SHA-256) ---
-  const resumen = `${account.name}|${stats.finalBalance}|${stats.netProfit}|${stats.totalTrades}|${stats.profitFactor}|${stats.winRate.toFixed(1)}|${stats.maxDrawdownPercent.toFixed(2)}|${dateFrom}-${dateTo}`;
+  // 3) PDF base
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const pageHeight = doc.internal.pageSize.height;
+
+  // Encabezado
+  doc.setFontSize(20); doc.text("Reporte de Rendimiento", 14, 22);
+  doc.setFontSize(10);
+  const dateFrom = (document.querySelector('#report-start-date')?.value) || '';
+  const dateTo   = (document.querySelector('#report-end-date')?.value)   || '';
+  doc.text(`Cuenta: ${account.name || '—'}`, 14, 30);
+  doc.text(`Desde: ${dateFrom} | Hasta: ${dateTo}`, 14, 35);
+
+  // Resumen (columna izquierda y derecha)
+  doc.setFontSize(12); doc.text("Resumen de Rendimiento", 14, 50); doc.setFontSize(10);
+  let y = 58, yCol2 = 58;
+
+  // --- Izquierda ---
+  doc.text("Balance Inicial:", 14, y);   doc.text(`$${initialBalance.toFixed(2)}`, 80, y); y += 6;
+  doc.text("Beneficio Neto:", 14, y);    doc.text(`$${stats.netProfit.toFixed(2)}`, 80, y); y += 6;
+  doc.text("Balance Final:", 14, y);     doc.text(`$${stats.finalBalance.toFixed(2)}`, 80, y); y += 6;
+  doc.text("Total de Operaciones:", 14, y); doc.text(`${stats.totalTrades}`, 80, y); y += 6;
+  doc.text("Tasa de Acierto:", 14, y);   doc.text(`${stats.winRate.toFixed(1)}%`, 80, y); y += 6;
+  doc.text("Profit Factor:", 14, y);     doc.text(`${stats.profitFactor.toFixed(2)}`, 80, y); y += 6;
+
+  // --- Derecha ---
+  doc.text("Beneficio Bruto:", 110, yCol2);   doc.text(`$${stats.grossProfit.toFixed(2)}`, 170, yCol2); yCol2 += 6;
+  doc.text("Pérdida Bruta:", 110, yCol2);     doc.text(`-$${Math.abs(stats.grossLoss).toFixed(2)}`, 170, yCol2); yCol2 += 6;
+  doc.text("Racha Ganadora Máx.:", 110, yCol2); doc.text(`${stats.maxWinningStreak} trades`, 170, yCol2); yCol2 += 6;
+  doc.text("Racha Perdedora Máx.:", 110, yCol2); doc.text(`${stats.maxLosingStreak} trades`, 170, yCol2); yCol2 += 6;
+  doc.text("Drawdown Máximo:", 110, yCol2);   doc.text(`-$${stats.maxDrawdownValue.toFixed(2)} (${stats.maxDrawdownPercent.toFixed(2)}%)`, 170, yCol2); yCol2 += 6;
+  doc.text("% Cambio vs Inicial:", 110, yCol2); doc.text(`${pctChange.toFixed(2)}%`, 170, yCol2); yCol2 += 6;
+
+  // 4) Preparar FIRMA (después de calcular stats)
   let shaSignature = 'N/D';
   try {
-    if (window.generateSHA256) {
-      shaSignature = await window.generateSHA256(resumen);
-    } else {
-      console.warn('generateSHA256 no está disponible en window.');
-      shaSignature = 'ERR:NO_FUNC';
-    }
-  } catch(e) {
+    const resumen = `${account.name}|${initialBalance}|${stats.finalBalance}|${stats.netProfit}|${stats.totalTrades}|${stats.profitFactor}|${stats.winRate.toFixed(1)}|${stats.maxDrawdownPercent.toFixed(2)}|${pctChange.toFixed(2)}|${dateFrom}-${dateTo}`;
+    if (window.generateSHA256) shaSignature = await window.generateSHA256(resumen);
+    else shaSignature = 'ERR:NO_FUNC';
+  } catch (e) {
     console.error('SHA256 error', e);
-    shaSignature = 'ERR:' + (e && e.message ? e.message : 'UNKNOWN');
+    shaSignature = 'ERR:' + (e?.message || 'UNKNOWN');
   }
-  console.log('[PDF] Firma SHA-256:', shaSignature, 'Resumen:', resumen);
 
+  // 5) Imprimir firma UNA SOLA VEZ, encima de la tabla
+  doc.setFontSize(8);
+  const sigY = Math.max(y, yCol2) + 2;
+  doc.text(`Firma (SHA-256): ${shaSignature}`, 14, sigY);
 
-  // ---- Firma Digital (única, arriba del detalle) ----
-  try {
-    doc.setFontSize(8);
-    const sigY = Math.max(y, yCol2) + 2;
-    doc.text(`Firma (SHA-256): ${shaSignature}`, 14, sigY);
-  } catch(e) { console.warn('No se pudo pintar la firma en el encabezado:', e); }
+  // 6) Tabla de Operaciones (arranca debajo de la firma)
+  const strategies = (window.__currentStrategies || []).reduce((m, s) => { m[s.id] = s.name || s.id; return m; }, {});
+  const body = trades.map(t => [
+    t.dateStr || '', t.pair || t.symbol || '',
+    (t.type === 'buy' ? 'Compra' : (t.type === 'sell' ? 'Venta' : (t.type || ''))),
+    ((t.result ?? 0).toFixed ? (t.result ?? 0).toFixed(2) : Number(t.result ?? 0).toFixed(2)),
+    (t.lots ?? t.lot ?? ''), (t.strategyId ? (strategies[t.strategyId] || t.strategyId) : (t.strategy || ''))
+  ]);
 
   doc.autoTable({
-
-        head: [['Fecha', 'Simbolo', 'Tipo', 'Resultado ($)', 'Lotes', 'Estrategia']],
-        body: lastReportData.map(t => [
-            t.dateStr, t.pair, t.type, t.result.toFixed(2), t.lots || '',
-            t.strategyId ? (window.__currentStrategies.find(s=>s.id === t.strategyId)?.name || '') : ''
-        ]),
-        startY: Math.max(y, yCol2) + 10, 14, pageHeight - 15);
-            doc.text(`Firma Digital (SHA-256): ${reportHash.slice(0,32)}...`, 14, pageHeight - 10);
-            doc.text('Página ' + doc.internal.getNumberOfPages(), doc.internal.pageSize.width - 14, pageHeight - 10, { align: 'right' `, 14, pageH - 10);
-      // Número de página a la derecha
-      doc.text('Página ' + doc.internal.getNumberOfPages(), pageW - 14, pageH - 10, { align: 'right' });
+    head: [['Fecha', 'Símbolo', 'Tipo', 'Resultado ($)', 'Lotes', 'Estrategia']],
+    body,
+    startY: sigY + 10,
+    didDrawPage: function () {
+      doc.setFontSize(8);
+      doc.text('Página ' + doc.internal.getNumberOfPages(),
+               doc.internal.pageSize.width - 14,
+               doc.internal.pageSize.height - 10,
+               { align: 'right' });
     }
   });
-}
-    });
+
+  // 7) Guardar
+  const fileName = `reporte_${(account.name || 'cuenta')}_${new Date().toISOString().slice(0,10)}.pdf`;
+  doc.save(fileName);
+});
     
     doc.save(`reporte_${account.name}_${new Date().toISOString().slice(0,10)}.pdf`);
 }
