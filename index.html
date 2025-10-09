@@ -2941,23 +2941,26 @@ async function exportToPDF() {
     (t.lots ?? t.lot ?? ''), (t.strategyId ? (strategies[t.strategyId] || t.strategyId) : (t.strategy || ''))
   ]);
 
+    // ... queda igual tu doc.autoTable({...})
   doc.autoTable({
     head: [['Fecha', 'Símbolo', 'Tipo', 'Resultado ($)', 'Lotes', 'Estrategia']],
     body,
     startY: sigY + 10,
     didDrawPage: function () {
       doc.setFontSize(8);
-      doc.text('Página ' + doc.internal.getNumberOfPages(),
-               doc.internal.pageSize.width - 14,
-               doc.internal.pageSize.height - 10,
-               { align: 'right' });
+      doc.text(
+        'Página ' + doc.internal.getNumberOfPages(),
+        doc.internal.pageSize.width - 14,
+        doc.internal.pageSize.height - 10,
+        { align: 'right' }
+      );
     }
   });
 
-  // 7) Guardar
+  // 7) Guardar  (—> OJO: solo una vez, sin `});` extra)
   const fileName = `reporte_${(account.name || 'cuenta')}_${new Date().toISOString().slice(0,10)}.pdf`;
   doc.save(fileName);
-});
+} // <-- cierre ÚNICO de exportToPDF()
     
     doc.save(`reporte_${account.name}_${new Date().toISOString().slice(0,10)}.pdf`);
 }
