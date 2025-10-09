@@ -1198,13 +1198,15 @@ function updateAccountsUI(accounts) {
         card.className = 'card';
         card.style.marginTop = '10px';
 
-        // --- Lógica de cálculo (mejorada) ---
         const initialBalance = parseFloat(a.balance) || 0;
-        const accountTrades = trades.filter(t => t.accountId === a.id);
-        const profit = accountTrades.reduce((sum, t) => sum + t.result, 0);
+        
+        // --- LÍNEA CORREGIDA ---
+        // Ahora busca en 'accountId' o en 'account' para encontrar las operaciones
+        const accountTrades = trades.filter(t => (t.accountId === a.id || t.account === a.id));
+        
+        const profit = accountTrades.reduce((sum, t) => sum + (t.result || 0), 0);
         const dynamicBalance = initialBalance + profit;
 
-        // Calcula el porcentaje de ganancia/pérdida
         const profitPercent = initialBalance > 0 ? (profit / initialBalance) * 100 : 0;
         const profitColor = profit >= 0 ? 'var(--success)' : 'var(--danger)';
         const formattedInitialBalance = initialBalance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
@@ -1233,27 +1235,6 @@ function updateAccountsUI(accounts) {
         el.appendChild(card);
     });
 }
-
-function calculateDrawdown(trades, initialBalance) {
-    let peakEquity = initialBalance;
-    let maxDrawdownValue = 0;
-
-    let currentEquity = initialBalance;
-    (trades || []).forEach(trade => {
-        currentEquity += trade.result;
-        if (currentEquity > peakEquity) {
-            peakEquity = currentEquity;
-        }
-        const drawdown = peakEquity - currentEquity;
-        if (drawdown > maxDrawdownValue) {
-            maxDrawdownValue = drawdown;
-        }
-    });
-
-    const maxDrawdownPercent = peakEquity > 0 ? (maxDrawdownValue / peakEquity) * 100 : 0;
-    return { maxDrawdownValue, maxDrawdownPercent };
-}
-
 
 function renderAnalytics(trades) {
     const t = trades || [];
@@ -1458,12 +1439,10 @@ function populateAnalyticsFilter(strategies) {
   function updateChallengeTrackerUI(trades, settings) {
     const accounts = window.__currentAccounts || [];
 
-    // --- LÓGICA MEJORADA Y MÁS ESTRICTA ---
     // 1. Busca explícitamente la cuenta designada como 'challenge'.
     const challengeAccount = accounts.find(acc => acc.type && acc.type.toLowerCase() === 'challenge');
 
     // 2. Si NO se encuentra NINGUNA cuenta de tipo 'challenge', reinicia la tarjeta y detiene la función.
-    //    Esto evita que se muestren datos incorrectos o de otra cuenta.
     if (!challengeAccount) {
         $('#challenge-current-balance').textContent = '$0.00';
         $('#challenge-profit').textContent = `+0.0%`;
@@ -1476,10 +1455,13 @@ function populateAnalyticsFilter(strategies) {
         return;
     }
 
-    // --- El resto de la función ahora tiene la garantía de tener la cuenta correcta ---
     const initialBalance = parseFloat(challengeAccount.balance) || 0;
-    const challengeTrades = (trades || []).filter(t => t.accountId === challengeAccount.id);
-    const totalProfit = challengeTrades.reduce((sum, trade) => sum + trade.result, 0);
+    
+    // --- LÍNEA CORREGIDA ---
+    // Ahora busca en 'accountId' o en 'account' para encontrar las operaciones del challenge
+    const challengeTrades = (trades || []).filter(t => (t.accountId === challengeAccount.id || t.account === challengeAccount.id));
+    
+    const totalProfit = challengeTrades.reduce((sum, trade) => sum + (trade.result || 0), 0);
     const currentBalance = initialBalance + totalProfit;
 
     const profitPercent = initialBalance > 0 ? (totalProfit / initialBalance) * 100 : 0;
@@ -1494,8 +1476,8 @@ function populateAnalyticsFilter(strategies) {
 
     // Actualizar la interfaz
     $('#challenge-current-balance').textContent = `$${currentBalance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-    $('#challenge-profit').textContent = `${profitPercent.toFixed(2)}%`;
-    $('#challenge-drawdown').textContent = `${drawdownPercent.toFixed(2)}%`;
+    $('#challenge-profit').textContent = `${profitPercent >= 0 ? '+' : ''}${profitPercent.toFixed(1)}%`;
+    $('#challenge-drawdown').textContent = `${drawdownPercent.toFixed(1)}%`;
     $('#challenge-trades').textContent = challengeTrades.length;
     $('#challenge-win-rate').textContent = `${winRate.toFixed(1)}%`;
     $('#challenge-progress-value').textContent = `${progressPercent.toFixed(1)}%`;
