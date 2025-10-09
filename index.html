@@ -1505,28 +1505,48 @@ function calculateRiskMetrics(trades, initialBalance) {
     }
 }
   
+// Reemplaza tu función calculateStreaks con esta
 function calculateStreaks(trades) {
-    let maxWinningStreak = 0;
-    let currentWinningStreak = 0;
-    let maxLosingStreak = 0;
-    let currentLosingStreak = 0;
+    let maxWinningStreak = 0, currentWinningStreak = 0;
+    let maxLosingStreak = 0, currentLosingStreak = 0;
+    
+    // Variables nuevas para el valor monetario
+    let maxWinningValue = 0, currentWinningValue = 0;
+    let maxLosingValue = 0, currentLosingValue = 0;
 
     (trades || []).forEach(trade => {
         if (trade.result > 0) {
             currentWinningStreak++;
+            currentWinningValue += trade.result; // Suma el valor
             currentLosingStreak = 0;
+            currentLosingValue = 0; // Resetea el valor
         } else if (trade.result < 0) {
             currentLosingStreak++;
+            currentLosingValue += trade.result; // Suma el valor
             currentWinningStreak = 0;
+            currentWinningValue = 0; // Resetea el valor
         }
+        
+        // Actualiza la racha ganadora máxima y su valor
         if (currentWinningStreak > maxWinningStreak) {
             maxWinningStreak = currentWinningStreak;
+            maxWinningValue = currentWinningValue;
         }
+        
+        // Actualiza la racha perdedora máxima y su valor
         if (currentLosingStreak > maxLosingStreak) {
             maxLosingStreak = currentLosingStreak;
+            maxLosingValue = currentLosingValue;
         }
     });
-    return { maxWinningStreak, maxLosingStreak };
+
+    // Devuelve los conteos y también los valores
+    return { 
+        maxWinningStreak, 
+        maxLosingStreak, 
+        maxWinningValue, 
+        maxLosingValue 
+    };
 }
 
 function recalcFromTrades(trades) {
@@ -2858,6 +2878,8 @@ function exportToExcel() {
     XLSX.writeFile(workbook, `reporte_journal_${new Date().toISOString().slice(0,10)}.xlsx`);
 }
 
+// Reemplaza tu función exportToPDF con esta
+
 async function exportToPDF() {
     if (lastReportData.length === 0) { return alert('Primero genera un reporte con datos.'); }
     const accountId = $('#report-account-select').value;
@@ -2866,42 +2888,50 @@ async function exportToPDF() {
     const account = window.__currentAccounts.find(a => a.id === accountId);
     const user = auth.currentUser;
 
+    // 1. Calculamos todas las estadísticas
+    const stats = calculateReportStats(lastReportData, account.balance);
+    
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
-    const pageHeight = doc.internal.pageSize.height;
     
-    const reportId = `REP-${user.uid.slice(0, 4)}-${Date.now()}`;
-    const dataString = JSON.stringify(lastReportData);
-    const reportHash = await generateSHA256(dataString);
-
+    // --- Sección del Título ---
     doc.setFontSize(20);
-    doc.text("Reporte de Operaciones", 14, 22);
+    doc.text("Reporte de Rendimiento", 14, 22);
     doc.setFontSize(10);
     doc.text(`Cuenta: ${account.name}`, 14, 30);
-    doc.text(`Broker: ${account.broker || 'No especificado'}`, 14, 35);
-    doc.text(`Balance Inicial: $${account.balance.toFixed(2)}`, 14, 40);
-    
-    doc.text(`Desde: ${$('#report-start-date').value}`, 140, 30);
-    doc.text(`Hasta: ${$('#report-end-date').value}`, 140, 35);
+    doc.text(`Desde: ${$('#report-start-date').value} | Hasta: ${$('#report-end-date').value}`, 14, 35);
 
+    // --- NUEVA SECCIÓN: RESUMEN DE ESTADÍSTICAS ---
+    doc.setFontSize(12);
+    doc.text("Resumen de Rendimiento", 14, 50);
+    doc.setFontSize(10);
+    
+    // Columna 1
+    doc.text("Beneficio Neto:", 14, 58); doc.text(`$${stats.netProfit.toFixed(2)}`, 60, 58);
+    doc.text("Balance Final:", 14, 64); doc.text(`$${stats.finalBalance.toFixed(2)}`, 60, 64);
+    doc.text("Total de Operaciones:", 14, 70); doc.text(`${stats.totalTrades}`, 60, 70);
+    doc.text("Tasa de Acierto:", 14, 76); doc.text(`${stats.winRate.toFixed(1)}%`, 60, 76);
+    doc.text("Profit Factor:", 14, 82); doc.text(`${stats.profitFactor.toFixed(2)}`, 60, 82);
+    
+    // Columna 2
+    doc.text("Beneficio Bruto:", 110, 58); doc.text(`$${stats.grossProfit.toFixed(2)}`, 160, 58);
+    doc.text("Pérdida Bruta:", 110, 64); doc.text(`-$${Math.abs(stats.grossLoss).toFixed(2)}`, 160, 64);
+    doc.text("Racha Ganadora Máx.:", 110, 70); doc.text(`${stats.maxWinningStreak} trades`, 160, 70);
+    doc.text("Racha Perdedora Máx.:", 110, 76); doc.text(`${stats.maxLosingStreak} trades`, 160, 76);
+    doc.text("Drawdown Máximo:", 110, 82); doc.text(`-$${stats.maxDrawdownValue.toFixed(2)} (${stats.maxDrawdownPercent.toFixed(2)}%)`, 160, 82);
+    
+    // --- Tabla de Operaciones (como ya la tenías) ---
     doc.autoTable({
-        head: [['Fecha', 'Simbolo', 'Tipo', 'Resultado ($)', 'Lotes', 'Estrategia']],
+        head: [['Fecha', 'Símbolo', 'Tipo', 'Resultado ($)', 'Lotes', 'Estrategia']],
         body: lastReportData.map(t => [
             t.dateStr, t.pair, t.type, t.result.toFixed(2), t.lots || '',
             t.strategyId ? (window.__currentStrategies.find(s=>s.id === t.strategyId)?.name || '') : ''
         ]),
-        startY: 50,
-        didDrawPage: function (data) {
-            doc.setFontSize(8);
-            doc.text(`Report ID: ${reportId}`, 14, pageHeight - 15);
-            doc.text(`Firma Digital (SHA-256): ${reportHash.slice(0,32)}...`, 14, pageHeight - 10);
-            doc.text('Página ' + doc.internal.getNumberOfPages(), doc.internal.pageSize.width - 14, pageHeight - 10, { align: 'right' });
-        }
+        startY: 90, // Ajustamos la posición inicial de la tabla para dar espacio al resumen
     });
     
     doc.save(`reporte_${account.name}_${new Date().toISOString().slice(0,10)}.pdf`);
 }
-
 
 $('#download-csv-btn').addEventListener('click', exportToCSV);
 $('#download-excel-btn').addEventListener('click', exportToExcel);
