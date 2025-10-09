@@ -2865,6 +2865,66 @@ function exportToExcel() {
     XLSX.writeFile(workbook, `reporte_journal_${new Date().toISOString().slice(0,10)}.xlsx`);
 }
 
+<script type="module">
+// === Guardas para que no falle si las helpers no existen en este módulo ===
+if (typeof calculateStreaks !== 'function') {
+  function calculateStreaks(trades) {
+    let maxWinning = 0, currentWinning = 0, maxLosing = 0, currentLosing = 0;
+    (trades || []).forEach(t => {
+      const r = Number(t?.result ?? 0);
+      if (r > 0) { currentWinning++; currentLosing = 0; }
+      else if (r < 0) { currentLosing++; currentWinning = 0; }
+      if (currentWinning > maxWinning) maxWinning = currentWinning;
+      if (currentLosing > maxLosing) maxLosing = currentLosing;
+    });
+    return { maxWinning, maxLosing };
+  }
+}
+
+if (typeof calculateDrawdown !== 'function') {
+  function calculateDrawdown(trades, initialBalance) {
+    let peakEquity = initialBalance || 0;
+    let currentEquity = initialBalance || 0;
+    let maxDrawdownValue = 0;
+    (trades || []).forEach(t => {
+      currentEquity += Number(t?.result ?? 0);
+      if (currentEquity > peakEquity) peakEquity = currentEquity;
+      const dd = peakEquity - currentEquity;
+      if (dd > maxDrawdownValue) maxDrawdownValue = dd;
+    });
+    const maxDrawdownPercent = (initialBalance > 0) ? (maxDrawdownValue / initialBalance) * 100 : 0;
+    return { maxDrawdownValue, maxDrawdownPercent };
+  }
+}
+
+if (typeof calculateReportStats !== 'function') {
+  function calculateReportStats(trades, initialBalance) {
+    const t = trades || [];
+    const wins   = t.filter(x => Number(x?.result ?? 0) > 0);
+    const losses = t.filter(x => Number(x?.result ?? 0) < 0);
+    const grossProfit = wins.reduce((s, x) => s + Number(x?.result ?? 0), 0);
+    const grossLoss   = losses.reduce((s, x) => s + Number(x?.result ?? 0), 0);
+    const netProfit   = grossProfit + grossLoss;
+    const profitFactor = Math.abs(grossLoss) > 0 ? (grossProfit / Math.abs(grossLoss)) : 0;
+    const streaks = calculateStreaks(t);
+    const drawdown = calculateDrawdown(t, initialBalance || 0);
+    return {
+      netProfit,
+      finalBalance: (initialBalance || 0) + netProfit,
+      totalTrades: t.length,
+      winRate: t.length ? (wins.length / t.length) * 100 : 0,
+      grossProfit,
+      grossLoss,
+      profitFactor,
+      maxWinningStreak: streaks.maxWinning,
+      maxLosingStreak: streaks.maxLosing,
+      maxDrawdownValue: drawdown.maxDrawdownValue,
+      maxDrawdownPercent: drawdown.maxDrawdownPercent,
+    };
+  }
+}
+</script>
+
 async function exportToPDF() {
   // 1) Datos de origen
   const trades = (window.currentReportData && Array.isArray(window.currentReportData)
