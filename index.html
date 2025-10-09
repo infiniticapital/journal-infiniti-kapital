@@ -3238,5 +3238,21 @@ function setDateInputs(range) {
 })();
 </script>
 
+
+<script type="module">
+// --- Single delegated listener for eye toggle (prevents double toggles) ---
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('#toggle-password');
+  if (!btn) return;
+  e.preventDefault();
+  const passInput = document.querySelector('#auth-pass');
+  const icon = btn.querySelector('i');
+  if (!passInput || !icon) return;
+  const isPassword = passInput.type === 'password';
+  passInput.type = isPassword ? 'text' : 'password';
+  icon.className = isPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
+});
+</script>
+
 </body>
 </html>
