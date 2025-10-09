@@ -1070,6 +1070,59 @@ const functions = getFunctions(app);
 window.auth = auth;
 window.db = db;
 
+// ===== PEGA ESTAS DOS FUNCIONES EN TU SCRIPT PRINCIPAL =====
+
+async function saveAccount(accountData) {
+  const user = auth.currentUser;
+  if (!user) throw new Error("Debes iniciar sesión para guardar una cuenta.");
+
+  // Preparamos los datos y nos aseguramos de no enviar 'undefined'
+  const dataToSave = {
+    name: accountData.name || "Cuenta sin nombre",
+    broker: accountData.broker || "",
+    balance: parseFloat(accountData.balance) || 0,
+    type: accountData.type || "personal"
+  };
+
+  // --- ¡AQUÍ ESTÁ LA LÍNEA DE DIAGNÓSTICO! ---
+  console.log("Datos de CUENTA que se van a guardar:", dataToSave);
+
+  if (accountData.id) {
+    // Si hay un ID, actualizamos el documento existente
+    const accountRef = doc(db, "users", user.uid, "accounts", accountData.id);
+    await updateDoc(accountRef, dataToSave);
+  } else {
+    // Si no hay ID, creamos un documento nuevo
+    dataToSave.createdAt = serverTimestamp();
+    await addDoc(collection(db, "users", user.uid, "accounts"), dataToSave);
+  }
+}
+
+async function saveStrategy(strategyData) {
+  const user = auth.currentUser;
+  if (!user) throw new Error("Debes iniciar sesión para guardar una estrategia.");
+
+  // Preparamos los datos
+  const dataToSave = {
+    name: strategyData.name || "Estrategia sin nombre",
+    desc: strategyData.desc || ""
+  };
+  
+  // --- ¡AQUÍ ESTÁ LA LÍNEA DE DIAGNÓSTICO! ---
+  console.log("Datos de ESTRATEGIA que se van a guardar:", dataToSave);
+
+  if (strategyData.id) {
+    // Actualizar
+    const strategyRef = doc(db, "users", user.uid, "strategies", strategyData.id);
+    dataToSave.updatedAt = serverTimestamp();
+    await updateDoc(strategyRef, dataToSave);
+  } else {
+    // Crear
+    dataToSave.createdAt = serverTimestamp();
+    await addDoc(collection(db, "users", user.uid, "strategies"), dataToSave);
+  }
+}
+
 // --- INICIO DE FUNCIONES DE CÁLCULO Y RENDERIZADO ---
 
 function updateRecentTrades(trades) {
