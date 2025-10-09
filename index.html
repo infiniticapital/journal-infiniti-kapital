@@ -2891,7 +2891,13 @@ async function exportToPDF() {
     doc.text(`Desde: ${$('#report-start-date').value}`, 140, 30);
     doc.text(`Hasta: ${$('#report-end-date').value}`, 140, 35);
 
-    doc.autoTable({
+    // --- Preparar Firma Digital (SHA-256) ---
+  const resumen = `${account.name}|${stats.finalBalance}|${stats.netProfit}|${stats.totalTrades}|${stats.profitFactor}|${stats.winRate.toFixed(1)}|${stats.maxDrawdownPercent.toFixed(2)}|${dateFrom}-${dateTo}`;
+  let shaSignature = '';
+  try { shaSignature = await window.generateSHA256(resumen); } catch(e) { console.error('SHA256 error', e); }
+
+  doc.autoTable({
+
         head: [['Fecha', 'Simbolo', 'Tipo', 'Resultado ($)', 'Lotes', 'Estrategia']],
         body: lastReportData.map(t => [
             t.dateStr, t.pair, t.type, t.result.toFixed(2), t.lots || '',
@@ -2902,8 +2908,18 @@ async function exportToPDF() {
             doc.setFontSize(8);
             doc.text(`Report ID: ${reportId}`, 14, pageHeight - 15);
             doc.text(`Firma Digital (SHA-256): ${reportHash.slice(0,32)}...`, 14, pageHeight - 10);
-            doc.text('Página ' + doc.internal.getNumberOfPages(), doc.internal.pageSize.width - 14, pageHeight - 10, { align: 'right' });
-        }
+            doc.text('Página ' + doc.internal.getNumberOfPages(), doc.internal.pageSize.width - 14, pageHeight - 10, { align: 'right' ,
+    didDrawPage: function (data) {
+      doc.setFontSize(8);
+      const pageW = doc.internal.pageSize.width;
+      const pageH = doc.internal.pageSize.height;
+      // Firma a la izquierda
+      doc.text(`Firma (SHA-256): ${shaSignature}`, 14, pageH - 10);
+      // Número de página a la derecha
+      doc.text('Página ' + doc.internal.getNumberOfPages(), pageW - 14, pageH - 10, { align: 'right' });
+    }
+  });
+}
     });
     
     doc.save(`reporte_${account.name}_${new Date().toISOString().slice(0,10)}.pdf`);
