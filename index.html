@@ -2962,10 +2962,6 @@ async function exportToPDF() {
   doc.save(fileName);
 } // <-- cierre ÚNICO de exportToPDF()
     
-    doc.save(`reporte_${account.name}_${new Date().toISOString().slice(0,10)}.pdf`);
-}
-
-
 $('#download-csv-btn').addEventListener('click', exportToCSV);
 $('#download-excel-btn').addEventListener('click', exportToExcel);
 $('#download-pdf-btn').addEventListener('click', exportToPDF);
