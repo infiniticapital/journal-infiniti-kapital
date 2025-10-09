@@ -2893,8 +2893,27 @@ async function exportToPDF() {
 
     // --- Preparar Firma Digital (SHA-256) ---
   const resumen = `${account.name}|${stats.finalBalance}|${stats.netProfit}|${stats.totalTrades}|${stats.profitFactor}|${stats.winRate.toFixed(1)}|${stats.maxDrawdownPercent.toFixed(2)}|${dateFrom}-${dateTo}`;
-  let shaSignature = '';
-  try { shaSignature = await window.generateSHA256(resumen); } catch(e) { console.error('SHA256 error', e); }
+  let shaSignature = 'N/D';
+  try {
+    if (window.generateSHA256) {
+      shaSignature = await window.generateSHA256(resumen);
+    } else {
+      console.warn('generateSHA256 no está disponible en window.');
+      shaSignature = 'ERR:NO_FUNC';
+    }
+  } catch(e) {
+    console.error('SHA256 error', e);
+    shaSignature = 'ERR:' + (e && e.message ? e.message : 'UNKNOWN');
+  }
+  console.log('[PDF] Firma SHA-256:', shaSignature, 'Resumen:', resumen);
+
+
+  // ---- Firma Digital (única, arriba del detalle) ----
+  try {
+    doc.setFontSize(8);
+    const sigY = Math.max(y, yCol2) + 2;
+    doc.text(`Firma (SHA-256): ${shaSignature}`, 14, sigY);
+  } catch(e) { console.warn('No se pudo pintar la firma en el encabezado:', e); }
 
   doc.autoTable({
 
@@ -2903,18 +2922,9 @@ async function exportToPDF() {
             t.dateStr, t.pair, t.type, t.result.toFixed(2), t.lots || '',
             t.strategyId ? (window.__currentStrategies.find(s=>s.id === t.strategyId)?.name || '') : ''
         ]),
-        startY: 50,
-        didDrawPage: function (data) {
-            doc.setFontSize(8);
-            doc.text(`Report ID: ${reportId}`, 14, pageHeight - 15);
+        startY: Math.max(y, yCol2) + 10, 14, pageHeight - 15);
             doc.text(`Firma Digital (SHA-256): ${reportHash.slice(0,32)}...`, 14, pageHeight - 10);
-            doc.text('Página ' + doc.internal.getNumberOfPages(), doc.internal.pageSize.width - 14, pageHeight - 10, { align: 'right' ,
-    didDrawPage: function (data) {
-      doc.setFontSize(8);
-      const pageW = doc.internal.pageSize.width;
-      const pageH = doc.internal.pageSize.height;
-      // Firma a la izquierda
-      doc.text(`Firma (SHA-256): ${shaSignature}`, 14, pageH - 10);
+            doc.text('Página ' + doc.internal.getNumberOfPages(), doc.internal.pageSize.width - 14, pageHeight - 10, { align: 'right' `, 14, pageH - 10);
       // Número de página a la derecha
       doc.text('Página ' + doc.internal.getNumberOfPages(), pageW - 14, pageH - 10, { align: 'right' });
     }
