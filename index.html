@@ -1237,9 +1237,13 @@ function updateAccountsUI(accounts) {
 
         const initialBalance = parseFloat(a.balance) || 0;
         
-        // --- LÍNEA CORREGIDA ---
-        // Busca en 'accountId' o en 'account' para encontrar las operaciones.
-        const accountTrades = trades.filter(t => (t.accountId === a.id || t.account === a.id));
+        // --- LÍNEA CORREGIDA Y MEJORADA ---
+        // Busca trades específicos para cada cuenta
+        const accountTrades = trades.filter(t => {
+            return (t.accountId === a.id) || 
+                   (t.account === a.id) ||
+                   (t.inChallenge && a.type === 'challenge' && (t.accountId === a.id || t.account === a.id)); // Más específico
+        });
         
         const profit = accountTrades.reduce((sum, t) => sum + (t.result || 0), 0);
         const dynamicBalance = initialBalance + profit;
@@ -2058,14 +2062,24 @@ window.updateAllCalculations = () => {
     
     const allTrades = window.__currentTrades || [];
     const settings = window.__currentSettings || {};
-    const selectedStrategyId = $('#analytics-strategy-filter')?.value;
-    const filteredTrades = selectedStrategyId ? allTrades.filter(t => t.strategyId === selectedStrategyId) : allTrades;
+    
+    // CORREGIR: Obtener el valor correcto del filtro
+    const selectedStrategyId = $('#analytics-strategy-filter')?.value || '';
+    const filteredTrades = selectedStrategyId && selectedStrategyId !== '' 
+        ? allTrades.filter(t => t.strategyId === selectedStrategyId) 
+        : allTrades; // Si no hay filtro, usar TODOS los trades
+    
+    console.log('📊 FILTRADO ANALÍTICAS:', {
+        totalTrades: allTrades.length,
+        filteredTrades: filteredTrades.length,
+        strategyFilter: selectedStrategyId
+    });
     
     // EJECUTAR TODOS LOS CÁLCULOS
     recalcFromTrades(allTrades);
     renderHistorySummary(allTrades);
     renderDetailedHistory(allTrades); 
-    renderAnalytics(filteredTrades);
+    renderAnalytics(filteredTrades); // Pasar los trades filtrados CORRECTAMENTE
     renderCalendar(allTrades);
     updateChallengeTrackerUI(allTrades, settings);
     updateAccountsUI(window.__currentAccounts);
@@ -3115,11 +3129,12 @@ function calculateReportStats(trades, initialBalance = 0) {
 }
 window.calculateReportStats = calculateReportStats;
 
-
 function renderAnalytics(trades) {
     console.log('📈 RENDERIZANDO ANALÍTICAS PARA:', trades?.length || 0, 'operaciones');
+    console.log('🔍 DATOS DE TRADES:', trades); // Debug para ver qué trades llegan
     
     if (!trades || trades.length === 0) {
+        console.log('⚠️ No hay trades para analíticas');
         // Resetear analíticas si no hay datos
         $('#analytics-total-profit').textContent = '$0.00';
         $('#analytics-win-rate').textContent = '0%';
@@ -3136,6 +3151,13 @@ function renderAnalytics(trades) {
     // CÁLCULOS PARA ANALÍTICAS
     const wins = trades.filter(t => (t.result || 0) > 0);
     const losses = trades.filter(t => (t.result || 0) < 0);
+    
+    console.log('📊 ESTADÍSTICAS:', {
+        totalTrades: trades.length,
+        wins: wins.length,
+        losses: losses.length,
+        tradesResults: trades.map(t => t.result)
+    });
     
     const totalProfit = trades.reduce((sum, t) => sum + (t.result || 0), 0);
     const winRate = trades.length ? (wins.length / trades.length) * 100 : 0;
@@ -3154,6 +3176,18 @@ function renderAnalytics(trades) {
     const settings = window.__currentGeneralSettings || { initialBalance: 10000 };
     const initialBalance = parseFloat(settings.initialBalance) || 10000;
     const { maxDrawdown, maxDrawdownPct } = calculateDrawdown(trades, initialBalance);
+
+    console.log('🧮 RESULTADOS CÁLCULOS:', {
+        totalProfit,
+        winRate,
+        profitFactor,
+        riskReward,
+        avgWin,
+        avgLoss,
+        expectancy,
+        maxDrawdown,
+        maxDrawdownPct
+    });
 
     // ACTUALIZAR UI DE ANALÍTICAS
     $('#analytics-total-profit').textContent = `$${totalProfit.toFixed(2)}`;
@@ -3661,31 +3695,48 @@ window.calculateRiskMetrics = calculateRiskMetrics;
   if (window.currentStats) render(window.currentStats);
 })();
 
-
-
-// === FIX: minimal calculateDrawdown (added) ===
 function calculateDrawdown(trades = [], initialBalance = 0) {
-  // Builds equity and computes maximum drawdown
-  let equity = Number(initialBalance) || 0;
-  let peak = equity;
-  let maxDD = 0;
-  const curve = [equity];
-  for (const t of (Array.isArray(trades) ? trades : [])) {
-    const r = Number((t && (t.result ?? t.pnl ?? t.profit)) || 0);
-    equity += r;
-    curve.push(equity);
-    if (equity > peak) peak = equity;
-    const dd = peak - equity;
-    if (dd > maxDD) maxDD = dd;
-  }
-  const base = Number(initialBalance) || 0;
-  const maxDDPct = base > 0 ? (maxDD / base) * 100 : 0;
-  return { maxDrawdown: maxDD, maxDrawdownPct: maxDDPct, equityCurve: curve };
+    console.log('📉 CALCULANDO DRAWDOWN PARA:', trades?.length || 0, 'operaciones');
+    
+    if (!trades || trades.length === 0) {
+        return { maxDrawdown: 0, maxDrawdownPct: 0 };
+    }
+
+    const initial = parseFloat(initialBalance) || 10000;
+    let equity = initial;
+    let peak = initial;
+    let maxDrawdown = 0;
+
+    trades.forEach(trade => {
+        const result = parseFloat(trade.result) || 0;
+        equity += result;
+        
+        if (equity > peak) {
+            peak = equity;
+        }
+        
+        const drawdown = peak - equity;
+        if (drawdown > maxDrawdown) {
+            maxDrawdown = drawdown;
+        }
+    });
+
+    const maxDrawdownPct = initial > 0 ? (maxDrawdown / initial) * 100 : 0;
+    
+    console.log('✅ DRAWDOWN CALCULADO:', { 
+        maxDrawdown, 
+        maxDrawdownPct,
+        initialBalance: initial,
+        finalEquity: equity
+    });
+    
+    return { 
+        maxDrawdown: Math.max(0, maxDrawdown), 
+        maxDrawdownPct: Math.max(0, maxDrawdownPct) 
+    };
 }
 window.calculateDrawdown = calculateDrawdown;
-
-
-
+  
 
 // === DATA COMPUTE: safe math + streaks (guarded) ===
 window.__ikNum = window.__ikNum || function(v){ v = Number(v); return (isFinite(v) ? v : 0); };
