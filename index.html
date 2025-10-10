@@ -1166,7 +1166,6 @@ function populateReportAccountsDropdown(accounts) {
     
     if (currentVal) reportSelect.value = currentVal;
 }
-
 function updateAccountsUI(accounts) {
     const el = $('#accounts-container');
     if (!el) return;
@@ -1204,14 +1203,12 @@ function updateAccountsUI(accounts) {
 
         const initialBalance = parseFloat(a.balance) || 0;
         
-        // --- LÍNEA CORREGIDA ---
-        // Ahora busca en 'accountId' o en 'account' para encontrar las operaciones
+        // --- ESTA ES LA LÍNEA CORREGIDA ---
         const accountTrades = trades.filter(t => (t.accountId === a.id || t.account === a.id));
         
         const profit = accountTrades.reduce((sum, t) => sum + (t.result || 0), 0);
         const dynamicBalance = initialBalance + profit;
 
-        const profitPercent = initialBalance > 0 ? (profit / initialBalance) * 100 : 0;
         const profitColor = profit >= 0 ? 'var(--success)' : 'var(--danger)';
         const formattedInitialBalance = initialBalance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
