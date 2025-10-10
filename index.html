@@ -3398,6 +3398,70 @@ window.calculateRiskMetrics = calculateRiskMetrics;
   if (window.currentStats) render(window.currentStats);
 })();
 
+
+
+// === SAFE GUARDS & DIAGNOSTICS ===
+(function installDiagnostics(){
+  // Global error capture (visible & console)
+  if (!window.__IK_errorInstalled){
+    window.__IK_errorInstalled = true;
+    window.addEventListener('error', (e) => {
+      try {
+        const msg = (e && e.message) ? e.message : String(e);
+        console.error('[IK ERROR]', msg, e?.filename || '', e?.lineno || '', e?.error || '');
+        let box = document.getElementById('ik-error-box');
+        if (!box){
+          box = document.createElement('div');
+          box.id = 'ik-error-box';
+          box.style.cssText = 'position:fixed;left:8px;right:8px;bottom:8px;background:#1f2937;color:#fff;border:1px solid #ef4444;padding:10px 12px;border-radius:8px;z-index:999999;font:12px/1.4 ui-sans-serif,system-ui;max-height:40vh;overflow:auto;';
+          document.body.appendChild(box);
+        }
+        const item = document.createElement('div');
+        item.textContent = msg;
+        box.appendChild(item);
+      } catch(_){}
+    });
+    window.addEventListener('unhandledrejection', (e) => {
+      const msg = '[Promise Rejection] ' + (e?.reason?.message || String(e.reason || e));
+      console.error('[IK REJECTION]', e);
+      let box = document.getElementById('ik-error-box');
+      if (!box){
+        box = document.createElement('div');
+        box.id = 'ik-error-box';
+        box.style.cssText = 'position:fixed;left:8px;right:8px;bottom:8px;background:#1f2937;color:#fff;border:1px solid #ef4444;padding:10px 12px;border-radius:8px;z-index:999999;font:12px/1.4 ui-sans-serif,system-ui;max-height:40vh;overflow:auto;';
+        document.body.appendChild(box);
+      }
+      const item = document.createElement('div');
+      item.textContent = msg;
+      box.appendChild(item);
+    });
+  }
+
+  // Defer heavy inits until all scripts (CDNs) finished loading
+  if (!window.__IK_loadedBound){
+    window.__IK_loadedBound = true;
+    window.addEventListener('load', () => {
+      try {
+        // kick a recalc if data was already bound
+        if (typeof window.__IK_recalc === 'function') window.__IK_recalc();
+        // repaint challenge/analytics if state exists
+        if (window.currentStats) {
+          if (typeof window.__IK_renderChallengeCard === 'function') window.__IK_renderChallengeCard(window.currentStats);
+          if (typeof window.Chart !== 'undefined' && typeof window.__IK_equityChart === 'undefined') {
+            // force analytics repaint to build chart once libraries are present
+            window.dispatchEvent(new CustomEvent('ik:recalc', { detail: window.currentStats }));
+          }
+        }
+      } catch(err){
+        console.error('load-init error', err);
+      }
+    });
+  }
+
+  // Extra guards: never call Chart if missing
+  window.__IK_hasChart = () => typeof window.Chart !== 'undefined';
+})();
+
 </script>
 
 <style>
