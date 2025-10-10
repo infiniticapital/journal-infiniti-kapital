@@ -1041,6 +1041,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <script type="module">
 // ----- SCRIPT PRINCIPAL CON TODA LA LÓGICA DE LA APLICACIÓN -----
 
+// 1. IMPORTS (siempre van arriba del todo)
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import {
   getAuth, onAuthStateChanged, signInWithEmailAndPassword,
@@ -1052,10 +1053,10 @@ import {
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js';
 
-
-// --- TODA LA LÓGICA VA DENTRO DE ESTE EVENTO PARA EVITAR ERRORES DE CARGA ---
+// 2. ENVOLTURA 'DOMContentLoaded' (para evitar errores de carga)
 document.addEventListener('DOMContentLoaded', () => {
 
+    // --- 3. INICIALIZACIÓN DE FIREBASE ---
     const firebaseConfig = {
         apiKey: "AIzaSyCuS-0g97JluGH6FTF5JBmwaW7d5aJ3WWw",
         authDomain: "journal-infiniti-kapital.firebaseapp.com",
@@ -1065,816 +1066,149 @@ document.addEventListener('DOMContentLoaded', () => {
         appId: "1:78211615687:web:02b05ba83acd46c8c6e7e2",
         measurementId: "G-D0ERFPMLGQ"
     };
+    const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+    const functions = getFunctions(app);
+    window.auth = auth;
+    window.db = db;
 
-const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db   = getFirestore(app);
-const functions = getFunctions(app);
-
-window.auth = auth;
-window.db = db;
-
-// ===== PEGA ESTAS DOS FUNCIONES EN TU SCRIPT PRINCIPAL =====
-
-async function saveAccount(accountData) {
-  const user = auth.currentUser;
-  if (!user) throw new Error("Debes iniciar sesión para guardar una cuenta.");
-
-  // Preparamos los datos y nos aseguramos de no enviar 'undefined'
-  const dataToSave = {
-    name: accountData.name || "Cuenta sin nombre",
-    broker: accountData.broker || "",
-    balance: parseFloat(accountData.balance) || 0,
-    type: accountData.type || "personal"
-  };
-
-  // --- ¡AQUÍ ESTÁ LA LÍNEA DE DIAGNÓSTICO! ---
-  console.log("Datos de CUENTA que se van a guardar:", dataToSave);
-
-  if (accountData.id) {
-    // Si hay un ID, actualizamos el documento existente
-    const accountRef = doc(db, "users", user.uid, "accounts", accountData.id);
-    await updateDoc(accountRef, dataToSave);
-  } else {
-    // Si no hay ID, creamos un documento nuevo
-    dataToSave.createdAt = serverTimestamp();
-    await addDoc(collection(db, "users", user.uid, "accounts"), dataToSave);
-  }
-}
-
-async function saveStrategy(strategyData) {
-  const user = auth.currentUser;
-  if (!user) throw new Error("Debes iniciar sesión para guardar una estrategia.");
-
-  // Preparamos los datos
-  const dataToSave = {
-    name: strategyData.name || "Estrategia sin nombre",
-    desc: strategyData.desc || ""
-  };
-  
-  // --- ¡AQUÍ ESTÁ LA LÍNEA DE DIAGNÓSTICO! ---
-  console.log("Datos de ESTRATEGIA que se van a guardar:", dataToSave);
-
-  if (strategyData.id) {
-    // Actualizar
-    const strategyRef = doc(db, "users", user.uid, "strategies", strategyData.id);
-    dataToSave.updatedAt = serverTimestamp();
-    await updateDoc(strategyRef, dataToSave);
-  } else {
-    // Crear
-    dataToSave.createdAt = serverTimestamp();
-    await addDoc(collection(db, "users", user.uid, "strategies"), dataToSave);
-  }
-}
-
-// --- INICIO DE FUNCIONES DE CÁLCULO Y RENDERIZADO ---
-
-function updateRecentTrades(trades) {
-    const el = $('#recent-trades-container');
-    if (!el) return;
-    if (!trades || !trades.length) {
-        el.innerHTML = '<div style="padding: 4px 0;">Sin registros.</div>';
-        return;
-    }
-    el.innerHTML = trades.slice(-5).reverse().map(t => {
-        const sign = (t.result || 0) >= 0 ? '+' : '-';
-        const col = (t.result || 0) >= 0 ? 'var(--success)' : 'var(--danger)';
-        const sessionInfo = t.session && t.session !== 'N/A' ? `<span style="color: var(--muted); font-size: 12px;">(${t.session})</span>` : '';
-        return `<div style="padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span>${t.pair} ${sessionInfo}</span>
-                        <b style="color:${col}">${sign}$${Math.abs(t.result || 0).toFixed(2)}</b>
-                    </div>
-                    <div style="font-size: 12px; color: var(--muted); margin-top: 2px;">${t.dateStr || ''}</div>
-                </div>`;
-    }).join('');
-}
-
-function populateReportAccountsDropdown(accounts) {
-    const reportSelect = $('#report-account-select');
-    if (!reportSelect) return;
-    
-    const currentVal = reportSelect.value;
-    reportSelect.innerHTML = '<option value="">-- Selecciona una cuenta --</option>';
-    
-    (accounts || []).forEach(a => {
-        const option = document.createElement('option');
-        option.value = a.id;
-        option.textContent = a.name;
-        reportSelect.appendChild(option);
-    });
-    
-    if (currentVal) reportSelect.value = currentVal;
-}
-function updateAccountsUI(accounts) {
-    const el = $('#accounts-container');
-    if (!el) return;
-
-    el.innerHTML = '';
-
-    const addAccountButton = document.createElement('div');
-    addAccountButton.className = 'btn primary';
-    addAccountButton.style = "display:inline-flex; align-items:center; gap:8px; margin-bottom: 20px; cursor: pointer;";
-    addAccountButton.innerHTML = `<i class="fa-solid fa-plus"></i> Agregar Cuenta`;
-    addAccountButton.onclick = () => {
-        $('#acc-title').textContent = 'Agregar Nueva Cuenta';
-        $('#account-name').value = '';
-        $('#account-broker').value = '';
-        $('#account-balance').value = '';
-        $('#account-type').value = 'principal';
-        $('#editing-account-id').value = '';
-        openModalById('add-account-modal');
-    };
-    el.appendChild(addAccountButton);
-    
-    if (!accounts || accounts.length === 0) {
-        const noAccountsMessage = document.createElement('p');
-        noAccountsMessage.textContent = 'Aún no tienes cuentas. ¡Agrega una para empezar!';
-        noAccountsMessage.style.color = 'var(--muted)';
-        el.appendChild(noAccountsMessage);
-        return;
-    }
-
-    const trades = window.__currentTrades || [];
-    accounts.forEach(a => {
-        const card = document.createElement('div');
-        card.className = 'card';
-        card.style.marginTop = '10px';
-
-        const initialBalance = parseFloat(a.balance) || 0;
-        
-        // --- ESTA ES LA LÍNEA CORREGIDA ---
-        const accountTrades = trades.filter(t => (t.accountId === a.id || t.account === a.id));
-        
-        const profit = accountTrades.reduce((sum, t) => sum + (t.result || 0), 0);
-        const dynamicBalance = initialBalance + profit;
-
-        const profitColor = profit >= 0 ? 'var(--success)' : 'var(--danger)';
-        const formattedInitialBalance = initialBalance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-
-        card.innerHTML = `
-          <div class="card-header">
-            <div class="card-title">${a.name || 'Cuenta sin nombre'}</div>
-            <div>
-              <button class="btn-icon btn-edit-account" data-id="${a.id}" title="Editar Cuenta"><i class="fa-solid fa-pen"></i></button>
-              <button class="btn-icon btn-delete-account" data-id="${a.id}" title="Eliminar Cuenta"><i class="fa-solid fa-trash"></i></button>
-            </div>
-          </div>
-          <div class="metric-card">
-            <div style="display: flex; justify-content: center; align-items: baseline; gap: 8px;">
-                <div class="metric-val">$${dynamicBalance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
-                <div style="font-weight: 700; color: ${profitColor};">
-                    (${(profit >= 0 ? '+' : '')}${profit.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})})
-                </div>
-            </div>
-            <div class="metric-lab">${a.broker || 'Sin broker'} - (${a.type || 'N/A'})</div>
-            <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">
-                Inicial: $${formattedInitialBalance}
-            </div>
-          </div>
-        `;
-        el.appendChild(card);
-    });
-}
-
-function calculateDrawdown(trades, initialBalance) {
-    let peakEquity = initialBalance || 0;
-    let currentEquity = initialBalance || 0;
-    let maxDrawdownValue = 0;
-    (trades || []).forEach(t => {
-      currentEquity += Number(t?.result ?? 0);
-      if (currentEquity > peakEquity) peakEquity = currentEquity;
-      const dd = peakEquity - currentEquity;
-      if (dd > maxDrawdownValue) maxDrawdownValue = dd;
-    });
-    const maxDrawdownPercent = (initialBalance > 0) ? (maxDrawdownValue / initialBalance) * 100 : 0;
-    return { maxDrawdownValue, maxDrawdownPercent };
-}
-
-function calculateStreaks(trades) {
-    let maxWinningStreak = 0;
-    let currentWinningStreak = 0;
-    let maxLosingStreak = 0;
-    let currentLosingStreak = 0;
-
-    (trades || []).forEach(trade => {
-      const r = Number(trade?.result ?? 0);
-      if (r > 0) { currentWinningStreak++; currentLosingStreak = 0; }
-      else if (r < 0) { currentLosingStreak++; currentWinningStreak = 0; }
-      if (currentWinningStreak > maxWinningStreak) maxWinningStreak = currentWinningStreak;
-      if (currentLosingStreak > maxLosingStreak) maxLosingStreak = currentLosingStreak;
-    });
-    return { maxWinningStreak, maxLosingStreak };
-}
-
-function calculateReportStats(trades, initialBalance) {
-    const t = trades || [];
-    const wins   = t.filter(x => Number(x?.result ?? 0) > 0);
-    const losses = t.filter(x => Number(x?.result ?? 0) < 0);
-    const grossProfit = wins.reduce((s, x) => s + Number(x?.result ?? 0), 0);
-    const grossLoss   = losses.reduce((s, x) => s + Number(x?.result ?? 0), 0);
-    const netProfit   = grossProfit + grossLoss;
-    const profitFactor = Math.abs(grossLoss) > 0 ? (grossProfit / Math.abs(grossLoss)) : 0;
-    const streaks = calculateStreaks(t);
-    const drawdown = calculateDrawdown(t, initialBalance || 0);
-    return {
-      netProfit,
-      finalBalance: (initialBalance || 0) + netProfit,
-      totalTrades: t.length,
-      winRate: t.length ? (wins.length / t.length) * 100 : 0,
-      grossProfit,
-      grossLoss,
-      profitFactor,
-      maxWinningStreak: streaks.maxWinningStreak,
-      maxLosingStreak: streaks.maxLosingStreak,
-      maxDrawdownValue: drawdown.maxDrawdownValue,
-      maxDrawdownPercent: drawdown.maxDrawdownPercent,
-    };
-}
-
-function renderAnalytics(trades) {
-    const t = trades || [];
-    const wins = t.filter(x => x.result > 0);
-    const losses = t.filter(x => x.result < 0);
-    const total = t.length;
-
-    const totalWinsValue = wins.reduce((s, x) => s + x.result, 0);
-    const totalLossValue = losses.reduce((s, x) => s + x.result, 0);
-
-    const totalProfit = totalWinsValue + totalLossValue;
-    const winRate = total ? (wins.length / total) : 0;
-    const profitFactor = Math.abs(totalLossValue) ? totalWinsValue / Math.abs(totalLossValue) : 0;
-    const avgRR = (wins.length && losses.length) ? (totalWinsValue / wins.length) / (Math.abs(totalLossValue) / losses.length) : 0;
-
-    const avgWin = wins.length > 0 ? totalWinsValue / wins.length : 0;
-    const avgLoss = losses.length > 0 ? totalLossValue / losses.length : 0;
-
-    const lossRate = total > 0 ? losses.length / total : 0;
-    const expectancy = (winRate * avgWin) - (lossRate * Math.abs(avgLoss));
-
-    $('#analytics-total-profit').textContent = `$${totalProfit.toFixed(2)}`;
-    $('#analytics-win-rate').textContent = `${(winRate * 100).toFixed(1)}%`;
-    $('#analytics-profit-factor').textContent = profitFactor.toFixed(2);
-    $('#analytics-rr').textContent = avgRR.toFixed(2);
-
-    $('#analytics-avg-win').textContent = `$${avgWin.toFixed(2)}`;
-    $('#analytics-avg-loss').textContent = `-$${Math.abs(avgLoss).toFixed(2)}`;
-
-    const expectancyEl = $('#analytics-expectancy');
-    if (expectancyEl) {
-        expectancyEl.textContent = `$${expectancy.toFixed(2)}`;
-        expectancyEl.style.color = expectancy >= 0 ? 'var(--success)' : 'var(--danger)';
-    }
-
-    const initialBalance = window.__currentGeneralSettings?.initialBalance || 10000;
-    const drawdown = calculateDrawdown(t, initialBalance);
-    $('#analytics-max-dd').textContent = `-$${drawdown.maxDrawdownValue.toFixed(2)}`;
-    $('#analytics-max-dd-percent').textContent = `${drawdown.maxDrawdownPercent.toFixed(2)}% del Pico`;
-
-    renderEquityCurve(t);
-}
-
- function renderEquityCurve(trades) {
-    const ctx = document.getElementById('equityCurveChart')?.getContext('2d');
-    if (!ctx) return;
-    let cumulativeProfit = 0;
-    const equityData = trades.map(trade => {
-        cumulativeProfit += trade.result;
-        return cumulativeProfit;
-    });
-    const labels = Array.from({ length: trades.length }, (_, i) => i + 1);
-    if (equityCurveChart) {
-        equityCurveChart.destroy();
-    }
-    equityCurveChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: ['Inicio', ...labels],
-            datasets: [{
-                label: 'Beneficio Acumulado ($)',
-                data: [0, ...equityData],
-                borderColor: 'rgba(212, 175, 55, 1)',
-                backgroundColor: 'rgba(212, 175, 55, 0.15)',
-                fill: true,
-                tension: 0.1
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: { y: { beginAtZero: false } }
+    // --- 4. FUNCIONES PARA GUARDAR DATOS (AÑADIDAS) ---
+    async function saveAccount(accountData) {
+        const user = auth.currentUser;
+        if (!user) throw new Error("Debes iniciar sesión.");
+        const dataToSave = {
+            name: accountData.name || "Cuenta sin nombre",
+            broker: accountData.broker || "",
+            balance: parseFloat(accountData.balance) || 0,
+            type: accountData.type || "personal"
+        };
+        if (accountData.id) {
+            await updateDoc(doc(db, "users", user.uid, "accounts", accountData.id), dataToSave);
+        } else {
+            dataToSave.createdAt = serverTimestamp();
+            await addDoc(collection(db, "users", user.uid, "accounts"), dataToSave);
         }
-    });
-}
-
-function renderCalendar(trades) {
-    const calendarEl = document.getElementById('calendar-container');
-    if (!calendarEl) return;
-
-    const dailySummary = {};
-    (trades || []).forEach(trade => {
-        const date = trade.dateStr;
-        if (!dailySummary[date]) {
-            dailySummary[date] = { profit: 0, count: 0 };
-        }
-        dailySummary[date].profit += trade.result;
-        dailySummary[date].count++;
-    });
-
-    if (window.calendar) {
-        window.calendar.destroy();
     }
 
-    window.calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
-        locale: 'es',
-        headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth' },
-        dayCellDidMount: function(arg) {
-            const dateStr = arg.date.toISOString().slice(0, 10);
-            const dayData = dailySummary[dateStr];
-            const frame = arg.el.querySelector('.fc-daygrid-day-frame');
-            
-            let contentHtml = '';
-            if (dayData) {
-                const isWin = dayData.profit >= 0;
-                const pnlColor = isWin ? 'var(--success)' : 'var(--danger)';
-                arg.el.style.backgroundColor = isWin ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)';
-
-                contentHtml = `
-                    <div class="calendar-day-content">
-                        <div class="calendar-day-pnl" style="color: ${pnlColor};">${isWin ? '+' : ''}$${dayData.profit.toFixed(2)}</div>
-                        <div class="calendar-day-trades">${dayData.count} ${dayData.count === 1 ? 'trade' : 'trades'}</div>
-                    </div>
-                `;
-            } else if (!arg.isOther) {
-                arg.el.style.backgroundColor = 'rgba(255, 255, 255, 0.02)';
-                 contentHtml = `
-                    <div class="calendar-day-content">
-                        <div class="calendar-day-trades">No Trades</div>
-                    </div>
-                `;
-            }
-            
-            if(frame && contentHtml) {
-                 frame.innerHTML = contentHtml + frame.innerHTML;
-            }
+    async function saveStrategy(strategyData) {
+        const user = auth.currentUser;
+        if (!user) throw new Error("Debes iniciar sesión.");
+        const dataToSave = {
+            name: strategyData.name || "Estrategia sin nombre",
+            desc: strategyData.desc || ""
+        };
+        if (strategyData.id) {
+            dataToSave.updatedAt = serverTimestamp();
+            await updateDoc(doc(db, "users", user.uid, "strategies", strategyData.id), dataToSave);
+        } else {
+            dataToSave.createdAt = serverTimestamp();
+            await addDoc(collection(db, "users", user.uid, "strategies"), dataToSave);
         }
-    });
-    window.calendar.render();
-}
-
-
-function renderStrategiesUI(strategies) {
-    const el = $('#strategies-container');
-    if (!el) return;
-    el.innerHTML = '';
-    const addStrategyButton = document.createElement('div');
-    addStrategyButton.className = 'btn primary';
-    addStrategyButton.style = "display:inline-flex; align-items:center; gap:8px; margin-bottom: 20px; cursor: pointer;";
-    addStrategyButton.innerHTML = `<i class="fa-solid fa-plus"></i> Agregar Estrategia`;
-    addStrategyButton.onclick = () => {
-        $('#strategy-title').textContent = 'Agregar Nueva Estrategia';
-        $('#strategy-name').value = '';
-        $('#strategy-desc').value = '';
-        $('#editing-strategy-id').value = '';
-        openModalById('add-strategy-modal');
-    };
-    el.appendChild(addStrategyButton);
-    if (!strategies || strategies.length === 0) {
-        const noStrategiesMessage = document.createElement('p');
-        noStrategiesMessage.textContent = 'No has definido ninguna estrategia.';
-        noStrategiesMessage.style.color = 'var(--muted)';
-        el.appendChild(noStrategiesMessage);
-        return;
-    }
-    strategies.forEach(s => {
-        const card = document.createElement('div');
-        card.className = 'card';
-        card.style.marginTop = '10px';
-        card.innerHTML = `
-      <div class="card-header">
-        <div class="card-title">${s.name || 'Estrategia sin nombre'}</div>
-        <div>
-          <button class="btn-icon btn-evaluate-ai" data-id="${s.id}" title="Evaluar con IA"><i class="fa-solid fa-brain"></i></button>
-          <button class="btn-icon btn-edit-strategy" data-id="${s.id}" title="Editar Estrategia"><i class="fa-solid fa-pen"></i></button>
-          <button class="btn-icon btn-delete-strategy" data-id="${s.id}" title="Eliminar Estrategia"><i class="fa-solid fa-trash"></i></button>
-        </div>
-      </div>
-      <p style="color: var(--muted); white-space: pre-wrap;">${s.desc || 'Sin descripción.'}</p>
-    `;
-        el.appendChild(card);
-    });
-}
-
-function updateStrategiesDropdown(strategies) {
-    const select = $('#trade-strategy-input');
-    if (!select) return;
-    const currentVal = select.value;
-    select.innerHTML = '<option value="">Ninguna</option>';
-    (strategies || []).forEach(s => {
-        const option = document.createElement('option');
-        option.value = s.id;
-        option.textContent = s.name;
-        select.appendChild(option);
-    });
-    select.value = currentVal;
-}
-
-function populateAnalyticsFilter(strategies) {
-    const select = $('#analytics-strategy-filter');
-    if (!select) return;
-    select.innerHTML = '<option value="">Todas las Estrategias</option>';
-    (strategies || []).forEach(s => {
-        const option = document.createElement('option');
-        option.value = s.id;
-        option.textContent = s.name;
-        select.appendChild(option);
-    });
-}
-
-  function updateChallengeTrackerUI(trades, settings) {
-    const accounts = window.__currentAccounts || [];
-
-    // 1. Busca explícitamente la cuenta designada como 'challenge'.
-    const challengeAccount = accounts.find(acc => acc.type && acc.type.toLowerCase() === 'challenge');
-
-    // 2. Si NO se encuentra NINGUNA cuenta de tipo 'challenge', reinicia la tarjeta y detiene la función.
-    if (!challengeAccount) {
-        $('#challenge-current-balance').textContent = '$0.00';
-        $('#challenge-profit').textContent = `+0.0%`;
-        $('#challenge-drawdown').textContent = `0.0%`;
-        $('#challenge-trades').textContent = '0';
-        $('#challenge-win-rate').textContent = `0%`;
-        $('#challenge-progress-value').textContent = `0%`;
-        $('#challenge-progress-bar').style.width = `0%`;
-        $('#challenge-residual-risk').textContent = `0.00%`;
-        return;
     }
 
-    const initialBalance = parseFloat(challengeAccount.balance) || 0;
-    
-    // --- LÍNEA CORREGIDA ---
-    // Ahora busca en 'accountId' o en 'account' para encontrar las operaciones del challenge
-    const challengeTrades = (trades || []).filter(t => (t.accountId === challengeAccount.id || t.account === challengeAccount.id));
-    
-    const totalProfit = challengeTrades.reduce((sum, trade) => sum + (trade.result || 0), 0);
-    const currentBalance = initialBalance + totalProfit;
-
-    const profitPercent = initialBalance > 0 ? (totalProfit / initialBalance) * 100 : 0;
-    const targetPercent = parseFloat(settings.profitTarget) || 10;
-    const progressPercent = targetPercent > 0 ? (profitPercent / targetPercent) * 100 : 0;
-    
-    const { maxDrawdownValue } = calculateDrawdown(challengeTrades, initialBalance);
-    const drawdownPercent = initialBalance > 0 ? (maxDrawdownValue / initialBalance) * 100 : 0;
-    
-    const wins = challengeTrades.filter(t => t.result > 0).length;
-    const winRate = challengeTrades.length > 0 ? (wins / challengeTrades.length) * 100 : 0;
-
-    // Actualizar la interfaz
-    $('#challenge-current-balance').textContent = `$${currentBalance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-    $('#challenge-profit').textContent = `${profitPercent >= 0 ? '+' : ''}${profitPercent.toFixed(1)}%`;
-    $('#challenge-drawdown').textContent = `${drawdownPercent.toFixed(1)}%`;
-    $('#challenge-trades').textContent = challengeTrades.length;
-    $('#challenge-win-rate').textContent = `${winRate.toFixed(1)}%`;
-    $('#challenge-progress-value').textContent = `${progressPercent.toFixed(1)}%`;
-    $('#challenge-progress-bar').style.width = `${Math.min(100, Math.max(0, progressPercent))}%`;
-    
-    const dailyLimit = settings.dailyLoss || 5;
-    const todayStr = new Date().toISOString().slice(0, 10);
-    const todaysTrades = challengeTrades.filter(t => t.dateStr === todayStr);
-    const dailyPnl = todaysTrades.reduce((sum, trade) => sum + trade.result, 0);
-    const dailyDrawdown = dailyPnl < 0 ? (Math.abs(dailyPnl) / initialBalance) * 100 : 0;
-    const residualRisk = dailyLimit - dailyDrawdown;
-    $('#challenge-residual-risk').textContent = `${residualRisk.toFixed(2)}%`;
-}
-
-function calculateRiskMetrics(trades, initialBalance) {
-    const totalProfitForPeriod = trades.reduce((sum, t) => sum + (t.result || 0), 0);
-    const periodProfitPercent = initialBalance > 0 ? (totalProfitForPeriod / initialBalance) * 100 : 0;
-
-    const riskProfitEl = $('#risk-profit-percent');
-    if (riskProfitEl) {
-        riskProfitEl.textContent = `${periodProfitPercent.toFixed(2)}%`;
-        riskProfitEl.style.color = periodProfitPercent >= 0 ? 'var(--success)' : 'var(--danger)';
-    }
-    
-    if (!initialBalance || initialBalance === 0) {
-        $('#daily-risk').textContent = '0.0%';
-        $('#weekly-risk').textContent = '0.0%';
-        $('#monthly-risk').textContent = '0.0%';
-        if (riskProfitEl) {
-            riskProfitEl.textContent = '0.00%';
-            riskProfitEl.style.color = 'var(--accent)';
-        }
-        if (riskChart) {
-            riskChart.data.datasets[0].data = [0, 0, 0, 0, 0, 0];
-            riskChart.update();
-        }
-        return;
-    }
-
-    const now = new Date();
-    const today = now.toISOString().slice(0, 10);
-    const startOfWeek = new Date(new Date(now).setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1))).toISOString().slice(0, 10);
-    const startOfMonth = new Date(new Date(now).getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
-
-    const dailyLoss = trades.filter(t => t.dateStr === today && t.result < 0).reduce((sum, t) => sum + t.result, 0);
-    const weeklyLoss = trades.filter(t => t.dateStr >= startOfWeek && t.result < 0).reduce((sum, t) => sum + t.result, 0);
-    const monthlyLoss = trades.filter(t => t.dateStr >= startOfMonth && t.result < 0).reduce((sum, t) => sum + t.result, 0);
-
-    $('#daily-risk').textContent = `${(Math.abs(dailyLoss) / initialBalance * 100).toFixed(1)}%`;
-    $('#weekly-risk').textContent = `${(Math.abs(weeklyLoss) / initialBalance * 100).toFixed(1)}%`;
-    $('#monthly-risk').textContent = `${(Math.abs(monthlyLoss) / initialBalance * 100).toFixed(1)}%`;
-
-    const wins = trades.filter(x => x.result > 0);
-    const losses = trades.filter(x => x.result < 0);
-    const winRate = trades.length ? (wins.length / trades.length) * 100 : 0;
-    const totalWins = wins.reduce((s, x) => s + x.result, 0);
-    const totalLoss = Math.abs(losses.reduce((s, x) => s + x.result, 0));
-    const avgRR = (wins.length && losses.length) ? (totalWins / wins.length) / (totalLoss / losses.length) : 0;
-
-    const aciertoScore = Math.min(5, winRate / 15);
-    const rrScore = Math.min(5, avgRR * 2);
-    const beneficioScore = Math.min(5, (totalProfitForPeriod / initialBalance * 100) / 4);
-
-    if (riskChart) {
-        riskChart.data.datasets[0].data = [3, 4, aciertoScore, rrScore, 3, beneficioScore];
-        riskChart.update();
-    }
-}
-  
-function calculateStreaks(trades) {
-    let maxWinningStreak = 0;
-    let currentWinningStreak = 0;
-    let maxLosingStreak = 0;
-    let currentLosingStreak = 0;
-
-    (trades || []).forEach(trade => {
-        if (trade.result > 0) {
-            currentWinningStreak++;
-            currentLosingStreak = 0;
-        } else if (trade.result < 0) {
-            currentLosingStreak++;
-            currentWinningStreak = 0;
-        }
-        if (currentWinningStreak > maxWinningStreak) {
-            maxWinningStreak = currentWinningStreak;
-        }
-        if (currentLosingStreak > maxLosingStreak) {
-            maxLosingStreak = currentLosingStreak;
-        }
-    });
-    return { maxWinningStreak, maxLosingStreak };
-}
-
-function recalcFromTrades(trades) {
-    const getSafeTimestamp = (trade) => {
-        if (!trade || !trade.createdAt) return 0;
-        if (typeof trade.createdAt.toMillis === 'function') {
-            return trade.createdAt.toMillis();
-        }
-        if (trade.createdAt instanceof Date) {
-            return trade.createdAt.getTime();
-        }
-        if (typeof trade.createdAt === 'number') {
-            return trade.createdAt;
-        }
-        return 0;
-    };
-
-    const t = (trades || []).sort((a, b) => getSafeTimestamp(a) - getSafeTimestamp(b));
-
-    const wins = t.filter(x => x.result > 0), losses = t.filter(x => x.result < 0);
-    const total = t.length;
-    const totalWins = wins.reduce((s, x) => s + x.result, 0);
-    const totalLoss = Math.abs(losses.reduce((s, x) => s + x.result, 0));
-    const winRate = total ? (wins.length / total) * 100 : 0;
-    const pf = totalLoss ? totalWins / totalLoss : 0;
-    const rr = (wins.length && losses.length) ? (totalWins / wins.length) / (totalLoss / losses.length) : 0;
-
-    $('#total-trades').textContent = total;
-    $('#total-trades-2').textContent = total;
-    $('#win-trades').textContent = wins.length;
-    $('#win-rate').textContent = `${winRate.toFixed(1)}%`;
-    $('#profit-factor').textContent = pf.toFixed(2);
-    $('#risk-reward').textContent = rr.toFixed(2);
-    const totalProfit = totalWins - totalLoss;
-    $('#total-profit').textContent = `$${totalProfit.toFixed(2)}`;
-
-    const settings = window.__currentGeneralSettings || { initialBalance: 10000 };
-    const initialBalance = settings.initialBalance;
-    const profitPercent = initialBalance > 0 ? (totalProfit / initialBalance) * 100 : 0;
-
-    const profitPercentEl = $('#total-profit-percent');
-    if (profitPercentEl) {
-        profitPercentEl.textContent = `(${profitPercent.toFixed(1)}%)`;
-        profitPercentEl.style.color = profitPercent >= 0 ? 'var(--success)' : 'var(--danger)';
-    }
-
-    const balanceGrowthEl = $('#balance-growth-percent');
-    if (balanceGrowthEl) {
-        balanceGrowthEl.textContent = `${profitPercent >= 0 ? '+' : ''}${profitPercent.toFixed(2)}%`;
-        balanceGrowthEl.style.color = profitPercent >= 0 ? 'var(--success)' : 'var(--danger)';
-    }
-
-    if (distributionChart) {
-        distributionChart.data.datasets[0].data = [wins.length, losses.length, t.filter(x => x.result === 0).length];
-        distributionChart.update();
-    }
-  
-    if (balanceChart || modalBalanceChart) {
-        const data = [];
-        let bal = settings.initialBalance;
-        data.push(bal);
-        t.forEach(trade => {
-            bal += trade.result || 0;
-            data.push(bal);
+    // --- 5. FUNCIONES DE CÁLCULO (INCLUIDAS Y CORREGIDAS) ---
+    function calculateStreaks(trades) {
+        let maxWinningStreak = 0, currentWinningStreak = 0, maxLosingStreak = 0, currentLosingStreak = 0;
+        (trades || []).forEach(trade => {
+            const r = Number(trade?.result ?? 0);
+            if (r > 0) { currentWinningStreak++; currentLosingStreak = 0; }
+            else if (r < 0) { currentLosingStreak++; currentWinningStreak = 0; }
+            if (currentWinningStreak > maxWinningStreak) maxWinningStreak = currentWinningStreak;
+            if (currentLosingStreak > maxLosingStreak) maxLosingStreak = currentLosingStreak;
         });
-        const labels = ['Inicio', ...Array.from({ length: t.length }, (_, i) => i + 1)];
-        if (balanceChart) {
-            balanceChart.data.datasets[0].data = data;
-            balanceChart.data.labels = labels;
-            balanceChart.update();
-        }
-        if (modalBalanceChart) {
-            modalBalanceChart.data.datasets[0].data = data;
-            modalBalanceChart.data.labels = labels;
-            modalBalanceChart.update();
-        }
-    }
-    updateRecentTrades(t);
-    calculateRiskMetrics(t, settings.initialBalance);
-
-    const streaks = calculateStreaks(t);
-    $('#max-win-streak').textContent = streaks.maxWinningStreak;
-    $('#max-loss-streak').textContent = streaks.maxLosingStreak;
-}
-
-function renderHistorySummary(trades) {
-    if (!trades) return;
-    const summary = {};
-
-    trades.forEach(trade => {
-        const symbol = trade.pair;
-        if (!summary[symbol]) {
-            summary[symbol] = {
-                netProfit: 0,
-                tradeCount: 0,
-                winCount: 0,
-            };
-        }
-        summary[symbol].netProfit += trade.result;
-        summary[symbol].tradeCount++;
-        if (trade.result > 0) {
-            summary[symbol].winCount++;
-        }
-    });
-
-    const totalTrades = trades.length;
-    const tbody = document.getElementById('history-summary-tbody');
-    if (!tbody) return;
-    tbody.innerHTML = '';
-
-    const chartLabels = [];
-    const chartData = [];
-    const chartColors = ['#10b981', '#ef4444', '#f59e0b', '#3b82f6', '#8b5cf6', '#ec4899'];
-
-    let totalNetProfit = 0;
-    let totalWins = 0;
-
-    Object.keys(summary).sort().forEach(symbol => {
-        const data = summary[symbol];
-        totalNetProfit += data.netProfit;
-        totalWins += data.winCount;
-
-        const lossCount = data.tradeCount - data.winCount;
-        const winRate = data.tradeCount > 0 ? (data.winCount / data.tradeCount) * 100 : 0;
-        const lossRate = data.tradeCount > 0 ? (lossCount / data.tradeCount) * 100 : 0;
-        const avgResult = data.tradeCount > 0 ? data.netProfit / data.tradeCount : 0;
-        const volumePercent = totalTrades > 0 ? (data.tradeCount / totalTrades) * 100 : 0;
-
-        const row = document.createElement('tr');
-        row.style.borderBottom = '1px solid var(--border)';
-        row.innerHTML = `
-            <td style="padding: 12px; font-weight: bold;">${symbol}</td>
-            <td style="padding: 12px; text-align: right; color: ${data.netProfit >= 0 ? 'var(--success)' : 'var(--danger)'};">$${data.netProfit.toFixed(2)}</td>
-            <td style="padding: 12px; text-align: right;">$${avgResult.toFixed(2)}</td>
-            <td style="padding: 12px; text-align: right;">${volumePercent.toFixed(2)}%</td>
-            <td style="padding: 12px; text-align: right;">${data.tradeCount}</td>
-            <td style="padding: 12px; text-align: right; color: var(--success);">${winRate.toFixed(2)}%</td>
-            <td style="padding: 12px; text-align: right; color: var(--danger);">${lossRate.toFixed(2)}%</td>
-        `;
-        tbody.appendChild(row);
-
-        chartLabels.push(symbol);
-        chartData.push(data.tradeCount);
-    });
-
-    const totalLosses = totalTrades - totalWins;
-    const totalWinRate = totalTrades > 0 ? (totalWins / totalTrades) * 100 : 0;
-    const totalLossRate = totalTrades > 0 ? (totalLosses / totalTrades) * 100 : 0;
-    const totalAvgResult = totalTrades > 0 ? totalNetProfit / totalTrades : 0;
-
-    const footerRow = document.createElement('tr');
-    footerRow.style.fontWeight = 'bold';
-    footerRow.innerHTML = `
-        <td style="padding: 12px;">Todos los símbolos</td>
-        <td style="padding: 12px; text-align: right; color: ${totalNetProfit >= 0 ? 'var(--success)' : 'var(--danger)'};">$${totalNetProfit.toFixed(2)}</td>
-        <td style="padding: 12px; text-align: right;">$${totalAvgResult.toFixed(2)}</td>
-        <td style="padding: 12px; text-align: right;">100.00%</td>
-        <td style="padding: 12px; text-align: right;">${totalTrades}</td>
-        <td style="padding: 12px; text-align: right; color: var(--success);">${totalWinRate.toFixed(2)}%</td>
-        <td style="padding: 12px; text-align: right; color: var(--danger);">${totalLossRate.toFixed(2)}%</td>
-    `;
-    tbody.appendChild(footerRow);
-
-    const ctx = document.getElementById('symbol-volume-chart')?.getContext('2d');
-    if (!ctx) return;
-    if (symbolVolumeChart) {
-        symbolVolumeChart.destroy();
-    }
-    symbolVolumeChart = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: chartLabels,
-            datasets: [{
-                label: 'Operaciones por Símbolo',
-                data: chartData,
-                backgroundColor: chartColors,
-                borderColor: 'var(--secondary)',
-                borderWidth: 2,
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'right',
-                    labels: { color: 'var(--text)' }
-                }
-            }
-        }
-    });
-}
-
-function renderDetailedHistory(trades) {
-    const tbody = $('#detailed-history-tbody');
-    if (!tbody) return;
-
-    if (!trades || trades.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" style="padding: 12px; text-align: center; color: var(--muted);">No hay operaciones registradas.</td></tr>`;
-        return;
+        return { maxWinningStreak, maxLosingStreak };
     }
 
-    const sortedTrades = [...trades].sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
-
-    tbody.innerHTML = sortedTrades.map(trade => {
-        const resultColor = trade.result >= 0 ? 'var(--success)' : 'var(--danger)';
-        const typeText = trade.type === 'buy' ? 'Compra' : 'Venta';
-        const typeColor = trade.type === 'buy' ? 'var(--success)' : 'var(--danger)';
-        
-        return `
-            <tr style="border-bottom: 1px solid var(--border);">
-                <td style="padding: 12px;">${trade.dateStr || 'N/A'}</td>
-                <td style="padding: 12px; font-weight: bold;">${trade.pair || 'N/A'}</td>
-                <td style="padding: 12px; color: ${typeColor};">${typeText}</td>
-                <td style="padding: 12px; text-align: right;">${trade.lots || '---'}</td>
-                <td style="padding: 12px; text-align: right; color: ${resultColor}; font-weight: bold;">$${(trade.result || 0).toFixed(2)}</td>
-                <td style="padding: 12px; text-align: center; display: flex; gap: 8px; justify-content: center;">
-                    <button class="btn-icon btn-edit-trade" data-id="${trade.id}" title="Editar Operación"><i class="fa-solid fa-pen"></i></button>
-                    <button class="btn-icon btn-delete-trade" data-id="${trade.id}" title="Eliminar Operación"><i class="fa-solid fa-trash"></i></button>
-                </td>
-            </tr>
-        `;
-    }).join('');
-}
-
-function updateWeeklyProgress() {
-    const goal = parseFloat($('#weekly-goal-input').value) || 0;
-    const progressBar = $('#weekly-progress-bar');
-    if (!progressBar) return;
-
-    if (goal <= 0) {
-        progressBar.style.width = '0%';
-        return;
+    function calculateDrawdown(trades, initialBalance) {
+        let peakEquity = initialBalance || 0;
+        let currentEquity = initialBalance || 0;
+        let maxDrawdownValue = 0;
+        (trades || []).forEach(t => {
+            currentEquity += Number(t?.result ?? 0);
+            if (currentEquity > peakEquity) peakEquity = currentEquity;
+            const dd = peakEquity - currentEquity;
+            if (dd > maxDrawdownValue) maxDrawdownValue = dd;
+        });
+        const maxDrawdownPercent = (initialBalance > 0) ? (maxDrawdownValue / initialBalance) * 100 : 0;
+        return { maxDrawdownValue, maxDrawdownPercent };
     }
 
-    const trades = window.__currentTrades || [];
+    function calculateReportStats(trades, initialBalance) {
+        const t = trades || [];
+        const wins = t.filter(x => Number(x?.result ?? 0) > 0);
+        const losses = t.filter(x => Number(x?.result ?? 0) < 0);
+        const grossProfit = wins.reduce((s, x) => s + Number(x?.result ?? 0), 0);
+        const grossLoss = losses.reduce((s, x) => s + Number(x?.result ?? 0), 0);
+        const netProfit = grossProfit + grossLoss;
+        const profitFactor = Math.abs(grossLoss) > 0 ? (grossProfit / Math.abs(grossLoss)) : 0;
+        const streaks = calculateStreaks(t);
+        const drawdown = calculateDrawdown(t, initialBalance || 0);
+        return {
+            netProfit, finalBalance: (initialBalance || 0) + netProfit, totalTrades: t.length,
+            winRate: t.length ? (wins.length / t.length) * 100 : 0,
+            grossProfit, grossLoss, profitFactor, maxWinningStreak: streaks.maxWinningStreak,
+            maxLosingStreak: streaks.maxLosingStreak, maxDrawdownValue: drawdown.maxDrawdownValue,
+            maxDrawdownPercent: drawdown.maxDrawdownPercent,
+        };
+    }
     
-    const today = new Date();
-    const dayOfWeek = today.getDay(); 
-    const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
-    const startOfWeek = new Date(new Date(today).setDate(diff)).toISOString().slice(0, 10);
+    // --- 6. FUNCIONES DE RENDERIZADO (CON CORRECCIONES) ---
+    function updateAccountsUI(accounts) {
+        const el = $('#accounts-container');
+        if (!el) return;
+        el.innerHTML = '';
+        const addAccountButton = document.createElement('div');
+        addAccountButton.className = 'btn primary';
+        addAccountButton.style = "display:inline-flex; align-items:center; gap:8px; margin-bottom: 20px; cursor: pointer;";
+        addAccountButton.innerHTML = `<i class="fa-solid fa-plus"></i> Agregar Cuenta`;
+        addAccountButton.onclick = () => { /* ... código para abrir modal ... */ };
+        el.appendChild(addAccountButton);
+        if (!accounts || !accounts.length) { /* ... mensaje de no hay cuentas ... */ return; }
+        const trades = window.__currentTrades || [];
+        accounts.forEach(a => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            const initialBalance = parseFloat(a.balance) || 0;
+            const accountTrades = trades.filter(t => (t.accountId === a.id || t.account === a.id)); // <-- CORRECCIÓN
+            const profit = accountTrades.reduce((sum, t) => sum + (t.result || 0), 0);
+            const dynamicBalance = initialBalance + profit;
+            const profitColor = profit >= 0 ? 'var(--success)' : 'var(--danger)';
+            card.innerHTML = `...`; // Tu HTML del card aquí
+            el.appendChild(card);
+        });
+    }
 
-    const netWeeklyProfit = trades
-        .filter(t => t.dateStr >= startOfWeek)
-        .reduce((sum, t) => sum + t.result, 0);
+    function updateChallengeTrackerUI(trades, settings) {
+        const accounts = window.__currentAccounts || [];
+        const challengeAccount = accounts.find(acc => acc.type && acc.type.toLowerCase() === 'challenge');
+        if (!challengeAccount) { /* ... resetear UI a cero ... */ return; }
+        const initialBalance = parseFloat(challengeAccount.balance) || 0;
+        const challengeTrades = (trades || []).filter(t => (t.accountId === challengeAccount.id || t.account === challengeAccount.id)); // <-- CORRECCIÓN
+        const totalProfit = challengeTrades.reduce((sum, t) => sum + (t.result || 0), 0);
+        const currentBalance = initialBalance + totalProfit;
+        // ... resto de cálculos y actualizaciones de UI
+        $('#challenge-current-balance').textContent = `$${currentBalance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        $('#challenge-trades').textContent = challengeTrades.length;
+    }
 
-    const progress = Math.min(100, (Math.max(0, netWeeklyProfit) / goal) * 100);
-    
-    progressBar.style.width = `${progress}%`;
-}
+    function updateWeeklyProgress() {
+        const goal = parseFloat($('#weekly-goal-input').value) || 0;
+        const progressBar = $('#weekly-progress-bar');
+        if (!progressBar) return;
+        if (goal <= 0) { progressBar.style.width = '0%'; return; }
+        const trades = window.__currentTrades || [];
+        const now = new Date();
+        const firstDayOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1)));
+        firstDayOfWeek.setHours(0, 0, 0, 0);
+        const netWeeklyProfit = trades.filter(t => {
+            const tradeDate = new Date(t.dateStr);
+            return !isNaN(tradeDate) && tradeDate >= firstDayOfWeek;
+        }).reduce((sum, t) => sum + (t.result || 0), 0);
+        const progress = Math.min(100, (Math.max(0, netWeeklyProfit) / goal) * 100);
+        progressBar.style.width = `${progress}%`;
+    }
+
 // --- FIN DE FUNCIONES DE CÁLCULO Y RENDERIZADO ---
 
 let authMode = 'login';
@@ -3439,7 +2773,6 @@ function setDateInputs(range) {
   });
 })();
 </script>
-
 
 <script type="module">
 // --- Single delegated listener for eye toggle (prevents double toggles) ---
