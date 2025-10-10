@@ -1033,8 +1033,9 @@ document.addEventListener('DOMContentLoaded', () => {
   
 <script type="module">
 
-// ----- SCRIPT PRINCIPAL CON TODA LA LÓGICA DE LA APLICACIÓN -----
+// ----- SCRIPT FINAL UNIFICADO Y CORREGIDO -----
 
+// 1. IMPORTS
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import {
   getAuth, onAuthStateChanged, signInWithEmailAndPassword,
@@ -1046,28 +1047,98 @@ import {
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js';
 
-// --- TODA LA LÓGICA AHORA VA DENTRO DE ESTE EVENTO ---
+// 2. INICIALIZACIÓN DE FIREBASE
+const firebaseConfig = {
+    apiKey: "AIzaSyCuS-0g97JluGH6FTF5JBmwaW7d5aJ3WWw",
+    authDomain: "journal-infiniti-kapital.firebaseapp.com",
+    projectId: "journal-infiniti-kapital",
+    storageBucket: "journal-infiniti-kapital.firebasestorage.app",
+    messagingSenderId: "78211615687",
+    appId: "1:78211615687:web:02b05ba83acd46c8c6e7e2",
+    measurementId: "G-D0ERFPMLGQ"
+};
+const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const functions = getFunctions(app);
+window.auth = auth;
+window.db = db;
+
+// 3. LÓGICA PRINCIPAL DENTRO DE DOMContentLoaded
 document.addEventListener('DOMContentLoaded', () => {
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyCuS-0g97JluGH6FTF5JBmwaW7d5aJ3WWw",
-        authDomain: "journal-infiniti-kapital.firebaseapp.com",
-        projectId: "journal-infiniti-kapital",
-        storageBucket: "journal-infiniti-kapital.firebasestorage.app",
-        messagingSenderId: "78211615687",
-        appId: "1:78211615687:web:02b05ba83acd46c8c6e7e2",
-        measurementId: "G-D0ERFPMLGQ"
-    };
+    // --- MANEJADOR DE AUTENTICACIÓN (TU VERSIÓN COMPLETA) ---
+    onAuthStateChanged(auth, async (user) => {
+        const userNameEl = document.querySelector('.user-name');
+        if (user) {
+            await user.getIdToken(true);
+            const token = await user.getIdTokenResult();
+            const role = token.claims.role || 'user';
+            document.body.classList.toggle('is-admin', role === 'admin');
+            
+            if (userNameEl) userNameEl.textContent = user.displayName || user.email;
+            document.querySelector('.avatar').textContent = (user.displayName || 'U').substring(0,2).toUpperCase();
+            
+            document.querySelector('#welcome-title').textContent = `Bienvenido, ${user.displayName || 'Trader'}`;
 
-    const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db   = getFirestore(app);
-    const functions = getFunctions(app);
+            const profileNameInput = document.querySelector('#profile-name-input');
+            if (profileNameInput) {
+                profileNameInput.value = user.displayName || '';
+            }
+            document.querySelector('#btn-login').classList.add('hidden');
+            document.querySelector('#btn-logout').classList.remove('hidden');
+            document.querySelector('#btn-open-auth').classList.add('hidden');
+            document.querySelector('#welcome-message').textContent = "Tu sesión está activa. Tus operaciones se guardarán en la nube.";
+            
+            bindSelfRealtime(user.uid);
+            
+            if (role === 'admin') {
+                // loadAdminPanel(); // Descomenta si tienes esta función
+            }
+        } else {
+            document.body.classList.remove('is-admin');
+            cleanupListeners();
+            
+            if (userNameEl) userNameEl.textContent = 'Invitado';
+            document.querySelector('.avatar').textContent = 'AT';
 
-    window.auth = auth;
-    window.db = db;
- }); 
- 
+            document.querySelector('#welcome-title').textContent = 'Bienvenido';
+
+            document.querySelector('#btn-login').classList.remove('hidden');
+            document.querySelector('#btn-logout').classList.add('hidden');
+            document.querySelector('#btn-open-auth').classList.remove('hidden');
+            document.querySelector('#welcome-message').textContent = "Inicia sesión para guardar tus operaciones en la nube.";
+
+            const empty = [];
+            window.__currentTrades = empty;
+            window.__currentAccounts = empty;
+            window.__currentStrategies = empty;
+            window.__currentSettings = {};
+            window.__currentGeneralSettings = { initialBalance: 10000 };
+            document.querySelector('#settings-initial-balance').value = 10000;
+            
+            updateAccountsUI(empty);
+            renderAnalytics(empty);
+            renderCalendar(empty);
+            renderStrategiesUI(empty);
+            updateStrategiesDropdown(empty);
+            populateAnalyticsFilter(empty);
+            recalcFromTrades(empty);
+            updateChallengeTrackerUI(empty, {});
+            renderNotesHistory(empty);
+            renderHistorySummary(empty);
+            renderDetailedHistory(empty); 
+
+            if (document.querySelector('#admin-users-tbody')) document.querySelector('#admin-users-tbody').innerHTML = '';
+            // ... y el resto de tu lógica de limpieza
+        }
+    });
+
+    // --- AQUÍ DEBEN IR TODAS TUS DEMÁS FUNCIONES Y EVENT LISTENERS ---
+    // (Por ejemplo: saveAccount, updateAccountsUI, etc. y los addEventListener)
+
+});
+
 // --- INICIO DE FUNCIONES DE CÁLCULO Y RENDERIZADO ---
 
 function updateRecentTrades(trades) {
