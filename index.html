@@ -2982,6 +2982,99 @@ function calculateReportStats(trades, initialBalance = 0) {
   return { total, wins, losses, winRate, netProfit };
 }
 window.calculateReportStats = calculateReportStats;
+
+
+// === FIX: minimal renderAnalytics (added) ===
+function renderAnalytics(trades = [], initialBalance = 0) {
+  try {
+    const stats = (typeof calculateReportStats === 'function')
+      ? calculateReportStats(trades, initialBalance)
+      : { total: trades.length, netProfit: 0, wins: 0, losses: 0, winRate: 0 };
+    // Notificar a la UI existente (si escucha estos eventos)
+    window.dispatchEvent(new CustomEvent('analytics:rendered', { detail: { stats } }));
+    return stats;
+  } catch (e) {
+    console.warn('renderAnalytics noop:', e);
+    return { total: trades.length || 0, netProfit: 0, wins: 0, losses: 0, winRate: 0 };
+  }
+}
+window.renderAnalytics = renderAnalytics;
+
+// === FIX: minimal calculateRiskMetrics (added) ===
+function calculateRiskMetrics(trades = [], initialBalance = 0) {
+  const list = Array.isArray(trades) ? trades : [];
+  let wins = 0, losses = 0, net = 0;
+  let equity = Number(initialBalance) || 0;
+  let peak = equity, maxDrawdown = 0;
+  let risked = 0, rewarded = 0;
+
+  for (const t of list) {
+    const r = Number((t && (t.result ?? t.pnl ?? t.profit)) || 0);
+    net += r;
+    equity += r;
+    if (equity > peak) peak = equity;
+    const dd = peak - equity;
+    if (dd > maxDrawdown) maxDrawdown = dd;
+    if (r > 0) { wins++; rewarded += r; }
+    else if (r < 0) { losses++; risked += Math.abs(r); }
+  }
+  const avgRisk = losses ? (risked / losses) : 0;
+  const avgReward = wins ? (rewarded / wins) : 0;
+  const rr = avgRisk > 0 ? (avgReward / avgRisk) : 0;
+  const expectancy = list.length ? (net / list.length) : 0;
+
+  return { wins, losses, netProfit: net, maxDrawdown, avgRisk, avgReward, rr, expectancy };
+}
+window.calculateRiskMetrics = calculateRiskMetrics;
+
+
+
+// === UX FIX: Enter-to-login + show/hide password (added, non-breaking) ===
+(function initLoginUX() {
+  // Delegate: toggle password visibility
+  document.addEventListener('click', (ev) => {
+    const t = ev.target.closest('[data-toggle="password"], .toggle-password, [data-action="toggle-password"]');
+    if (!t) return;
+    ev.preventDefault();
+    // Resolve target input: by data-target or nearest input sibling
+    let sel = t.getAttribute('data-target');
+    let input = sel ? document.querySelector(sel) : null;
+    if (!input) {
+      input = t.previousElementSibling && t.previousElementSibling.matches('input[type="password"],input[type="text"]')
+        ? t.previousElementSibling
+        : t.parentElement && t.parentElement.querySelector('input[type="password"],input[type="text"]');
+    }
+    if (!input) return;
+    const isPwd = input.getAttribute('type') === 'password';
+    input.setAttribute('type', isPwd ? 'text' : 'password');
+    // Optional: toggle eye icon class
+    t.classList.toggle('is-visible', !isPwd);
+  }, { capture: false });
+
+  // Enter-to-submit for login form
+  const form = document.querySelector('#login-form, form[data-form="login"], form[name="login"]');
+  if (form && !form.__ik_enter_bound) {
+    form.__ik_enter_bound = true;
+    form.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        // avoid accidental submits in textarea
+        if (e.target && e.target.tagName === 'TEXTAREA') return;
+        e.preventDefault();
+        // Prefer native submit if onsubmit is wired
+        if (typeof form.requestSubmit === 'function') {
+          form.requestSubmit();
+          return;
+        }
+        // Fallback: click login button or call login handler if exposed
+        const btn = form.querySelector('[type="submit"], #btn-login, [data-action="login"]');
+        if (btn) { btn.click(); return; }
+        if (typeof window.login === 'function') { window.login(); return; }
+        if (typeof window.handleLogin === 'function') { window.handleLogin(); return; }
+      }
+    });
+  }
+})();
+
 </script>
 
 <style>
