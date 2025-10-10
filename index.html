@@ -1200,45 +1200,6 @@ async function saveAccount(accountData) {
     }
 }
 
-function renderAnalytics(data) {
-    const analyticsContainer = document.getElementById('analytics-container') || 
-                              document.querySelector('.analytics') ||
-                              document.createElement('div');
-    
-    if (!analyticsContainer.innerHTML) {
-        analyticsContainer.className = 'analytics-container';
-        document.body.appendChild(analyticsContainer);
-    }
-
-    const metrics = calculateRiskMetrics(data?.trades || []);
-    
-    analyticsContainer.innerHTML = `
-        <div class="analytics-card">
-            <h3>Métricas de Riesgo</h3>
-            <div class="metric">
-                <span>Win Rate:</span>
-                <span>${metrics.winRate}%</span>
-            </div>
-            <div class="metric">
-                <span>Factor de Beneficio:</span>
-                <span>${metrics.profitFactor}</span>
-            </div>
-            <div class="metric">
-                <span>Drawdown Máximo:</span>
-                <span>${metrics.maxDrawdown}</span>
-            </div>
-            <div class="metric">
-                <span>Ratio Sharpe:</span>
-                <span>${metrics.sharpeRatio}</span>
-            </div>
-            <div class="metric">
-                <span>Total Operaciones:</span>
-                <span>${metrics.totalTrades}</span>
-            </div>
-        </div>
-    `;
-}
-
 function updateAccountsUI(accounts) {
     const el = document.getElementById('accounts-container');
     if (!el) return;
@@ -2359,10 +2320,33 @@ async function saveChallengeSettings(settings) {
     await setDoc(settingsRef, settings, { merge: true });
 }
 async function deleteItem(collectionName, id) {
-  const user = auth.currentUser; if (!user || !id) return;
-  if (confirm(`¿Estás seguro de que quieres eliminar este elemento?`)) {
-    await deleteDoc(doc(db, 'users', user.uid, collectionName, id));
-  }
+    const user = auth.currentUser;
+    if (!user || !id) {
+        console.error("No se puede borrar: falta usuario o ID.");
+        return;
+    }
+
+    // Usamos una confirmación más robusta
+    const confirmation = confirm(`¿Estás seguro de que quieres eliminar este elemento de "${collectionName}"?`);
+    
+    if (confirmation) {
+        console.log(`Intentando borrar: ${collectionName}/${id}`);
+        try {
+            const docRef = doc(db, 'users', user.uid, collectionName, id);
+            await deleteDoc(docRef);
+            
+            // Éxito: notificar en la consola y al usuario
+            console.log("¡Borrado con éxito de Firestore!");
+            alert("Elemento eliminado correctamente.");
+
+        } catch (error) {
+            // Error: mostrar el error en la consola y al usuario
+            console.error("Error al intentar borrar de Firestore:", error);
+            alert("Hubo un error al eliminar el elemento: " + error.message);
+        }
+    } else {
+        console.log("Borrado cancelado por el usuario.");
+    }
 }
 
 function renderNotesHistory(notes) {
@@ -2956,6 +2940,48 @@ async function exportToPDF() {
 $('#download-csv-btn').addEventListener('click', exportToCSV);
 $('#download-excel-btn').addEventListener('click', exportToExcel);
 $('#download-pdf-btn').addEventListener('click', exportToPDF);
+
+
+// === FIX: saveStrategy (added) ===
+async function saveStrategy(evt) {
+  try {
+    if (evt && typeof evt.preventDefault === 'function') evt.preventDefault();
+    const form = document.getElementById('strategy-form') || document.querySelector('[data-form="strategy"]');
+    const payload = form ? Object.fromEntries(new FormData(form)) : {};
+    const user = (typeof auth !== 'undefined' && auth && auth.currentUser) ? auth.currentUser : null;
+    if (user) payload.userId = user.uid;
+    // Allow both manual and form-driven name/id fields
+    if (!payload.name && payload.strategyName) payload.name = payload.strategyName;
+    if (!payload.createdAt) payload.createdAt = serverTimestamp();
+    // Persist in 'strategies' collection
+    const ref = await addDoc(collection(db, 'strategies'), payload);
+    // Feedback UI (non-intrusive): dispatch event so existing UI can react
+    window.dispatchEvent(new CustomEvent('strategy:saved', { detail: { id: ref.id, data: payload } }));
+    return ref.id;
+  } catch (err) {
+    console.error('saveStrategy error:', err);
+    window.dispatchEvent(new CustomEvent('strategy:error', { detail: { message: String(err) } }));
+    throw err;
+  }
+}
+// expose for non-module callers (onclick="saveStrategy(event)")
+window.saveStrategy = saveStrategy;
+
+
+// === FIX: minimal calculateReportStats (added) ===
+function calculateReportStats(trades, initialBalance = 0) {
+  const list = Array.isArray(trades) ? trades : [];
+  let wins = 0, losses = 0, netProfit = 0;
+  for (const t of list) {
+    const r = Number((t && (t.result ?? t.pnl ?? t.profit)) || 0);
+    if (r > 0) wins++; else if (r < 0) losses++;
+    netProfit += r;
+  }
+  const total = wins + losses + (list.length - (wins + losses));
+  const winRate = total > 0 ? (wins / total) * 100 : 0;
+  return { total, wins, losses, winRate, netProfit };
+}
+window.calculateReportStats = calculateReportStats;
 </script>
 
 <style>
