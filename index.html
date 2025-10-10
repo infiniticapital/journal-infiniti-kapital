@@ -1200,6 +1200,45 @@ async function saveAccount(accountData) {
     }
 }
 
+function renderAnalytics(data) {
+    const analyticsContainer = document.getElementById('analytics-container') || 
+                              document.querySelector('.analytics') ||
+                              document.createElement('div');
+    
+    if (!analyticsContainer.innerHTML) {
+        analyticsContainer.className = 'analytics-container';
+        document.body.appendChild(analyticsContainer);
+    }
+
+    const metrics = calculateRiskMetrics(data?.trades || []);
+    
+    analyticsContainer.innerHTML = `
+        <div class="analytics-card">
+            <h3>Métricas de Riesgo</h3>
+            <div class="metric">
+                <span>Win Rate:</span>
+                <span>${metrics.winRate}%</span>
+            </div>
+            <div class="metric">
+                <span>Factor de Beneficio:</span>
+                <span>${metrics.profitFactor}</span>
+            </div>
+            <div class="metric">
+                <span>Drawdown Máximo:</span>
+                <span>${metrics.maxDrawdown}</span>
+            </div>
+            <div class="metric">
+                <span>Ratio Sharpe:</span>
+                <span>${metrics.sharpeRatio}</span>
+            </div>
+            <div class="metric">
+                <span>Total Operaciones:</span>
+                <span>${metrics.totalTrades}</span>
+            </div>
+        </div>
+    `;
+}
+
 function updateAccountsUI(accounts) {
     const el = document.getElementById('accounts-container');
     if (!el) return;
@@ -2320,33 +2359,10 @@ async function saveChallengeSettings(settings) {
     await setDoc(settingsRef, settings, { merge: true });
 }
 async function deleteItem(collectionName, id) {
-    const user = auth.currentUser;
-    if (!user || !id) {
-        console.error("No se puede borrar: falta usuario o ID.");
-        return;
-    }
-
-    // Usamos una confirmación más robusta
-    const confirmation = confirm(`¿Estás seguro de que quieres eliminar este elemento de "${collectionName}"?`);
-    
-    if (confirmation) {
-        console.log(`Intentando borrar: ${collectionName}/${id}`);
-        try {
-            const docRef = doc(db, 'users', user.uid, collectionName, id);
-            await deleteDoc(docRef);
-            
-            // Éxito: notificar en la consola y al usuario
-            console.log("¡Borrado con éxito de Firestore!");
-            alert("Elemento eliminado correctamente.");
-
-        } catch (error) {
-            // Error: mostrar el error en la consola y al usuario
-            console.error("Error al intentar borrar de Firestore:", error);
-            alert("Hubo un error al eliminar el elemento: " + error.message);
-        }
-    } else {
-        console.log("Borrado cancelado por el usuario.");
-    }
+  const user = auth.currentUser; if (!user || !id) return;
+  if (confirm(`¿Estás seguro de que quieres eliminar este elemento?`)) {
+    await deleteDoc(doc(db, 'users', user.uid, collectionName, id));
+  }
 }
 
 function renderNotesHistory(notes) {
@@ -2371,99 +2387,6 @@ function renderNotesHistory(notes) {
         </div>
     `).join('');
 }
-
-// Función para calcular métricas de riesgo
-function calculateRiskMetrics(trades) {
-    if (!trades || trades.length === 0) {
-        return {
-            winRate: 0,
-            profitFactor: 0,
-            maxDrawdown: 0,
-            sharpeRatio: 0,
-            totalTrades: 0
-        };
-    }
-
-    const profits = trades.map(t => t.profit || 0);
-    const winningTrades = profits.filter(p => p > 0);
-    const losingTrades = profits.filter(p => p < 0);
-    
-    const winRate = (winningTrades.length / trades.length) * 100;
-    const totalProfit = winningTrades.reduce((sum, p) => sum + p, 0);
-    const totalLoss = Math.abs(losingTrades.reduce((sum, p) => sum + p, 0));
-    const profitFactor = totalLoss > 0 ? totalProfit / totalLoss : totalProfit;
-    
-    // Cálculo simplificado de drawdown
-    let balance = 0;
-    let peak = 0;
-    let maxDrawdown = 0;
-    
-    profits.forEach(profit => {
-        balance += profit;
-        if (balance > peak) peak = balance;
-        const drawdown = peak - balance;
-        if (drawdown > maxDrawdown) maxDrawdown = drawdown;
-    });
-
-    return {
-        winRate: Math.round(winRate * 100) / 100,
-        profitFactor: Math.round(profitFactor * 100) / 100,
-        maxDrawdown: Math.round(maxDrawdown * 100) / 100,
-        sharpeRatio: profitFactor > 0 ? Math.round(profitFactor * 10) / 10 : 0,
-        totalTrades: trades.length
-    };
-}
-
-// Función para renderizar analytics
-function renderAnalytics(data) {
-    const analyticsContainer = document.getElementById('analytics-container') || 
-                              document.querySelector('.analytics') ||
-                              document.createElement('div');
-    
-    if (!analyticsContainer.innerHTML) {
-        analyticsContainer.className = 'analytics-container';
-        document.body.appendChild(analyticsContainer);
-    }
-
-    const metrics = calculateRiskMetrics(data?.trades || []);
-    
-    analyticsContainer.innerHTML = `
-        <div class="analytics-card">
-            <h3>Métricas de Riesgo</h3>
-            <div class="metric">
-                <span>Win Rate:</span>
-                <span>${metrics.winRate}%</span>
-            </div>
-            <div class="metric">
-                <span>Factor de Beneficio:</span>
-                <span>${metrics.profitFactor}</span>
-            </div>
-            <div class="metric">
-                <span>Drawdown Máximo:</span>
-                <span>${metrics.maxDrawdown}</span>
-            </div>
-            <div class="metric">
-                <span>Ratio Sharpe:</span>
-                <span>${metrics.sharpeRatio}</span>
-            </div>
-            <div class="metric">
-                <span>Total Operaciones:</span>
-                <span>${metrics.totalTrades}</span>
-            </div>
-        </div>
-    `;
-}
-
-// Función para cerrar modales (que ya tienes)
-function closeAllModals() { 
-    document.querySelectorAll('.modal').forEach(m => m.classList.remove('show')); 
-    document.body.style.overflow = ''; 
-}
-
-// Asegurar que las funciones sean globales
-window.calculateRiskMetrics = calculateRiskMetrics;
-window.renderAnalytics = renderAnalytics;
-window.closeAllModals = closeAllModals;
 
 // EN TU index.html, DENTRO DEL <script type="module">
 // Reemplaza tu addEventListener de 'main' completo con este bloque
