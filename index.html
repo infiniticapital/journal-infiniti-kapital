@@ -2320,10 +2320,33 @@ async function saveChallengeSettings(settings) {
     await setDoc(settingsRef, settings, { merge: true });
 }
 async function deleteItem(collectionName, id) {
-  const user = auth.currentUser; if (!user || !id) return;
-  if (confirm(`¿Estás seguro de que quieres eliminar este elemento?`)) {
-    await deleteDoc(doc(db, 'users', user.uid, collectionName, id));
-  }
+    const user = auth.currentUser;
+    if (!user || !id) {
+        console.error("No se puede borrar: falta usuario o ID.");
+        return;
+    }
+
+    // Usamos una confirmación más robusta
+    const confirmation = confirm(`¿Estás seguro de que quieres eliminar este elemento de "${collectionName}"?`);
+    
+    if (confirmation) {
+        console.log(`Intentando borrar: ${collectionName}/${id}`);
+        try {
+            const docRef = doc(db, 'users', user.uid, collectionName, id);
+            await deleteDoc(docRef);
+            
+            // Éxito: notificar en la consola y al usuario
+            console.log("¡Borrado con éxito de Firestore!");
+            alert("Elemento eliminado correctamente.");
+
+        } catch (error) {
+            // Error: mostrar el error en la consola y al usuario
+            console.error("Error al intentar borrar de Firestore:", error);
+            alert("Hubo un error al eliminar el elemento: " + error.message);
+        }
+    } else {
+        console.log("Borrado cancelado por el usuario.");
+    }
 }
 
 function renderNotesHistory(notes) {
