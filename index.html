@@ -1808,53 +1808,79 @@ function cleanupListeners() {
     unsubscribes = [];
 }
 
-function bindSelfRealtime(uid){
-  cleanupListeners();
+function bindSelfRealtime(uid) {
+    cleanupListeners();
+    
+    // Flag para prevenir loops
+    let isUpdating = false;
+    let pendingUpdate = false;
 
-  const tradesRef = collection(db, 'users', uid, 'trades');
-  const unsubTrades = onSnapshot(query(tradesRef, orderBy('createdAt','asc')), snap=>{
-    window.__currentTrades = snap.docs.map(d=>({id:d.id,...d.data()}));
-    (window.updateAllCalculations || (()=>{}))();
-  });
+    const tradesRef = collection(db, 'users', uid, 'trades');
+    const unsubTrades = onSnapshot(query(tradesRef, orderBy('createdAt', 'asc')), snap => {
+        if (isUpdating) {
+            pendingUpdate = true;
+            return;
+        }
+        
+        isUpdating = true;
+        window.__currentTrades = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        
+        // Ejecutar cálculos de forma controlada
+        setTimeout(() => {
+            if (window.updateAllCalculations) {
+                window.updateAllCalculations();
+            }
+            isUpdating = false;
+            
+            // Procesar actualización pendiente si existe
+            if (pendingUpdate) {
+                pendingUpdate = false;
+                // Disparar una nueva actualización
+                const currentTrades = window.__currentTrades;
+                window.__currentTrades = [...currentTrades]; // Forzar actualización
+                if (window.updateAllCalculations) {
+                    window.updateAllCalculations();
+                }
+            }
+        }, 100); // Pequeño delay para agrupar actualizaciones
+    });
 
-  const settingsRef = doc(db, 'users', uid, 'settings', 'challenge');
-  const unsubSettings = onSnapshot(settingsRef, snap => {
-    window.__currentSettings = snap.data() || {};
-    (window.updateAllCalculations || (()=>{}))();
-  });
+    const settingsRef = doc(db, 'users', uid, 'settings', 'challenge');
+    const unsubSettings = onSnapshot(settingsRef, snap => {
+        window.__currentSettings = snap.data() || {};
+    });
 
-  const generalSettingsRef = doc(db, 'users', uid, 'settings', 'general');
-  const unsubGeneralSettings = onSnapshot(generalSettingsRef, snap => {
-    const settings = snap.data() || { initialBalance: 10000, weeklyGoal: '' };
-    window.__currentGeneralSettings = settings;
-    $('#settings-initial-balance').value = settings.initialBalance;
-    $('#weekly-goal-input').value = settings.weeklyGoal || '';
-    (window.updateAllCalculations || (()=>{}))();
-  });      
+    const generalSettingsRef = doc(db, 'users', uid, 'settings', 'general');
+    const unsubGeneralSettings = onSnapshot(generalSettingsRef, snap => {
+        const settings = snap.data() || { initialBalance: 10000, weeklyGoal: '' };
+        window.__currentGeneralSettings = settings;
+        $('#settings-initial-balance').value = settings.initialBalance;
+        $('#weekly-goal-input').value = settings.weeklyGoal || '';
+    });
 
-  const accountsRef = collection(db, 'users', uid, 'accounts');
-  const unsubAccounts = onSnapshot(query(accountsRef, orderBy('createdAt', 'desc')), snap=>{
-    window.__currentAccounts = snap.docs.map(d=>({id:d.id,...d.data()}));
-    updateAccountsUI(window.__currentAccounts);
-    populateReportAccountsDropdown(window.__currentAccounts);
-  });
+    const accountsRef = collection(db, 'users', uid, 'accounts');
+    const unsubAccounts = onSnapshot(query(accountsRef, orderBy('createdAt', 'desc')), snap => {
+        window.__currentAccounts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        updateAccountsUI(window.__currentAccounts);
+        populateReportAccountsDropdown(window.__currentAccounts);
+    });
 
-  const strategiesRef = collection(db, 'users', uid, 'strategies');
-  const unsubStrategies = onSnapshot(query(strategiesRef, orderBy('createdAt','desc')), snap=>{
-    const strategies = snap.docs.map(d=>({id:d.id,...d.data()}));
-    window.__currentStrategies = strategies;
-    renderStrategiesUI(strategies);
-    updateStrategiesDropdown(strategies);
-    populateAnalyticsFilter(strategies);
-  });
-  
-  const notesRef = collection(db, 'users', uid, 'notes');
-  const unsubNotes = onSnapshot(query(notesRef, orderBy('createdAt', 'desc')), snap => {
-      const notes = snap.docs.map(d => ({id: d.id, ...d.data()}));
-      renderNotesHistory(notes);
-  });
+    const strategiesRef = collection(db, 'users', uid, 'strategies');
+    const unsubStrategies = onSnapshot(query(strategiesRef, orderBy('createdAt', 'desc')), snap => {
+        const strategies = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        window.__currentStrategies = strategies;
+        renderStrategiesUI(strategies);
+        updateStrategiesDropdown(strategies);
+        populateAnalyticsFilter(strategies);
+    });
 
-  unsubscribes.push(unsubTrades, unsubSettings, unsubGeneralSettings, unsubAccounts, unsubStrategies, unsubNotes);
+    const notesRef = collection(db, 'users', uid, 'notes');
+    const unsubNotes = onSnapshot(query(notesRef, orderBy('createdAt', 'desc')), snap => {
+        const notes = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderNotesHistory(notes);
+    });
+
+    unsubscribes.push(unsubTrades, unsubSettings, unsubGeneralSettings, unsubAccounts, unsubStrategies, unsubNotes);
 }
 
 onAuthStateChanged(auth, async (user) => {
@@ -1927,20 +1953,29 @@ onAuthStateChanged(auth, async (user) => {
 });
  
  window.updateAllCalculations = () => {
-  const allTrades = window.__currentTrades || [];
-  const settings = window.__currentSettings || {};
-  const selectedStrategyId = $('#analytics-strategy-filter').value;
-  const filteredTrades = selectedStrategyId ? allTrades.filter(t => t.strategyId === selectedStrategyId) : allTrades;
-  
-  recalcFromTrades(allTrades);
-  renderHistorySummary(allTrades);
-  renderDetailedHistory(allTrades); 
-  renderAnalytics(filteredTrades);
-  renderCalendar(allTrades);
-  updateChallengeTrackerUI(allTrades, settings);
-  updateAccountsUI(window.__currentAccounts);
-  updateWeeklyProgress();
-}
+    // Debug para verificar que no se ejecuta en loop
+    console.log('🔄 updateAllCalculations ejecutado');
+    
+    const allTrades = window.__currentTrades || [];
+    const settings = window.__currentSettings || {};
+    const selectedStrategyId = $('#analytics-strategy-filter')?.value;
+    const filteredTrades = selectedStrategyId ? allTrades.filter(t => t.strategyId === selectedStrategyId) : allTrades;
+    
+    // Solo recalcular si hay trades
+    if (allTrades.length > 0) {
+        recalcFromTrades(allTrades);
+        renderHistorySummary(allTrades);
+        renderDetailedHistory(allTrades);
+    }
+    
+    renderAnalytics(filteredTrades);
+    renderCalendar(allTrades);
+    updateChallengeTrackerUI(allTrades, settings);
+    updateAccountsUI(window.__currentAccounts);
+    updateWeeklyProgress();
+    
+    console.log('✅ Cálculos completados');
+};
 
 function calculateChallengeProgress(trades, settings) {
   const initialBalance = settings.initialBalance;
