@@ -1674,6 +1674,36 @@ function setAuthMode(mode){
   $('#auth-error').classList.add('hidden');
 }
 
+// Activar envío con la tecla Enter en el formulario de autenticación
+const authForm = document.getElementById('auth-form');
+if (authForm) {
+    authForm.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            // Evita que el formulario se envíe de la forma tradicional
+            e.preventDefault(); 
+            // Simula un clic en el botón de envío
+            document.getElementById('auth-submit')?.click();
+        }
+    });
+}
+
+// Funcionalidad para el botón de mostrar/ocultar contraseña
+const togglePasswordButton = document.getElementById('toggle-password');
+if (togglePasswordButton) {
+    togglePasswordButton.addEventListener('click', () => {
+        const passwordInput = document.getElementById('auth-pass');
+        const icon = togglePasswordButton.querySelector('i');
+        if (!passwordInput || !icon) return;
+
+        // Cambia el tipo de input
+        const isPassword = passwordInput.type === 'password';
+        passwordInput.type = isPassword ? 'text' : 'password';
+        
+        // Cambia el ícono del ojo
+        icon.className = isPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
+    });
+}
+
 let unsubscribes = [];
 function cleanupListeners() {
     unsubscribes.forEach(unsub => unsub && unsub());
