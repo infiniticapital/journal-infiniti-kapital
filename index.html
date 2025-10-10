@@ -1237,6 +1237,26 @@ function updateAccountsUI(accounts) {
     });
 }
 
+function calculateDrawdown(trades, initialBalance) {
+    let peakEquity = initialBalance;
+    let maxDrawdownValue = 0;
+
+    let currentEquity = initialBalance;
+    (trades || []).forEach(trade => {
+        currentEquity += (trade.result || 0);
+        if (currentEquity > peakEquity) {
+            peakEquity = currentEquity;
+        }
+        const drawdown = peakEquity - currentEquity;
+        if (drawdown > maxDrawdownValue) {
+            maxDrawdownValue = drawdown;
+        }
+    });
+
+    const maxDrawdownPercent = peakEquity > 0 ? (maxDrawdownValue / peakEquity) * 100 : 0;
+    return { maxDrawdownValue, maxDrawdownPercent };
+}
+
 function renderAnalytics(trades) {
     const t = trades || [];
     const wins = t.filter(x => x.result > 0);
