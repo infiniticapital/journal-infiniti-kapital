@@ -1238,23 +1238,58 @@ function updateAccountsUI(accounts) {
 }
 
 function calculateDrawdown(trades, initialBalance) {
-    let peakEquity = initialBalance;
+    let peakEquity = initialBalance || 0;
+    let currentEquity = initialBalance || 0;
     let maxDrawdownValue = 0;
-
-    let currentEquity = initialBalance;
-    (trades || []).forEach(trade => {
-        currentEquity += (trade.result || 0);
-        if (currentEquity > peakEquity) {
-            peakEquity = currentEquity;
-        }
-        const drawdown = peakEquity - currentEquity;
-        if (drawdown > maxDrawdownValue) {
-            maxDrawdownValue = drawdown;
-        }
+    (trades || []).forEach(t => {
+      currentEquity += Number(t?.result ?? 0);
+      if (currentEquity > peakEquity) peakEquity = currentEquity;
+      const dd = peakEquity - currentEquity;
+      if (dd > maxDrawdownValue) maxDrawdownValue = dd;
     });
-
-    const maxDrawdownPercent = peakEquity > 0 ? (maxDrawdownValue / peakEquity) * 100 : 0;
+    const maxDrawdownPercent = (initialBalance > 0) ? (maxDrawdownValue / initialBalance) * 100 : 0;
     return { maxDrawdownValue, maxDrawdownPercent };
+}
+
+function calculateStreaks(trades) {
+    let maxWinningStreak = 0;
+    let currentWinningStreak = 0;
+    let maxLosingStreak = 0;
+    let currentLosingStreak = 0;
+
+    (trades || []).forEach(trade => {
+      const r = Number(trade?.result ?? 0);
+      if (r > 0) { currentWinningStreak++; currentLosingStreak = 0; }
+      else if (r < 0) { currentLosingStreak++; currentWinningStreak = 0; }
+      if (currentWinningStreak > maxWinningStreak) maxWinningStreak = currentWinningStreak;
+      if (currentLosingStreak > maxLosingStreak) maxLosingStreak = currentLosingStreak;
+    });
+    return { maxWinningStreak, maxLosingStreak };
+}
+
+function calculateReportStats(trades, initialBalance) {
+    const t = trades || [];
+    const wins   = t.filter(x => Number(x?.result ?? 0) > 0);
+    const losses = t.filter(x => Number(x?.result ?? 0) < 0);
+    const grossProfit = wins.reduce((s, x) => s + Number(x?.result ?? 0), 0);
+    const grossLoss   = losses.reduce((s, x) => s + Number(x?.result ?? 0), 0);
+    const netProfit   = grossProfit + grossLoss;
+    const profitFactor = Math.abs(grossLoss) > 0 ? (grossProfit / Math.abs(grossLoss)) : 0;
+    const streaks = calculateStreaks(t);
+    const drawdown = calculateDrawdown(t, initialBalance || 0);
+    return {
+      netProfit,
+      finalBalance: (initialBalance || 0) + netProfit,
+      totalTrades: t.length,
+      winRate: t.length ? (wins.length / t.length) * 100 : 0,
+      grossProfit,
+      grossLoss,
+      profitFactor,
+      maxWinningStreak: streaks.maxWinningStreak,
+      maxLosingStreak: streaks.maxLosingStreak,
+      maxDrawdownValue: drawdown.maxDrawdownValue,
+      maxDrawdownPercent: drawdown.maxDrawdownPercent,
+    };
 }
 
 function renderAnalytics(trades) {
