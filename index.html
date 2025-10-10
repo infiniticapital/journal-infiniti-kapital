@@ -3423,23 +3423,26 @@ window.calculateDrawdown = calculateDrawdown;
 
 
 
-// === DATA COMPUTE: safe math + streaks ===
-function __ikNum(v){ v = Number(v); return (isFinite(v) ? v : 0); }
-function __ikPct(n, d){ n = __ikNum(n); d = __ikNum(d); return d > 0 ? (n/d) : 0; }
-function __ikFmt(n){ n = __ikNum(n); return n.toFixed(2); }
-function __ikPctText(x){ return (__ikNum(x)*100).toFixed(1) + '%'; }
 
-function calculateStreaks(trades = []){
-  let maxWin = 0, maxLoss = 0, curWin = 0, curLoss = 0;
-  for (const t of trades){
-    const r = __ikNum(t.result ?? t.pnl ?? t.profit);
-    if (r > 0){ curWin++; maxWin = Math.max(maxWin, curWin); curLoss = 0; }
-    else if (r < 0){ curLoss++; maxLoss = Math.max(maxLoss, curLoss); curWin = 0; }
-    else { curWin = 0; curLoss = 0; }
+// === DATA COMPUTE: safe math + streaks (guarded) ===
+window.__ikNum = window.__ikNum || function(v){ v = Number(v); return (isFinite(v) ? v : 0); };
+window.__ikPct = window.__ikPct || function(n, d){ n = window.__ikNum(n); d = window.__ikNum(d); return d > 0 ? (n/d) : 0; };
+window.__ikFmt = window.__ikFmt || function(n){ n = window.__ikNum(n); return n.toFixed(2); };
+window.__ikPctText = window.__ikPctText || function(x){ return (window.__ikNum(x)*100).toFixed(1) + '%'; };
+
+if (typeof window.calculateStreaks !== 'function'){
+  window.calculateStreaks = function(trades){
+    trades = Array.isArray(trades) ? trades : [];
+    let maxWin = 0, maxLoss = 0, curWin = 0, curLoss = 0;
+    for (const t of trades){
+      const r = window.__ikNum((t && (t.result ?? t.pnl ?? t.profit)) || 0);
+      if (r > 0){ curWin++; maxWin = Math.max(maxWin, curWin); curLoss = 0; }
+      else if (r < 0){ curLoss++; maxLoss = Math.max(maxLoss, curLoss); curWin = 0; }
+      else { curWin = 0; curLoss = 0; }
+    }
+    return { maxWinStreak: maxWin, maxLossStreak: maxLoss };
   }
-  return { maxWinStreak: maxWin, maxLossStreak: maxLoss };
 }
-
 // === RENDER: Analytics (reliable, zero-safe) ===
 (function ensureAnalytics(){
   function compute(list, base){
