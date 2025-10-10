@@ -1032,6 +1032,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
   
 <script type="module">
+
 // ----- SCRIPT PRINCIPAL CON TODA LA LÓGICA DE LA APLICACIÓN -----
 
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
@@ -1045,23 +1046,26 @@ import {
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js';
 
-const firebaseConfig = {
-    apiKey: "AIzaSyCuS-0g97JluGH6FTF5JBmwaW7d5aJ3WWw",
-    authDomain: "journal-infiniti-kapital.firebaseapp.com",
-    projectId: "journal-infiniti-kapital",
-    storageBucket: "journal-infiniti-kapital.firebasestorage.app",
-    messagingSenderId: "78211615687",
-    appId: "1:78211615687:web:02b05ba83acd46c8c6e7e2",
-    measurementId: "G-D0ERFPMLGQ"
-};
+// --- TODA LA LÓGICA AHORA VA DENTRO DE ESTE EVENTO ---
+document.addEventListener('DOMContentLoaded', () => {
 
-const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db   = getFirestore(app);
-const functions = getFunctions(app);
+    const firebaseConfig = {
+        apiKey: "AIzaSyCuS-0g97JluGH6FTF5JBmwaW7d5aJ3WWw",
+        authDomain: "journal-infiniti-kapital.firebaseapp.com",
+        projectId: "journal-infiniti-kapital",
+        storageBucket: "journal-infiniti-kapital.firebasestorage.app",
+        messagingSenderId: "78211615687",
+        appId: "1:78211615687:web:02b05ba83acd46c8c6e7e2",
+        measurementId: "G-D0ERFPMLGQ"
+    };
 
-window.auth = auth;
-window.db = db;
+    const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+    const functions = getFunctions(app);
+
+    window.auth = auth;
+    window.db = db;
 
 // --- INICIO DE FUNCIONES DE CÁLCULO Y RENDERIZADO ---
 
@@ -2738,7 +2742,7 @@ $('#generate-report-btn').addEventListener('click', async () => {
     }
 });
 
-async function generateSHA256(str) {
+window.generateSHA256 = async function(str) {
     const textAsBuffer = new TextEncoder().encode(str);
     const hashBuffer = await crypto.subtle.digest('SHA-256', textAsBuffer);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
