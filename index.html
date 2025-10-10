@@ -3075,6 +3075,329 @@ window.calculateRiskMetrics = calculateRiskMetrics;
   }
 })();
 
+
+
+// === LINK: unify Accounts ⇄ Trades ⇄ Challenges (non-breaking glue) ===
+(function linkIK() {
+  // Shared state container
+  const IK = (window.__IK = window.__IK || {
+    accounts: [],
+    trades: [],
+    challenges: [],
+    selectedAccountId: null,
+    selectedChallengeId: null,
+  });
+
+  // Helpers
+  const num = (v) => Number(v ?? 0);
+  const pick = (...args) => args.find(v => v !== undefined && v !== null && v !== '');
+
+  function normalizeTrade(t) {
+    const obj = { ...(t || {}) };
+    // normalize accountId/challengeId
+    if (!obj.accountId && obj.account) obj.accountId = obj.account;
+    if (!obj.challengeId && obj.challenge) obj.challengeId = obj.challenge;
+    // normalize result field
+    if (obj.result === undefined) obj.result = pick(obj.pnl, obj.profit, 0);
+    obj.result = num(obj.result);
+    return obj;
+  }
+
+  function getInitialBalance() {
+    // Priority: selected challenge -> selected account -> 0
+    const ch = IK.challenges.find(c => c.id === IK.selectedChallengeId);
+    if (ch) return num(pick(ch.initialBalance, ch.startingBalance, ch.balance, 0));
+    const acc = IK.accounts.find(a => a.id === IK.selectedAccountId) || IK.accounts[0];
+    if (acc) return num(pick(acc.initialBalance, acc.balance, acc.base, 0));
+    return 0;
+  }
+
+  function currentTradeFilter(t) {
+    const accOk = IK.selectedAccountId ? (t.accountId === IK.selectedAccountId) : true;
+    const chOk  = IK.selectedChallengeId ? (t.challengeId === IK.selectedChallengeId) : true;
+    return accOk && chOk;
+  }
+
+  function aggregate(trades, initialBalance) {
+    const list = (trades || []).map(normalizeTrade).filter(currentTradeFilter);
+    const base = num(initialBalance);
+    const stats = (typeof calculateReportStats === 'function')
+      ? calculateReportStats(list, base)
+      : { total: list.length, wins: 0, losses: 0, winRate: 0, netProfit: list.reduce((s,t)=>s+num(t.result),0) };
+    const risk = (typeof calculateRiskMetrics === 'function')
+      ? calculateRiskMetrics(list, base)
+      : { maxDrawdown: 0, rr: 0, expectancy: 0 };
+    const balance = base + stats.netProfit;
+    return { list, base, balance, stats, risk };
+  }
+
+  // Expose a single recalculation entrypoint used by snapshots/UI
+  async function recalcAndNotify() {
+    const init = getInitialBalance();
+    const out = aggregate(IK.trades, init);
+    window.currentStats = out;
+    // fire events for any existing UI/chart code
+    window.dispatchEvent(new CustomEvent('ik:recalc', { detail: out }));
+    if (typeof renderAnalytics === 'function') {
+      try { renderAnalytics(out.list, out.base); } catch (e) { /* noop */ }
+    }
+    if (typeof window.updateAllCalculations === 'function') {
+      try { window.updateAllCalculations(); } catch (e) { /* noop */ }
+    }
+    return out;
+  }
+  window.__IK_recalc = recalcAndNotify;
+
+  // Bind selects if they exist
+  function bindSelectorsOnce() {
+    const accSel = document.querySelector('#account-select, select[data-select=\"account\"]');
+    const chSel  = document.querySelector('#challenge-select, select[data-select=\"challenge\"]');
+    if (accSel && !accSel.__ik_bound) {
+      accSel.__ik_bound = true;
+      accSel.addEventListener('change', () => {
+        IK.selectedAccountId = accSel.value || null;
+        recalcAndNotify();
+      });
+    }
+    if (chSel && !chSel.__ik_bound) {
+      chSel.__ik_bound = true;
+      chSel.addEventListener('change', () => {
+        IK.selectedChallengeId = chSel.value || null;
+        recalcAndNotify();
+      });
+    }
+  }
+  document.addEventListener('DOMContentLoaded', bindSelectorsOnce);
+  // In case the selects are injected later:
+  const mo = new MutationObserver(bindSelectorsOnce);
+  mo.observe(document.documentElement, { childList: true, subtree: true });
+
+  // Real-time bindings (require auth, db, Firestore helpers)
+  async function bindRealtime(user) {
+    if (!user || typeof db === 'undefined') return;
+    // Accounts
+    try {
+      const qAcc = query(collection(db, 'accounts'), where('userId', '==', user.uid));
+      onSnapshot(qAcc, (snap) => {
+        IK.accounts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        if (!IK.selectedAccountId && IK.accounts[0]) IK.selectedAccountId = IK.accounts[0].id;
+        recalcAndNotify();
+      });
+    } catch (e) { /* noop */ }
+
+    // Trades
+    try {
+      const qTr = query(collection(db, 'trades'), where('userId', '==', user.uid), orderBy('timestamp','asc'));
+      onSnapshot(qTr, (snap) => {
+        IK.trades = snap.docs.map(d => ({ id: d.id, ...d.data() })).map(normalizeTrade);
+        recalcAndNotify();
+      });
+    } catch (e) { /* noop */ }
+
+    // Challenges
+    try {
+      const qCh = query(collection(db, 'challenges'), where('userId', '==', user.uid));
+      onSnapshot(qCh, (snap) => {
+        IK.challenges = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        if (!IK.selectedChallengeId && IK.challenges[0]) IK.selectedChallengeId = null; // keep optional by default
+        recalcAndNotify();
+      });
+    } catch (e) { /* noop */ }
+  }
+  window.__IK_bindRealtime = bindRealtime;
+
+  // Hook into auth state if available
+  try {
+    if (typeof onAuthStateChanged === 'function' && typeof auth !== 'undefined') {
+      onAuthStateChanged(auth, (user) => {
+        if (user) bindRealtime(user);
+        else {
+          IK.accounts = []; IK.trades = []; IK.challenges = [];
+          IK.selectedAccountId = null; IK.selectedChallengeId = null;
+          recalcAndNotify();
+        }
+      });
+    }
+  } catch (e) { /* noop */ }
+})();
+
+
+
+// === LINK: Challenge card live sync (saldo dinámico + métricas) ===
+(function syncChallengeCard(){
+  function $(sel, root=document){ return root.querySelector(sel); }
+  function $all(sel, root=document){ return Array.from(root.querySelectorAll(sel)); }
+  function fmt(v){ v = Number(v); return isFinite(v) ? v.toFixed(2) : '0.00'; }
+  function pct(v){ v = Number(v); return isFinite(v) ? (v*100).toFixed(1)+'%' : '0.0%'; }
+  function pct100(v){ v = Number(v); return isFinite(v) ? v.toFixed(1)+'%' : '0.0%'; }
+
+  // Find challenge card by common ids/classes; fallback to data-widget
+  function findCard(){
+    return $('#ftmo-summary') ||
+           $('#challenge-card') ||
+           $('.challenge-summary') ||
+           $('[data-widget="challenge"]') ||
+           $('[data-card="challenge"]');
+  }
+
+  function setText(el, text){
+    if (!el) return;
+    el.textContent = text;
+  }
+
+  // Update function
+  function render(detail){
+    const card = findCard();
+    if (!card || !detail) return;
+    const s = detail.stats || {};
+    const r = detail.risk || {};
+    const base = Number(detail.base)||0;
+    const bal = Number(detail.balance)||0;
+    const netPct = base > 0 ? (detail.stats.netProfit / base) : 0;
+    const ddPct  = base > 0 ? (r.maxDrawdown / base) : 0;
+
+    // Targets by class OR data-field
+    const targets = {
+      balance:  $('[data-field="balance"], .saldo-actual', card),
+      benefit:  $('[data-field="benefit"], .beneficio', card),
+      drawdown: $('[data-field="drawdown"], .drawdown', card),
+      winrate:  $('[data-field="winrate"], .acierto', card),
+      trades:   $('[data-field="trades"], .operaciones', card),
+      risk:     $('[data-field="risk"], .riesgo', card),
+      progress: $('[data-field="progress"], .progreso-barra', card)
+    };
+
+    setText(targets.balance, '$'+fmt(bal));
+    setText(targets.benefit, (netPct >= 0 ? '+' : '') + pct100(netPct));
+    setText(targets.drawdown, pct100(ddPct));
+    setText(targets.winrate,  pct100(s.winRate/100));
+    setText(targets.trades,   String(s.total || 0));
+
+    // Simple risk display: expectancy per trade as % of base (or 0)
+    const expPct = base > 0 ? (Number(r.expectancy||0) / base) : 0;
+    setText(targets.risk, pct100(expPct));
+
+    // Progress (example): 10% target of base
+    const goal = base * 0.10;
+    const progPct = (goal > 0) ? Math.max(0, Math.min(100, (Math.max(0, bal - base)/goal)*100)) : 0;
+    if (targets.progress) {
+      if ('style' in targets.progress) targets.progress.style.width = progPct + '%';
+      targets.progress.setAttribute('aria-valuenow', String(progPct.toFixed(1)));
+    }
+  }
+
+  // React to global recalcs
+  window.addEventListener('ik:recalc', (e)=>render(e.detail));
+  // Render once if state is already there
+  if (window.currentStats) render(window.currentStats);
+
+  // Expose for manual calls
+  window.__IK_renderChallengeCard = render;
+})();
+
+
+
+// === ANALYTICS PANEL: live updater (neto, winrate, PF, RB, avg ±, expectancy, DD, curva) ===
+(function analyticsPanel(){
+  function $(sel, root=document){ return root.querySelector(sel); }
+  function fmt(v){ v = Number(v); return isFinite(v) ? v.toFixed(2) : '0.00'; }
+  function pct(v){ v = Number(v); return isFinite(v) ? v.toFixed(1)+'%' : '0.0%'; }
+
+  function computeExtras(list, base){
+    let wins=0, losses=0, sumWin=0, sumLoss=0, equity=Number(base)||0, peak=equity, maxDD=0;
+    for (const t of list){
+      const r = Number(t.result||0);
+      if (r>0){ wins++; sumWin+=r; } else if (r<0){ losses++; sumLoss+=Math.abs(r); }
+      equity += r; if (equity>peak) peak=equity; const dd = peak - equity; if (dd>maxDD) maxDD=dd;
+    }
+    const avgWin = wins? sumWin/wins : 0;
+    const avgLoss = losses? -(sumLoss/losses) : 0;
+    const pf = sumLoss>0 ? (sumWin/sumLoss) : (wins>0?Infinity:0);
+    const rr = (avgLoss!==0)? (avgWin/Math.abs(avgLoss)) : 0;
+    const net = list.reduce((s,t)=>s+Number(t.result||0),0);
+    const total = list.length;
+    const winrate = total? (wins/total)*100 : 0;
+    const expectancy = total? (net/total) : 0;
+    return {wins, losses, sumWin, sumLoss, avgWin, avgLoss, pf, rr, net, total, winrate, maxDD};
+  }
+
+  function render(detail){
+    if(!detail) return;
+    const base = Number(detail.base)||0;
+    const list = Array.isArray(detail.list)? detail.list : [];
+    const ex = computeExtras(list, base);
+
+    const root = document.querySelector('#analytics, [data-page="analytics"], .analytics-panel') || document;
+    const map = {
+      net:        root.querySelector('[data-field="net"], .metric-net'),
+      winrate:    root.querySelector('[data-field="winrate"], .metric-winrate'),
+      pf:         root.querySelector('[data-field="pf"], .metric-pf'),
+      rb:         root.querySelector('[data-field="rb"], .metric-rb'),
+      avgWin:     root.querySelector('[data-field="avg-win"], .metric-avgwin'),
+      avgLoss:    root.querySelector('[data-field="avg-loss"], .metric-avgloss'),
+      expectancy: root.querySelector('[data-field="expectancy"], .metric-expectancy'),
+      maxdd:      root.querySelector('[data-field="maxdd"], .metric-maxdd'),
+      maxddpct:   root.querySelector('[data-field="maxdd-pct"], .metric-maxddpct')
+    };
+
+    if (map.net)        map.net.textContent = '$'+fmt(ex.net);
+    if (map.winrate)    map.winrate.textContent = pct(ex.winrate/100);
+    if (map.pf)         map.pf.textContent = (Number.isFinite(ex.pf)? fmt(ex.pf) : '∞');
+    if (map.rb)         map.rb.textContent = fmt(ex.rr);
+    if (map.avgWin)     map.avgWin.textContent = '$'+fmt(ex.avgWin);
+    if (map.avgLoss)    map.avgLoss.textContent = '$'+fmt(ex.avgLoss);
+    if (map.expectancy) map.expectancy.textContent = '$'+fmt(ex.expectancy);
+    if (map.maxdd)      map.maxdd.textContent = '$'+fmt(ex.maxDD);
+    if (map.maxddpct)   map.maxddpct.textContent = pct(base>0? (ex.maxDD/base) : 0);
+
+    // Equity curve (Chart.js if present)
+    const canvas = root.querySelector('#equity-curve, canvas[data-chart="equity"]');
+    if (canvas && typeof Chart !== 'undefined'){
+      const labels = []; const data = [];
+      let eq = base;
+      labels.push('Start'); data.push(eq);
+      for (const t of list){
+        eq += Number(t.result||0);
+        labels.push(t.symbol || 'trade'); data.push(eq);
+      }
+      if (!window.__IK_equityChart){
+        window.__IK_equityChart = new Chart(canvas.getContext('2d'), {
+          type: 'line',
+          data: { labels, datasets: [{ label: 'Saldo', data }] },
+          options: { responsive: true, maintainAspectRatio: false, scales: { x: { display: true }, y: { display: true } } }
+        });
+      } else {
+        const ch = window.__IK_equityChart;
+        ch.data.labels = labels; ch.data.datasets[0].data = data; ch.update();
+      }
+    }
+  }
+
+  // Strategy filter wiring
+  function applyStrategyFilter(strategyName){
+    const IK = window.__IK || {};
+    if (!IK.trades){ return; }
+    const list = (IK.trades||[]).filter(t => {
+      const s = (t.strategy || t.strategyName || '').toString().trim();
+      return !strategyName || strategyName === '' || s === strategyName;
+    });
+    const base = (window.currentStats && window.currentStats.base) || 0;
+    const out = { list, base, stats: { netProfit: list.reduce((a,b)=>a+Number(b.result||0),0) } };
+    // reuse renderer directly
+    render(out);
+  }
+
+  // Listen to global calc + strategy select
+  window.addEventListener('ik:recalc', (e)=>render(e.detail));
+  const sel = document.querySelector('#strategy-filter, select[data-filter="strategy"]');
+  if (sel && !sel.__ik_bound){
+    sel.__ik_bound = true;
+    sel.addEventListener('change', ()=>applyStrategyFilter(sel.value));
+  }
+  // first paint if stats exist
+  if (window.currentStats) render(window.currentStats);
+})();
+
 </script>
 
 <style>
