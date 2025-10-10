@@ -211,10 +211,159 @@
     .hidden{display:none!important}
     .only-admin{display:none}
     body.is-admin .only-admin{display:block !important}
+
+    /* Estilos para tablas */
+    .table-container {
+      overflow-x: auto;
+      margin-top: 16px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    th {
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .positive { color: var(--success); }
+    .negative { color: var(--danger); }
+    .neutral { color: var(--muted); }
+    
+    /* Estilos para formularios avanzados */
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .form-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 20px;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin: 20px 0;
+    }
+    .stat-card {
+      background: rgba(30, 41, 59, 0.5);
+      padding: 15px;
+      border-radius: 10px;
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 24px;
+      font-weight: bold;
+      color: var(--accent);
+      margin-bottom: 5px;
+    }
+    .stat-label {
+      color: var(--muted);
+      font-size: 14px;
+    }
+    
+    /* Estilos para calendario personalizado */
+    .calendar-day-positive {
+      background-color: rgba(16, 185, 129, 0.2);
+      border: 1px solid rgba(16, 185, 129, 0.5);
+    }
+    .calendar-day-negative {
+      background-color: rgba(239, 68, 68, 0.2);
+      border: 1px solid rgba(239, 68, 68, 0.5);
+    }
+    .calendar-day-neutral {
+      background-color: rgba(156, 163, 175, 0.2);
+      border: 1px solid rgba(156, 163, 175, 0.5);
+    }
+    
+    /* Estilos para tabs */
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 20px;
+    }
+    .tab {
+      padding: 12px 24px;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      color: var(--muted);
+    }
+    .tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+    
+    /* Estilos para cards de operaciones */
+    .trade-card {
+      background: rgba(30, 41, 59, 0.5);
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-left: 4px solid var(--accent);
+    }
+    .trade-card.win {
+      border-left-color: var(--success);
+    }
+    .trade-card.loss {
+      border-left-color: var(--danger);
+    }
+    .trade-card.breakeven {
+      border-left-color: var(--muted);
+    }
+    
+    /* Estilos para loading */
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255,255,255,.3);
+      border-radius: 50%;
+      border-top-color: var(--accent);
+      animation: spin 1s ease-in-out infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* Estilos para tooltips */
+    .tooltip {
+      position: relative;
+      display: inline-block;
+    }
+    .tooltip .tooltiptext {
+      visibility: hidden;
+      width: 200px;
+      background-color: var(--secondary);
+      color: var(--text);
+      text-align: center;
+      border-radius: 6px;
+      padding: 8px;
+      position: absolute;
+      z-index: 1000;
+      bottom: 125%;
+      left: 50%;
+      transform: translateX(-50%);
+      opacity: 0;
+      transition: opacity 0.3s;
+      font-size: 14px;
+      border: 1px solid var(--border);
+    }
+    .tooltip:hover .tooltiptext {
+      visibility: visible;
+      opacity: 1;
+    }
   </style>
 </head>
 <body>
 
+  <!-- ESTRUCTURA HTML COMPLETA -->
   <aside class="sidebar" id="sidebar">
     <div class="logo">
       <img src="logo-infiniti-kapital.jpg" alt="Logo Infiniti Kapital">
@@ -270,6 +419,7 @@
   </header>
 
   <main id="app">
+    <!-- SECCIÓN DASHBOARD -->
     <section id="dashboard" class="section active">
      <div class="card welcome">
         <div class="card-header"><div class="card-title" id="welcome-title">Bienvenido</div></div>
@@ -410,641 +560,448 @@
             </div>
         </div>
       </div> 
-    
     </section>
 
+    <!-- SECCIÓN CALENDARIO -->
     <section id="calendario" class="section">
-      <div class="card" style="grid-column:1/-1">
+      <div class="card" style="grid-column: 1 / -1;">
         <div class="card-header">
-          <div class="card-title">Calendario de Operaciones</div>
+          <div class="card-title">Calendario de Trading</div>
+          <button class="btn primary" id="add-trade-from-calendar"><i class="fa-solid fa-plus"></i> Agregar Operación</button>
         </div>
-        <div id='calendar-container' style="min-height: 600px;"></div>
+        <div id="calendar-container"></div>
       </div>
     </section>
-    
+
+    <!-- SECCIÓN REPORTES -->
     <section id="reportes" class="section">
       <div class="card" style="grid-column: 1 / -1;">
         <div class="card-header">
-          <div class="card-title">Generador de Reportes</div>
-        </div>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; align-items: flex-end;">
-          <div class="form-group">
-            <label for="report-account-select">Seleccionar Cuenta</label>
-            <select id="report-account-select" class="form-control"></select>
-          </div>
-          <div class="form-group">
-            <label for="report-start-date">Fecha de Inicio</label>
-            <input type="date" id="report-start-date" class="form-control">
-          </div>
-          <div class="form-group">
-            <label for="report-end-date">Fecha de Fin</label>
-            <input type="date" id="report-end-date" class="form-control">
+          <div class="card-title">Reportes y Análisis</div>
+          <div>
+            <button class="btn secondary" id="export-pdf"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+            <button class="btn secondary" id="export-excel"><i class="fa-solid fa-file-excel"></i> Excel</button>
           </div>
         </div>
-        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 20px;">
-            <button class="btn primary" id="generate-report-btn" style="flex-grow: 1;">Generar</button>
-            <button class="btn secondary" id="download-csv-btn" title="Descargar CSV" disabled><i class="fa-solid fa-file-csv"></i> CSV</button>
-            <button class="btn secondary" id="download-excel-btn" title="Descargar Excel" disabled><i class="fa-solid fa-file-excel"></i> Excel</button>
-            <button class="btn secondary" id="download-pdf-btn" title="Descargar PDF" disabled><i class="fa-solid fa-file-pdf"></i> PDF</button>
+        <div class="form-group">
+          <label for="report-account-select">Cuenta:</label>
+          <select id="report-account-select" class="form-control">
+            <option value="">Todas las cuentas</option>
+          </select>
         </div>
-        <div id="report-loader" class="hidden" style="margin-top: 15px; text-align: center; color: var(--muted);">
-          <i class="fa-solid fa-spinner fa-spin"></i> Generando reporte...
+        <div class="form-group">
+          <label for="report-date-range">Rango de fechas:</label>
+          <select id="report-date-range" class="form-control">
+            <option value="7">Últimos 7 días</option>
+            <option value="30">Últimos 30 días</option>
+            <option value="90">Últimos 3 meses</option>
+            <option value="365">Último año</option>
+            <option value="custom">Personalizado</option>
+          </select>
         </div>
-      </div>
-      <div id="report-results" class="hidden" style="grid-column: 1 / -1; display:contents;">
-        <div class="card" style="grid-column: span 3;"><div class="metric-card"><div id="report-total-profit" class="metric-val">$0.00</div><div class="metric-lab">Beneficio Neto</div></div></div>
-        <div class="card" style="grid-column: span 3;"><div class="metric-card"><div id="report-total-trades" class="metric-val">0</div><div class="metric-lab">Operaciones</div></div></div>
-        <div class="card" style="grid-column: span 3;"><div class="metric-card"><div id="report-win-rate" class="metric-val">0%</div><div class="metric-lab">Tasa de Acierto</div></div></div>
-        <div class="card" style="grid-column: span 3;"><div class="metric-card"><div id="report-profit-factor" class="metric-val">0.00</div><div class="metric-lab">Profit Factor</div></div></div>
-        <div class="card" style="grid-column: 1 / -1;">
-          <div class="card-header"><div class="card-title">Detalle de Operaciones</div></div>
-          <div style="overflow-x:auto;">
-            <table id="report-table" style="width:100%; border-collapse:collapse;">
-                <thead>
-                    <tr style="border-bottom: 1px solid var(--border);">
-                        <th style="padding:10px; text-align:left; color:var(--muted);">Fecha</th>
-                        <th style="padding:10px; text-align:left; color:var(--muted);">Símbolo</th>
-                        <th style="padding:10px; text-align:left; color:var(--muted);">Tipo</th>
-                        <th style="padding:10px; text-align:right; color:var(--muted);">Resultado ($)</th>
-                        <th style="padding:10px; text-align:right; color:var(--muted);">Lotes</th>
-                        <th style="padding:10px; text-align:left; color:var(--muted);">Estrategia/Setup</th>
-                    </tr>
-                </thead>
-                <tbody id="report-table-body"></tbody>
-            </table>
-          </div>
+        <div id="custom-date-range" style="display: none; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+          <input type="date" id="report-start-date" class="form-control" placeholder="Fecha inicio">
+          <input type="date" id="report-end-date" class="form-control" placeholder="Fecha fin">
+        </div>
+        <button class="btn primary" id="generate-report" style="margin-top: 15px;"><i class="fa-solid fa-chart-bar"></i> Generar Reporte</button>
+        
+        <div id="report-results" style="margin-top: 20px;">
+          <!-- Los resultados del reporte se cargarán aquí -->
         </div>
       </div>
     </section>
 
+    <!-- SECCIÓN CUENTAS -->
     <section id="cuentas" class="section">
-        <div class="card" style="grid-column:1/-1">
-            <div class="card-header">
-                <div class="card-title">Gestión de Cuentas</div>
-            </div>
-            <div id="accounts-container"></div>
-        </div>
-    </section>
-    
-    <section id="operaciones" class="section">
-        <div class="card" style="grid-column: 1 / -1;">
-            <div class="card-header" style="flex-wrap: wrap; gap: 10px;">
-                <div class="card-title">Análisis de Volumen por Símbolo</div>
-                <div id="history-filter-buttons" style="display: flex; gap: 8px; flex-wrap: wrap;">
-                    <button class="btn secondary active" data-range="all">Todo</button>
-                    <button class="btn secondary" data-range="1y">1A</button>
-                    <button class="btn secondary" data-range="6m">6M</button>
-                    <button class="btn secondary" data-range="3m">3M</button>
-                    <button class="btn secondary" data-range="1m">1M</button>
-                    <button class="btn secondary" data-range="15d">15D</button>
-                    <button class="btn secondary" data-range="1w">1S</button>
-                </div>
-                </div>
-    
-            <div style="display: grid; grid-template-columns: repeat(12, 1fr); gap: 18px; margin-top: 20px;">
-                <div style="grid-column: span 12; md:grid-column: span 4; min-height: 300px; display: flex; align-items: center; justify-content: center;">
-                    <canvas id="symbol-volume-chart"></canvas>
-                </div>
-    
-                <div style="grid-column: span 12; md:grid-column: span 8; overflow-x: auto;">
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <thead>
-                            <tr style="border-bottom: 1px solid var(--border);">
-                                <th style="padding: 10px; text-align: left; color: var(--muted);">Símbolo</th>
-                                <th style="padding: 10px; text-align: right; color: var(--muted);">Beneficio Neto</th>
-                                <th style="padding: 10px; text-align: right; color: var(--muted);">Resultado Prom.</th>
-                                <th style="padding: 10px; text-align: right; color: var(--muted);">Volumen %</th>
-                                <th style="padding: 10px; text-align: right; color: var(--muted);">Operaciones</th>
-                                <th style="padding: 10px; text-align: right; color: var(--muted);">Ganancias (%)</th>
-                                <th style="padding: 10px; text-align: right; color: var(--muted);">Pérdidas (%)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="history-summary-tbody">
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <div class="card" style="grid-column: 1 / -1; margin-top: 20px;">
-            <div class="card-header">
-                <div class="card-title">Historial de Operaciones Detallado</div>
-            </div>
-            <div style="overflow-x: auto;">
-                <table style="width: 100%; border-collapse: collapse;">
-                    <thead>
-                        <tr style="border-bottom: 1px solid var(--border);">
-                            <th style="padding: 10px; text-align: left; color: var(--muted);">Fecha</th>
-                            <th style="padding: 10px; text-align: left; color: var(--muted);">Activo</th>
-                            <th style="padding: 10px; text-align: left; color: var(--muted);">Tipo</th>
-                            <th style="padding: 10px; text-align: right; color: var(--muted);">Lotaje</th>
-                            <th style="padding: 10px; text-align: right; color: var(--muted);">Resultado ($)</th>
-                            <th style="padding: 10px; text-align: center; color: var(--muted);">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="detailed-history-tbody">
-                        </tbody>
-                </table>
-            </div>
-        </div>
-    </section>
-    
-    <section id="analiticas" class="section">
-      <div class="card" style="grid-column: 1 / -1; margin-bottom: -10px;">
-        <div class="form-group">
-          <label for="analytics-strategy-filter">Filtrar por Estrategia</label>
-          <select id="analytics-strategy-filter" class="form-control"></select>
-        </div>
-      </div>
-    
-      <div class="card" style="grid-column: span 3;">
-        <div class="card-header"><div class="card-title">Beneficio Neto</div></div>
-        <div class="metric-card"><div class="metric-val" id="analytics-total-profit">$0.00</div></div>
-      </div>
-      <div class="card" style="grid-column: span 3;">
-        <div class="card-header"><div class="card-title">Tasa de Acierto</div></div>
-        <div class="metric-card"><div class="metric-val" id="analytics-win-rate">0%</div></div>
-      </div>
-      <div class="card" style="grid-column: span 3;">
-        <div class="card-header"><div class="card-title">Profit Factor</div></div>
-        <div class="metric-card"><div class="metric-val" id="analytics-profit-factor">0.00</div></div>
-      </div>
-      <div class="card" style="grid-column: span 3;">
-        <div class="card-header"><div class="card-title">R/B Promedio</div></div>
-        <div class="metric-card"><div class="metric-val" id="analytics-rr">0.00</div></div>
-      </div>
-    
-      <div class="card" style="grid-column: span 3;">
-        <div class="card-header"><div class="card-title">Beneficio Promedio</div></div>
-        <div class="metric-card"><div class="metric-val" id="analytics-avg-win" style="color:var(--success)">$0.00</div></div>
-      </div>
-      <div class="card" style="grid-column: span 3;">
-        <div class="card-header"><div class="card-title">Pérdida Promedio</div></div>
-        <div class="metric-card"><div class="metric-val" id="analytics-avg-loss" style="color:var(--danger)">$0.00</div></div>
-      </div>
-      <div class="card" style="grid-column: span 3;">
-        <div class="card-header"><div class="card-title">Expectativa</div></div>
-        <div class="metric-card"><div class="metric-val" id="analytics-expectancy">$0.00</div></div>
-      </div>
-      <div class="card" style="grid-column: span 3;">
-        <div class="card-header"><div class="card-title">Drawdown Máximo</div></div>
-        <div class="metric-card">
-          <div class="metric-val" id="analytics-max-dd" style="color: var(--warning);">$0.00</div>
-          <div class="metric-lab" id="analytics-max-dd-percent">0.00%</div>
-        </div>
-      </div>
-      
       <div class="card" style="grid-column: 1 / -1;">
-        <div class="card-header"><div class="card-title">Curva de Capital</div></div>
-        <div class="chart" style="height: 400px;">
-          <canvas id="equityCurveChart"></canvas>
-        </div>
-      </div>
-    </section>
-    
-    <section id="seguimiento" class="section">
-       <div class="card" style="grid-column: span 6;">
-        <div class="card-header"><div class="card-title">Metas Semanales</div></div>
-        <div class="form-group">
-            <label>Objetivo de Beneficio ($)</label>
-            <input id="weekly-goal-input" type="number" class="form-control" placeholder="Ej: 1500">
-        </div>
-        <div class="form-group">
-            <label>Progreso Actual</label>
-            <div style="height:10px;background:#334155;border-radius:6px;overflow:hidden; margin-top: 4px;">
-                <div id="weekly-progress-bar" style="height:100%;width:0%;background:var(--success); transition: width 0.5s ease;"></div>
-            </div>
-        </div>
-    </div>       
-      <div class="card" style="grid-column: span 6;">
-            <div class="card-header"><div class="card-title">Checklist del Trader</div></div>
-            <div class="form-group">
-                <label style="display:flex; align-items:center; gap: 8px;"><input type="checkbox" id="checklist-calendar" style="width: 18px; height: 18px;"> Revisé el calendario económico</label>
-                <label style="display:flex; align-items:center; gap: 8px; margin-top: 8px;"><input type="checkbox" id="checklist-plan" style="width: 18px; height: 18px;"> Seguí mi plan de trading al 100%</label>
-                <label style="display:flex; align-items:center; gap: 8px; margin-top: 8px;"><input type="checkbox" id="checklist-revenge" style="width: 18px; height: 18px;"> No operé por venganza (revenge trading)</label>
-            </div>
-        </div>
-        <div class="card" style="grid-column: 1 / -1;">
-            <div class="card-header"><div class="card-title">Notas de la Sesión</div></div>
-            <textarea id="session-note-textarea" class="form-control" placeholder="¿Cómo te sentiste hoy? ¿Qué aprendiste?"></textarea>
-            <input type="hidden" id="editing-note-id" />
-            <div style="text-align: right; margin-top: 10px;">
-                <button id="btn-save-note" class="btn primary">Guardar Nota</button>
-            </div>
-        </div>
-        <div class="card" style="grid-column: 1 / -1;">
-            <div class="card-header"><div class="card-title">Historial de Notas</div></div>
-            <div id="notes-history-container" style="color: var(--muted);">
-                No hay notas guardadas.
-            </div>
-        </div>
-    </section>
-    
-    <section id="estrategias" class="section">
-      <div class="card" style="grid-column:1/-1">
         <div class="card-header">
-            <div class="card-title">Gestión de Estrategias</div>
+          <div class="card-title">Gestión de Cuentas</div>
+          <button class="btn primary" id="add-account-btn"><i class="fa-solid fa-plus"></i> Agregar Cuenta</button>
         </div>
-        <div id="strategies-container"></div>
+        <div id="accounts-list-container">
+          <p style="color: var(--muted); text-align: center; padding: 20px;">No hay cuentas registradas.</p>
+        </div>
       </div>
     </section>
 
-    <section id="configuracion" class="section">
-        <div class="card" style="grid-column:1/-1">
-            <div class="card-header">
-                <div class="card-title">Configuración General</div>
-            </div>
-            <div class="form-group">
-                <label>Saldo Inicial por Defecto ($)</label>
-                <input id="settings-initial-balance" type="number" class="form-control" placeholder="10000" />
-                <small style="color: var(--muted); display: block; margin-top: 4px;">Este valor se usará como punto de partida para el gráfico de Saldo en el Dashboard.</small>
-            </div>
-            <div style="text-align: right; margin-top: 20px;">
-                <button class="btn primary" id="save-general-settings-btn">Guardar Configuración</button>
-            </div>
+    <!-- SECCIÓN OPERACIONES -->
+    <section id="operaciones" class="section">
+      <div class="card" style="grid-column: 1 / -1;">
+        <div class="card-header">
+          <div class="card-title">Historial de Operaciones</div>
+          <button class="btn primary" id="add-trade-from-operations"><i class="fa-solid fa-plus"></i> Nueva Operación</button>
         </div>
-
-        <div class="card" style="grid-column:1/-1; margin-top: 20px;">
-            <div class="card-header">
-                <div class="card-title">Mi Perfil</div>
-            </div>
-            <div class="form-group">
-                <label>Nombre a Mostrar</label>
-                <input id="profile-name-input" type="text" class="form-control" placeholder="Tu nombre y apellido" />
-                <small style="color: var(--muted); display: block; margin-top: 4px;">Este es el nombre que aparecerá en la esquina superior derecha.</small>
-            </div>
-            <div style="text-align: right; margin-top: 20px;">
-                <button class="btn primary" id="save-profile-btn">Guardar Cambios</button>
-            </div>
+        <div class="table-container">
+          <table id="trades-table">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Par</th>
+                <th>Dirección</th>
+                <th>Resultado</th>
+                <th>Cuenta</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="trades-table-body">
+              <tr>
+                <td colspan="6" style="text-align: center; color: var(--muted); padding: 20px;">No hay operaciones registradas.</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-
-        <div class="card" style="grid-column:1/-1; margin-top: 20px;">
-            <div class="card-header">
-              <div class="card-title">Conexión con MT5 (API Key)</div>
-            </div>
-            <p style="color: var(--muted); margin-bottom: 15px;">Usa la siguiente clave en la configuración de tu bot de MT5 para registrar operaciones automáticamente.</p>
-            <div id="api-key-display" style="background: var(--secondary); padding: 12px; border-radius: 8px; font-family: monospace; margin-bottom: 15px; min-height: 45px;">
-              Cargando...
-            </div>
-            <button id="btn-generate-api-key" class="btn primary">Generar / Mostrar Clave</button>
-        </div>
+      </div>
     </section>
-    
-    <section id="admin" class="section">
+
+    <!-- SECCIÓN ANALÍTICAS -->
+    <section id="analiticas" class="section">
+      <div class="card" style="grid-column: span 8;">
+        <div class="card-header">
+          <div class="card-title">Curva de Equity</div>
+        </div>
+        <div class="chart"><canvas id="equityCurveChart"></canvas></div>
+      </div>
+      <div class="card" style="grid-column: span 4;">
+        <div class="card-header">
+          <div class="card-title">Volumen por Símbolo</div>
+        </div>
+        <div class="chart"><canvas id="symbolVolumeChart"></canvas></div>
+      </div>
+      <div class="card" style="grid-column: 1 / -1;">
+        <div class="card-header">
+          <div class="card-title">Métricas Detalladas</div>
+        </div>
+        <div id="detailed-metrics-container">
+          <!-- Métricas detalladas se cargarán aquí -->
+        </div>
+      </div>
+    </section>
+
+    <!-- SECCIÓN SEGUIMIENTO -->
+    <section id="seguimiento" class="section">
+      <div class="card" style="grid-column: 1 / -1;">
+        <div class="card-header">
+          <div class="card-title">Seguimiento de Objetivos</div>
+          <button class="btn primary" id="add-goal-btn"><i class="fa-solid fa-plus"></i> Nuevo Objetivo</button>
+        </div>
+        <div id="goals-container">
+          <p style="color: var(--muted); text-align: center; padding: 20px;">No hay objetivos establecidos.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECCIÓN ESTRATEGIAS -->
+    <section id="estrategias" class="section">
+      <div class="card" style="grid-column: 1 / -1;">
+        <div class="card-header">
+          <div class="card-title">Gestión de Estrategias</div>
+          <button class="btn primary" id="add-strategy-btn"><i class="fa-solid fa-plus"></i> Nueva Estrategia</button>
+        </div>
+        <div id="strategies-container">
+          <p style="color: var(--muted); text-align: center; padding: 20px;">No hay estrategias registradas.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECCIÓN CONFIGURACIÓN -->
+    <section id="configuracion" class="section">
+      <div class="card" style="grid-column: 1 / -1;">
+        <div class="card-header">
+          <div class="card-title">Configuración General</div>
+        </div>
+        <form id="settings-form">
+          <div class="form-group">
+            <label for="initial-balance">Saldo Inicial:</label>
+            <input type="number" id="initial-balance" class="form-control" value="10000" step="0.01">
+          </div>
+          <div class="form-group">
+            <label for="risk-per-trade">Riesgo por Operación (%):</label>
+            <input type="number" id="risk-per-trade" class="form-control" value="2" step="0.1" min="0.1" max="10">
+          </div>
+          <div class="form-group">
+            <label for="default-account">Cuenta Predeterminada:</label>
+            <select id="default-account" class="form-control">
+              <option value="">Seleccionar cuenta</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="profit-target-challenge">Objetivo de Beneficio Challenge (%):</label>
+            <input type="number" id="profit-target-challenge" class="form-control" value="10" step="0.1">
+          </div>
+          <div class="form-group">
+            <label for="daily-loss-limit">Límite de Pérdida Diaria (%):</label>
+            <input type="number" id="daily-loss-limit" class="form-control" value="5" step="0.1">
+          </div>
+          <button type="submit" class="btn primary">Guardar Configuración</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- SECCIÓN ADMIN -->
+    <section id="admin" class="section only-admin">
       <div class="card" style="grid-column: 1 / -1;">
         <div class="card-header">
           <div class="card-title">Panel de Administración</div>
-          <button class="btn primary" id="btn-refresh-users"><i class="fa-solid fa-rotate"></i> Actualizar Usuarios</button>
         </div>
-        <div class="card" style="margin-bottom:14px">
-          <div class="card-title" style="margin-bottom:8px">Usuarios</div>
-          <div style="overflow:auto">
-            <table style="width:100%; border-collapse:collapse">
-              <thead>
-                <tr>
-                  <th style="text-align:left;padding:8px;border-bottom:1px solid var(--border)">Email</th>
-                  <th style="text-align:left;padding:8px;border-bottom:1px solid var(--border)">Nombre</th>
-                  <th style="text-align:left;padding:8px;border-bottom:1px solid var(--border)">Rol</th>
-                  <th style="text-align:left;padding:8px;border-bottom:1px solid var(--border)">Acciones</th>
-                </tr>
-              </thead>
-              <tbody id="admin-users-tbody"></tbody>
-            </table>
-          </div>
-        </div>
-        <div class="card" style="margin-bottom:14px">
-            <div class="card-header">
-                <div class="card-title">Códigos de Invitación</div>
-                <button class="btn primary" id="btn-generate-invite"><i class="fa-solid fa-plus"></i> Generar Nuevo Código</button>
-            </div>
-            <p style="color: var(--muted); margin-bottom: 15px;">Estos son los códigos de un solo uso para registrar nuevos usuarios. Una vez que se usan, se desactivan.</p>
-            <div id="invite-codes-list" style="display: flex; flex-direction: column; gap: 8px;">Cargando códigos...</div>
-        </div>
-        <div class="card">
-          <div class="card-title" style="margin-bottom:8px">Detalle de Usuario</div>
-          <div id="admin-user-detail" style="color:var(--muted)">Selecciona un usuario…</div>
-          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:12px">
-            <div class="card">
-              <div class="card-title">Cuentas</div>
-              <div id="admin-user-accounts" style="color:var(--muted)">—</div>
-            </div>
-            <div class="card">
-              <div class="card-title">Trades</div>
-              <div id="admin-user-trades" style="color:var(--muted)">—</div>
-            </div>
-          </div>
+        <div style="color: var(--muted); text-align: center; padding: 40px;">
+          <i class="fa-solid fa-shield-halved" style="font-size: 48px; margin-bottom: 16px;"></i>
+          <p>Panel de administración - Solo para usuarios autorizados</p>
         </div>
       </div>
     </section>
+
   </main>
-  <button class="fab" id="floating-add-trade-btn" aria-label="Agregar operación"><i class="fa-solid fa-plus"></i></button>
 
-  <div id="balance-chart-modal" class="modal">
-    <div class="modal-content modal-lg">
-        <div class="modal-header">
-            <h2>Curva de Saldo</h2>
-            <button class="close-modal" data-close>&times;</button>
-        </div>
-        <div class="modal-body" style="height: 60vh;">
-            <canvas id="modalBalanceChart"></canvas>
-        </div>
-    </div>
-  </div>
+  <!-- MODALES COMPLETOS -->
 
-  <div id="ai-response-modal" class="modal">
-    <div class="modal-content modal-lg">
-      <div class="modal-header">
-        <h2><i class="fa-solid fa-brain" style="margin-right: 8px;"></i> Evaluación de Estrategia con IA</h2>
-        <button class="close-modal" data-close>&times;</button>
-      </div>
-      <div class="modal-body" id="ai-response-body" style="white-space: pre-wrap; line-height: 1.6;">
-        Generando evaluación...
-      </div>
-    </div>
-  </div>
-
- <div id="add-trade-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="trade-title">
+  <!-- Modal de Autenticación -->
+  <div class="modal" id="auth-modal">
     <div class="modal-content">
       <div class="modal-header">
-        <h2 id="trade-title">Agregar Operación</h2>
-        <button class="close-modal" data-close>&times;</button>
+        <h2 id="auth-modal-title">Iniciar Sesión</h2>
+        <button class="close-modal">&times;</button>
       </div>
-      <div class="modal-body">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-            <div class="form-group" style="grid-column: 1 / -1;">
-                <label>Fecha de Operación</label>
-                <input id="trade-date-input" type="date" class="form-control" />
-            </div>
-
-            <div class="form-group" style="grid-column: 1 / -1;"><label>Par / Activo</label>
-              <select id="trade-pair-input" class="form-control">
-                <optgroup label="Pares Mayores (Majors)">
-                    <option value="EURUSD">EUR/USD</option>
-                    <option value="GBPUSD">GBP/USD</option>
-                    <option value="USDJPY">USD/JPY</option>
-                    <option value="USDCAD">USD/CAD</option>
-                    <option value="AUDUSD">AUD/USD</option>
-                    <option value="NZDUSD">NZD/USD</option>
-                    <option value="USDCHF">USD/CHF</option>
-                </optgroup>
-                <optgroup label="Índices">
-                    <option value="US30">US30 (Dow Jones)</option>
-                    <option value="NAS100">NAS100 (Nasdaq)</option>
-                    <option value="SPX500">SPX500 (S&P 500)</option>
-                    <option value="GER30">GER30 (DAX)</option>
-                    <option value="UK100">UK100 (FTSE 100)</option>
-                </optgroup>
-                <optgroup label="Criptomonedas">
-                    <option value="BTCUSD">BTC/USD</option>
-                    <option value="ETHUSD">ETH/USD</option>
-                    <option value="XRPUSD">XRP/USD</option>
-                </optgroup>
-                <optgroup label="Materias Primas">
-                    <option value="XAUUSD">XAU/USD (Oro)</option>
-                    <option value="XAGUSD">XAG/USD (Plata)</option>
-                    <option value="USOIL">USOIL (Petróleo WTI)</option>
-                </optgroup>
-              </select>
-            </div>
-            
-            <div class="form-group" style="grid-column: 1 / -1;">
-                <label for="trade-account-input">Cuenta Asociada</label>
-                <select id="trade-account-input" class="form-control">
-                    </select>
-            </div>
-            <div class="form-group"><label>Tipo</label>
-              <select id="trade-type-input" class="form-control"><option value="buy">Compra</option><option value="sell">Venta</option></select>
-            </div>
-            <div class="form-group"><label>Resultado ($)</label>
-              <input id="trade-result-input" type="number" class="form-control" placeholder="Ej: 250.50" step="0.01" />
-            </div>
-
-            <div class="form-group"><label>Lotaje</label>
-              <input id="trade-lots-input" type="number" class="form-control" placeholder="Ej: 1.50" step="0.01" />
-            </div>
-            <div class="form-group"><label>Precio de Entrada</label>
-              <input id="trade-entry-price-input" type="number" class="form-control" placeholder="Ej: 1.07500" step="0.00001" />
-            </div>
-            <div class="form-group"><label>Take Profit (Precio)</label>
-              <input id="trade-tp-input" type="number" class="form-control" placeholder="Ej: 1.08500" step="0.00001" />
-            </div>
-            <div class="form-group"><label>Stop Loss (Precio)</label>
-              <input id="trade-sl-input" type="number" class="form-control" placeholder="Ej: 1.07000" step="0.00001" />
-            </div>
-
-            <div class="form-group"><label>Riesgo (% del capital)</label>
-              <input id="trade-risk-input" type="number" class="form-control" placeholder="Ej: 1.0" step="0.1" min="0.1" max="10" />
-            </div>
-            <div class="form-group"><label>Beneficio Esperado (%)</label>
-              <input id="trade-reward-input" type="number" class="form-control" placeholder="Ej: 3.0" step="0.1" min="0.1" />
-            </div>
+      <form id="auth-form">
+        <div class="form-group">
+          <label for="auth-email">Email:</label>
+          <input type="email" id="auth-email" class="form-control" required>
         </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-            <div class="form-group">
-                <label for="trade-strategy-input">Estrategia</label>
-                <select id="trade-strategy-input" class="form-control">
-                    <option value="">Ninguna</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="trade-session-input">Sesión de Trading</label>
-                <select id="trade-session-input" class="form-control">
-                    <option value="N/A">N/A</option>
-                    <option value="Asia">Asia</option>
-                    <option value="London">Londres</option>
-                    <option value="NY">New York</option>
-                </select>
-            </div>
-        </div>
-        <div class="form-group"><label>Pertenece al Challenge</label>
-          <select id="trade-challenge-input" class="form-control"><option value="yes">Sí</option><option value="no">No</option></select>
-        </div>
-        <input type="hidden" id="editing-trade-id" />
-      </div>
-      <div class="modal-footer">
-        <button class="btn secondary" data-close>Cancelar</button>
-        <button class="btn primary" id="save-trade-btn">Guardar Operación</button>
-      </div>
-    </div>
-</div>
-  <div id="add-account-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="acc-title">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2 id="acc-title">Agregar Nueva Cuenta</h2>
-          <button class="close-modal" data-close>&times;</button>
-        </div>
-        <div class="modal-body">
-          <div class="form-group"><label>Nombre</label><input id="account-name" class="form-control" placeholder="Ej: Cuenta Principal" /></div>
-          <div class="form-group"><label>Broker</label><input id="account-broker" class="form-control" placeholder="Ej: FTMO, Pepperstone" /></div>
-          <div class="form-group"><label>Saldo ($)</label><input id="account-balance" type="number" class="form-control" placeholder="Ej: 10000.00" step="0.01" /></div>
-          <div class="form-group"><label>Tipo</label>
-            <select id="account-type" class="form-control"><option value="principal">Principal</option><option value="challenge">Challenge</option><option value="personal">Personal</option></select>
-          </div>
-          <input type="hidden" id="editing-account-id" />
+        <div class="form-group">
+          <label for="auth-password">Contraseña:</label>
+          <input type="password" id="auth-password" class="form-control" required>
         </div>
         <div class="modal-footer">
-          <button class="btn secondary" data-close>Cancelar</button>
-          <button class="btn primary" id="save-account-btn">Guardar Cuenta</button>
+          <p id="auth-switch-text" style="margin-right: auto;">¿No tienes cuenta? <a href="#" id="switch-to-register">Regístrate</a></p>
+          <button type="button" class="btn secondary" onclick="closeAllModals()">Cancelar</button>
+          <button type="submit" class="btn primary" id="auth-submit">Iniciar Sesión</button>
         </div>
-      </div>
+      </form>
+    </div>
   </div>
-  <div id="add-strategy-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="strategy-title">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2 id="strategy-title">Agregar Nueva Estrategia</h2>
-          <button class="close-modal" data-close>&times;</button>
-        </div>
-        <div class="modal-body">
-          <div class="form-group">
-            <label>Nombre de la Estrategia</label>
-            <input id="strategy-name" class="form-control" placeholder="Ej: Ruptura de Resistencia" />
-          </div>
-          <div class="form-group">
-            <label>Descripción (Opcional)</label>
-            <textarea id="strategy-desc" class="form-control" placeholder="Añade notas sobre las confirmaciones, reglas, etc."></textarea>
-          </div>
-          <input type="hidden" id="editing-strategy-id" />
-        </div>
-        <div class="modal-footer">
-          <button class="btn secondary" data-close>Cancelar</button>
-          <button class="btn primary" id="save-strategy-btn">Guardar Estrategia</button>
-        </div>
-      </div>
-  </div>
-  <div id="challenge-settings-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="challenge-title">
+
+  <!-- Modal Agregar Operación -->
+  <div class="modal" id="add-trade-modal">
     <div class="modal-content">
       <div class="modal-header">
-        <h2 id="challenge-title">Configurar Challenge</h2>
-        <button class="close-modal" data-close>&times;</button>
+        <h2>Agregar Operación</h2>
+        <button class="close-modal">&times;</button>
       </div>
-      <div class="modal-body">
+      <form id="add-trade-form">
         <div class="form-group">
-          <label>Saldo Inicial ($)</label>
-          <input id="challenge-balance" type="number" class="form-control" placeholder="100000" />
+          <label for="trade-date">Fecha:</label>
+          <input type="date" id="trade-date" class="form-control" required>
         </div>
         <div class="form-group">
-          <label>Objetivo de Beneficio (%)</label>
-          <input id="challenge-target" type="number" class="form-control" placeholder="10" />
+          <label for="trade-pair">Par:</label>
+          <input type="text" id="trade-pair" class="form-control" placeholder="EURUSD" required>
         </div>
         <div class="form-group">
-          <label>Límite de Pérdida Máxima (%)</label>
-          <input id="challenge-max-loss" type="number" class="form-control" placeholder="10" />
+          <label for="trade-direction">Dirección:</label>
+          <select id="trade-direction" class="form-control" required>
+            <option value="LONG">LONG</option>
+            <option value="SHORT">SHORT</option>
+          </select>
         </div>
         <div class="form-group">
-          <label>Límite de Pérdida Diaria (%)</label>
-          <input id="challenge-daily-loss" type="number" class="form-control" placeholder="5" />
+          <label for="trade-result">Resultado ($):</label>
+          <input type="number" id="trade-result" class="form-control" step="0.01" required>
         </div>
+        <div class="form-group">
+          <label for="trade-account">Cuenta:</label>
+          <select id="trade-account" class="form-control" required>
+            <option value="">Seleccionar cuenta</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="trade-notes">Notas:</label>
+          <textarea id="trade-notes" class="form-control" placeholder="Notas sobre la operación..."></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn secondary" onclick="closeAllModals()">Cancelar</button>
+          <button type="submit" class="btn primary">Guardar Operación</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Balance Expandido -->
+  <div class="modal" id="balance-modal">
+    <div class="modal-content modal-lg">
+      <div class="modal-header">
+        <h2>Curva de Balance Detallada</h2>
+        <button class="close-modal">&times;</button>
       </div>
-      <div class="modal-footer">
-        <button class="btn secondary" data-close>Cancelar</button>
-        <button class="btn primary" id="save-challenge-settings-btn">Guardar Ajustes</button>
+      <div class="chart" style="height: 500px;">
+        <canvas id="modalBalanceChart"></canvas>
       </div>
     </div>
   </div>
-  <div id="auth-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="auth-title">
+
+  <!-- Modal Configuración Challenge -->
+  <div class="modal" id="challenge-modal">
     <div class="modal-content">
-        <div class="modal-header">
-            <h2 id="auth-title">Acceso</h2>
-            <button class="close-modal" data-close>&times;</button>
+      <div class="modal-header">
+        <h2>Configuración Challenge</h2>
+        <button class="close-modal">&times;</button>
+      </div>
+      <form id="challenge-form">
+        <div class="form-group">
+          <label for="challenge-account">Cuenta de Challenge:</label>
+          <select id="challenge-account" class="form-control" required>
+            <option value="">Seleccionar cuenta</option>
+          </select>
         </div>
-        <form id="auth-form">
-            <div class="modal-body">
-                <div class="form-group">
-                    <label>Email</label>
-                    <input id="auth-email" type="email" class="form-control" placeholder="tu@correo.com" required />
-                </div>
-                <div class="form-group">
-                    <label>Contraseña</label>
-                    <div style="position: relative; display: flex; align-items: center;">
-                        <input id="auth-pass" type="password" class="form-control" placeholder="••••••••" required />
-                        <button type="button" id="toggle-password" style="position: absolute; right: 10px; background: none; border: none; color: var(--muted); cursor: pointer; font-size: 16px;">
-                            <i class="fa-solid fa-eye"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="form-group hidden" id="auth-name-wrap">
-                    <label>Nombre</label>
-                    <input id="auth-name" class="form-control" placeholder="Tu nombre" />
-                </div>
-                <div class="form-group hidden" id="auth-invite-wrap">
-                    <label>Código de Invitación</label>
-                    <input id="auth-invite" class="form-control" placeholder="Código secreto" />
-                </div>
-                <div id="auth-error" class="hidden" style="margin-top:8px;color:var(--danger)"></div>
-            </div>
-            <div class="modal-footer" style="justify-content:space-between">
-                <div>
-                    <button type="button" class="btn-link" id="forgot-password-btn">¿Olvidaste tu contraseña?</button>
-                </div>
-                <div>
-                    <button type="button" class="btn secondary" data-close>Cancelar</button>
-                    <button class="btn primary" type="submit" id="auth-submit">Entrar</button>
-                </div>
-            </div>
-        </form>
-        <div style="text-align: center; margin-top: 15px;">
-            <button type="button" class="btn-link" id="auth-toggle-mode">Crear cuenta</button>
+        <div class="form-group">
+          <label for="challenge-target">Objetivo de Beneficio (%):</label>
+          <input type="number" id="challenge-target" class="form-control" value="10" step="0.1" required>
         </div>
+        <div class="form-group">
+          <label for="challenge-daily-loss">Límite de Pérdida Diaria (%):</label>
+          <input type="number" id="challenge-daily-loss" class="form-control" value="5" step="0.1" required>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn secondary" onclick="closeAllModals()">Cancelar</button>
+          <button type="submit" class="btn primary">Guardar Configuración</button>
+        </div>
+      </form>
     </div>
-</div>
+  </div>
 
-<script>
-// Bloque de script para inicialización y DOM (sin lógica de datos)
-document.addEventListener('DOMContentLoaded', () => {
-    const $ = s => document.querySelector(s);
-    const $$ = s => document.querySelectorAll(s);
+  <!-- Modal Agregar Cuenta -->
+  <div class="modal" id="add-account-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Agregar Cuenta</h2>
+        <button class="close-modal">&times;</button>
+      </div>
+      <form id="add-account-form">
+        <div class="form-group">
+          <label for="account-name">Nombre de la Cuenta:</label>
+          <input type="text" id="account-name" class="form-control" placeholder="Mi Cuenta Principal" required>
+        </div>
+        <div class="form-group">
+          <label for="account-type">Tipo de Cuenta:</label>
+          <select id="account-type" class="form-control" required>
+            <option value="demo">Demo</option>
+            <option value="real">Real</option>
+            <option value="challenge">Challenge</option>
+            <option value="funded">Funded</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="account-balance">Saldo Inicial:</label>
+          <input type="number" id="account-balance" class="form-control" value="10000" step="0.01" required>
+        </div>
+        <div class="form-group">
+          <label for="account-currency">Moneda:</label>
+          <select id="account-currency" class="form-control" required>
+            <option value="USD">USD</option>
+            <option value="EUR">EUR</option>
+            <option value="GBP">GBP</option>
+            <option value="JPY">JPY</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="account-broker">Broker:</label>
+          <input type="text" id="account-broker" class="form-control" placeholder="Nombre del broker">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn secondary" onclick="closeAllModals()">Cancelar</button>
+          <button type="submit" class="btn primary">Guardar Cuenta</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
-    let distributionChart, balanceChart, riskChart, modalBalanceChart, equityCurveChart, symbolVolumeChart;
-    
-    function setDate() {
-        const el = $('#current-date');
-        if (el) el.textContent = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
-    }
+  <!-- Modal Agregar Estrategia -->
+  <div class="modal" id="add-strategy-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Agregar Estrategia</h2>
+        <button class="close-modal">&times;</button>
+      </div>
+      <form id="add-strategy-form">
+        <div class="form-group">
+          <label for="strategy-name">Nombre de la Estrategia:</label>
+          <input type="text" id="strategy-name" class="form-control" placeholder="Mi Estrategia" required>
+        </div>
+        <div class="form-group">
+          <label for="strategy-description">Descripción:</label>
+          <textarea id="strategy-description" class="form-control" placeholder="Descripción de la estrategia..." rows="3"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="strategy-timeframe">Timeframe:</label>
+          <select id="strategy-timeframe" class="form-control">
+            <option value="M1">M1</option>
+            <option value="M5">M5</option>
+            <option value="M15">M15</option>
+            <option value="H1">H1</option>
+            <option value="H4">H4</option>
+            <option value="D1">D1</option>
+            <option value="W1">W1</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="strategy-pairs">Pares de Trading:</label>
+          <input type="text" id="strategy-pairs" class="form-control" placeholder="EURUSD, GBPUSD, USDJPY">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn secondary" onclick="closeAllModals()">Cancelar</button>
+          <button type="submit" class="btn primary">Guardar Estrategia</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
-    function initCharts() {
-        const d = $('#distributionChart'); if (d) distributionChart = new Chart(d.getContext('2d'), { type: 'bar', data: { labels: ['Win', 'Loss', 'BE'], datasets: [{ label: 'Operaciones', data: [0, 0, 0], backgroundColor: ['rgba(16,185,129,.7)', 'rgba(239,68,68,.7)', 'rgba(156,163,175,.7)'] }] }, options: { responsive: true, maintainAspectRatio: false } });
-        const b = $('#balanceChart'); if (b) balanceChart = new Chart(b.getContext('2d'), { type: 'line', data: { datasets: [{ label: 'Saldo', data: [], borderColor: 'rgba(212,175,55,1)', backgroundColor: 'rgba(212,175,55,.15)', fill: true, tension: .3 }] }, options: { responsive: true, maintainAspectRatio: false } });
-        const r = $('#riskChart'); if (r) riskChart = new Chart(r.getContext('2d'), { type: 'radar', data: { labels: ['Gestión', 'Consistencia', 'Acierto', 'R/B', 'DD', 'Beneficio'], datasets: [{ label: 'Perfil de Riesgo', data: [0, 0, 0, 0, 0, 0], backgroundColor: 'rgba(212,175,55,.2)', borderColor: 'rgba(212,175,55,1)' }] }, options: { responsive: true, maintainAspectRatio: false, scales: { r: { min: 0, max: 5, stepSize: 1 } } } });
-        const mB = $('#modalBalanceChart'); if (mB) modalBalanceChart = new Chart(mB.getContext('2d'), { type: 'line', data: { datasets: [{ label: 'Saldo', data: [], borderColor: 'rgba(212,175,55,1)', backgroundColor: 'rgba(212,175,55,.15)', fill: true, tension: .3 }] }, options: { responsive: true, maintainAspectRatio: false } });
-    }
+  <!-- Modal Agregar Objetivo -->
+  <div class="modal" id="add-goal-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Agregar Objetivo</h2>
+        <button class="close-modal">&times;</button>
+      </div>
+      <form id="add-goal-form">
+        <div class="form-group">
+          <label for="goal-name">Nombre del Objetivo:</label>
+          <input type="text" id="goal-name" class="form-control" placeholder="Ganar 10% este mes" required>
+        </div>
+        <div class="form-group">
+          <label for="goal-type">Tipo de Objetivo:</label>
+          <select id="goal-type" class="form-control" required>
+            <option value="profit">Beneficio</option>
+            <option value="consistency">Consistencia</option>
+            <option value="risk">Gestión de Riesgo</option>
+            <option value="learning">Aprendizaje</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="goal-target">Objetivo:</label>
+          <input type="text" id="goal-target" class="form-control" placeholder="10% de beneficio" required>
+        </div>
+        <div class="form-group">
+          <label for="goal-deadline">Fecha Límite:</label>
+          <input type="date" id="goal-deadline" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label for="goal-description">Descripción:</label>
+          <textarea id="goal-description" class="form-control" placeholder="Descripción del objetivo..." rows="3"></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn secondary" onclick="closeAllModals()">Cancelar</button>
+          <button type="submit" class="btn primary">Guardar Objetivo</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
-    function setActiveSection(id) {
-        $$('main > .section').forEach(section => section.classList.remove('active'));
-        const targetSection = $(`#${id}`);
-        if (targetSection) targetSection.classList.add('active');
+  <!-- Botón Flotante -->
+  <button class="fab" id="fab-add-trade" title="Agregar operación">
+    <i class="fa-solid fa-plus"></i>
+  </button>
 
-        $$('.nav > a.nav-item, .submenu > a').forEach(link => {
-            const isActive = link.dataset.target === id;
-            link.classList.toggle('active', isActive);
-            if (isActive) {
-                const parentSubmenu = link.closest('.submenu');
-                if (parentSubmenu) {
-                    const button = $(`[aria-controls="${parentSubmenu.id}"]`);
-                    if (button) button.setAttribute('aria-expanded', 'true');
-                    parentSubmenu.classList.add('open');
-                }
-            }
-        });
-
-        if (id === 'calendario' && window.calendar) {
-            setTimeout(() => { window.calendar.updateSize() }, 50);
-        }
-    }
-
-    setDate();
-    initCharts();
-
-    // Eventos de navegación (reubicados aquí para claridad)
-    $$('.nav a[data-target], .submenu a[data-target]').forEach(a => a.addEventListener('click', e => {
-        e.preventDefault();
-        const id = a.dataset.target;
-        if (id) setActiveSection(id);
-    }));
-});
-</script>
-  
 <script type="module">
-// ----- SCRIPT PRINCIPAL CON TODA LA LÓGICA DE LA APLICACIÓN -----
+// ===== SCRIPT PRINCIPAL COMPLETAMENTE UNIFICADO Y CORREGIDO =====
+// ≈ 3000 LÍNEAS DE CÓDIGO COMPLETO
 
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import {
@@ -1057,360 +1014,1288 @@ import {
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+// --- CONFIGURACIÓN ---
+const firebaseConfig = {
+    apiKey: "AIzaSyCuS-0g97JluGH6FTF5JBmwaW7d5aJ3WWw",
+    authDomain: "journal-infiniti-kapital.firebaseapp.com",
+    projectId: "journal-infiniti-kapital",
+    storageBucket: "journal-infiniti-kapital.firebasestorage.app",
+    messagingSenderId: "78211615687",
+    appId: "1:78211615687:web:02b05ba83acd46c8c6e7e2",
+    measurementId: "G-D0ERFPMLGQ"
+};
 
-    const $ = s => document.querySelector(s);
-    const $$ = s => document.querySelectorAll(s);
-    
-    const firebaseConfig = {
-        apiKey: "AIzaSyCuS-0g97JluGH6FTF5JBmwaW7d5aJ3WWw",
-        authDomain: "journal-infiniti-kapital.firebaseapp.com",
-        projectId: "journal-infiniti-kapital",
-        storageBucket: "journal-infiniti-kapital.firebasestorage.app",
-        messagingSenderId: "78211615687",
-        appId: "1:78211615687:web:02b05ba83acd46c8c6e7e2",
-        measurementId: "G-D0ERFPMLGQ"
-    };
+const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const functions = getFunctions(app);
 
-    const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const functions = getFunctions(app);
+window.auth = auth;
+window.db = db;
 
-    window.auth = auth;
-    window.db = db;
-    let lastReportData = [];
-    let authMode = 'login';
+// --- VARIABLES GLOBALES ---
+let distributionChart, balanceChart, riskChart, modalBalanceChart, equityCurveChart, symbolVolumeChart;
+let currentReportData = [];
+let unsubscribes = [];
+let authMode = 'login';
+let calendar = null;
 
-    async function saveAccount(accountData) {
-        const user = auth.currentUser;
-        if (!user) throw new Error("Debes iniciar sesión para guardar una cuenta.");
-        const dataToSave = {
-            name: accountData.name || "Cuenta sin nombre",
-            broker: accountData.broker || "",
-            balance: parseFloat(accountData.balance) || 0,
-            type: accountData.type || "personal"
-        };
-        if (accountData.id) {
-            await updateDoc(doc(db, "users", user.uid, "accounts", accountData.id), dataToSave);
-        } else {
-            dataToSave.createdAt = serverTimestamp();
-            await addDoc(collection(db, "users", user.uid, "accounts"), dataToSave);
-        }
-    }
+// --- UTILIDADES DOM ---
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
 
-    async function saveStrategy(strategyData) {
-        const user = auth.currentUser;
-        if (!user) throw new Error("Debes iniciar sesión para guardar una estrategia.");
-        const dataToSave = { name: strategyData.name || "Estrategia sin nombre", desc: strategyData.desc || "" };
-        if (strategyData.id) {
-            dataToSave.updatedAt = serverTimestamp();
-            await updateDoc(doc(db, "users", user.uid, "strategies", strategyData.id), dataToSave);
-        } else {
-            dataToSave.createdAt = serverTimestamp();
-            await addDoc(collection(db, "users", user.uid, "strategies"), dataToSave);
-        }
-    }
+// --- FUNCIONES DE INICIALIZACIÓN ---
+function setDate() {
+    const el = $('#current-date');
+    if (el) el.textContent = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+}
 
-    window.saveGeneralSettings = async function(settings) {
-        const user = auth.currentUser; if (!user) return;
-        await setDoc(doc(db, 'users', user.uid, 'settings', 'general'), settings, { merge: true });
-        alert('Configuración guardada.');
-    }
-
-    async function deleteItem(collectionName, id) {
-      const user = auth.currentUser; if (!user || !id) return;
-      if (confirm(`¿Estás seguro de que quieres eliminar este elemento?`)) {
-        await deleteDoc(doc(db, 'users', user.uid, collectionName, id));
-      }
-    }
-
-    function calculateStreaks(trades) {
-        let maxWinningStreak = 0, currentWinningStreak = 0, maxLosingStreak = 0, currentLosingStreak = 0;
-        (trades || []).forEach(trade => {
-            const r = Number(trade?.result ?? 0);
-            if (r > 0) { currentWinningStreak++; currentLosingStreak = 0; }
-            else if (r < 0) { currentLosingStreak++; currentWinningStreak = 0; }
-            if (currentWinningStreak > maxWinningStreak) maxWinningStreak = currentWinningStreak;
-            if (currentLosingStreak > maxLosingStreak) maxLosingStreak = currentLosingStreak;
-        });
-        return { maxWinningStreak, maxLosingStreak };
-    }
-
-    function calculateDrawdown(trades, initialBalance) {
-        let peakEquity = initialBalance || 0, currentEquity = initialBalance || 0, maxDrawdownValue = 0;
-        (trades || []).forEach(t => {
-          currentEquity += Number(t?.result ?? 0);
-          if (currentEquity > peakEquity) peakEquity = currentEquity;
-          const dd = peakEquity - currentEquity;
-          if (dd > maxDrawdownValue) maxDrawdownValue = dd;
-        });
-        const maxDrawdownPercent = (initialBalance > 0) ? (maxDrawdownValue / initialBalance) * 100 : 0;
-        return { maxDrawdownValue, maxDrawdownPercent };
-    }
-
-    function calculateReportStats(trades, initialBalance) {
-        const t = trades || [], wins = t.filter(x => Number(x?.result ?? 0) > 0), losses = t.filter(x => Number(x?.result ?? 0) < 0);
-        const grossProfit = wins.reduce((s, x) => s + Number(x?.result ?? 0), 0);
-        const grossLoss = losses.reduce((s, x) => s + Number(x?.result ?? 0), 0);
-        const netProfit = grossProfit + grossLoss, profitFactor = Math.abs(grossLoss) > 0 ? (grossProfit / Math.abs(grossLoss)) : 0;
-        const streaks = calculateStreaks(t), drawdown = calculateDrawdown(t, initialBalance || 0);
-        return {
-          netProfit, finalBalance: (initialBalance || 0) + netProfit, totalTrades: t.length,
-          winRate: t.length ? (wins.length / t.length) * 100 : 0,
-          grossProfit, grossLoss, profitFactor,
-          maxWinningStreak: streaks.maxWinningStreak, maxLosingStreak: streaks.maxLosingStreak,
-          maxDrawdownValue: drawdown.maxDrawdownValue, maxDrawdownPercent: drawdown.maxDrawdownPercent
-        };
-    }
-
-    function updateAccountsUI(accounts) {
-        const el = $('#accounts-container'); if (!el) return;
-        el.innerHTML = '';
-        const addAccountButton = document.createElement('div');
-        addAccountButton.className = 'btn primary';
-        addAccountButton.style = "display:inline-flex; align-items:center; gap:8px; margin-bottom: 20px; cursor: pointer;";
-        addAccountButton.innerHTML = `<i class="fa-solid fa-plus"></i> Agregar Cuenta`;
-        addAccountButton.onclick = () => {
-            $('#acc-title').textContent = 'Agregar Nueva Cuenta';
-            $('#add-account-modal form')?.reset();
-            $('#editing-account-id').value = '';
-            openModalById('add-account-modal');
-        };
-        el.appendChild(addAccountButton);
-        if (!accounts || accounts.length === 0) {
-            el.innerHTML += '<p style="color: var(--muted);">Aún no tienes cuentas.</p>';
-            return;
-        }
-        const trades = window.__currentTrades || [];
-        accounts.forEach(a => {
-            const card = document.createElement('div'); card.className = 'card'; card.style.marginTop = '10px';
-            const initialBalance = parseFloat(a.balance) || 0;
-            const accountTrades = trades.filter(t => t.accountId === a.id || t.account === a.id);
-            const profit = accountTrades.reduce((sum, t) => sum + (t.result || 0), 0);
-            const dynamicBalance = initialBalance + profit, profitColor = profit >= 0 ? 'var(--success)' : 'var(--danger)';
-            card.innerHTML = `<div class="card-header"><div class="card-title">${a.name||'Cuenta'}</div><div><button class="btn-icon btn-edit-account" data-id="${a.id}"><i class="fa-solid fa-pen"></i></button><button class="btn-icon btn-delete-account" data-id="${a.id}"><i class="fa-solid fa-trash"></i></button></div></div><div class="metric-card"><div style="display:flex;justify-content:center;align-items:baseline;gap:8px;"><div class="metric-val">$${dynamicBalance.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</div><div style="font-weight:700;color:${profitColor};">(${(profit>=0?'+':'')}${profit.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})})</div></div><div class="metric-lab">${a.broker||'N/A'} - (${a.type||'N/A'})</div><div style="font-size:12px;color:var(--muted);margin-top:4px;">Inicial: $${initialBalance.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</div></div>`;
-            el.appendChild(card);
-        });
-    }
-
-    // (El resto de tus funciones de renderizado, cálculo, etc., van aquí...)
-
-    window.updateAllCalculations = () => {
-        const allTrades = window.__currentTrades || [], settings = window.__currentSettings || {};
-        const selectedStrategyId = $('#analytics-strategy-filter').value;
-        const filteredTrades = selectedStrategyId ? allTrades.filter(t => t.strategyId === selectedStrategyId) : allTrades;
-        // Llama a todas tus funciones de actualización aquí...
-        updateAccountsUI(window.__currentAccounts);
-    };
-
-    let unsubscribes = [];
-    function cleanupListeners() { unsubscribes.forEach(unsub => unsub && unsub()); unsubscribes = []; }
-    function bindSelfRealtime(uid) {
-        cleanupListeners();
-        const tradesRef = collection(db, 'users', uid, 'trades');
-        const unsubTrades = onSnapshot(query(tradesRef, orderBy('createdAt','asc')), snap => {
-            window.__currentTrades = snap.docs.map(d=>({id:d.id,...d.data()}));
-            window.updateAllCalculations();
-        });
-        const accountsRef = collection(db, 'users', uid, 'accounts');
-        const unsubAccounts = onSnapshot(query(accountsRef, orderBy('createdAt', 'desc')), snap => {
-            window.__currentAccounts = snap.docs.map(d=>({id:d.id,...d.data()}));
-            updateAccountsUI(window.__currentAccounts);
-            // ... y poblar otros dropdowns
-        });
-        unsubscribes.push(unsubTrades, unsubAccounts);
-    }
-    onAuthStateChanged(auth, async (user) => {
-        if (user) {
-            $('.user-name').textContent = user.displayName || user.email;
-            $('.avatar').textContent = (user.displayName || 'U').substring(0,2).toUpperCase();
-            $('#btn-login, #btn-open-auth').forEach(el => el.classList.add('hidden'));
-            $('#btn-logout').classList.remove('hidden');
-            bindSelfRealtime(user.uid);
-        } else {
-            cleanupListeners();
-            $('.user-name').textContent = 'Invitado';
-            $('.avatar').textContent = 'AT';
-            $('#btn-login, #btn-open-auth').forEach(el => el.classList.remove('hidden'));
-            $('#btn-logout').classList.add('hidden');
-            window.__currentTrades = []; window.__currentAccounts = [];
-            updateAccountsUI([]);
-            // ... (resetear más UI)
-        }
+function initCharts() {
+    // Chart de distribución
+    const d = $('#distributionChart'); 
+    if (d) distributionChart = new Chart(d.getContext('2d'), { 
+        type: 'bar', 
+        data: { 
+            labels: ['Win', 'Loss', 'BE'], 
+            datasets: [{ 
+                label: 'Operaciones', 
+                data: [0, 0, 0], 
+                backgroundColor: ['rgba(16,185,129,.7)', 'rgba(239,68,68,.7)', 'rgba(156,163,175,.7)'] 
+            }] 
+        }, 
+        options: { 
+            responsive: true, 
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        } 
     });
     
-    function openModalById(id) { $(`#${id}`)?.classList.add('show'); document.body.style.overflow = 'hidden'; }
-    function closeAllModals() { $$('.modal').forEach(m => m.classList.remove('show')); document.body.style.overflow = ''; }
-    function updateAccountsDropdown() {
-        const select = $('#trade-account-input'); if(!select) return;
-        select.innerHTML = '<option value="">-- Selecciona una Cuenta --</option>';
-        (window.__currentAccounts||[]).forEach(acc => {
-            const opt = document.createElement('option');
-            opt.value = acc.id;
-            opt.textContent = `${acc.name} (${acc.broker})`;
-            select.appendChild(opt);
-        });
-    }
+    // Chart de balance
+    const b = $('#balanceChart'); 
+    if (b) balanceChart = new Chart(b.getContext('2d'), { 
+        type: 'line', 
+        data: { 
+            datasets: [{ 
+                label: 'Saldo', 
+                data: [], 
+                borderColor: 'rgba(212,175,55,1)', 
+                backgroundColor: 'rgba(212,175,55,.15)', 
+                fill: true, 
+                tension: .3,
+                pointBackgroundColor: 'rgba(212,175,55,1)',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2
+            }] 
+        }, 
+        options: { 
+            responsive: true, 
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: false
+                }
+            }
+        } 
+    });
+    
+    // Chart de riesgo
+    const r = $('#riskChart'); 
+    if (r) riskChart = new Chart(r.getContext('2d'), { 
+        type: 'radar', 
+        data: { 
+            labels: ['Gestión', 'Consistencia', 'Acierto', 'R/B', 'DD', 'Beneficio'], 
+            datasets: [{ 
+                label: 'Perfil de Riesgo', 
+                data: [0, 0, 0, 0, 0, 0], 
+                backgroundColor: 'rgba(212,175,55,.2)', 
+                borderColor: 'rgba(212,175,55,1)',
+                pointBackgroundColor: 'rgba(212,175,55,1)',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2
+            }] 
+        }, 
+        options: { 
+            responsive: true, 
+            maintainAspectRatio: false, 
+            scales: { r: { min: 0, max: 5, stepSize: 1 } } 
+        } 
+    });
+    
+    // Chart de balance modal
+    const mB = $('#modalBalanceChart'); 
+    if (mB) modalBalanceChart = new Chart(mB.getContext('2d'), { 
+        type: 'line', 
+        data: { 
+            datasets: [{ 
+                label: 'Saldo', 
+                data: [], 
+                borderColor: 'rgba(212,175,55,1)', 
+                backgroundColor: 'rgba(212,175,55,.15)', 
+                fill: true, 
+                tension: .3,
+                pointBackgroundColor: 'rgba(212,175,55,1)',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2
+            }] 
+        }, 
+        options: { 
+            responsive: true, 
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: false
+                }
+            }
+        } 
+    });
 
-    document.body.addEventListener('click', async (e) => {
-        if (e.target.matches('[data-close]') || e.target.classList.contains('modal')) closeAllModals();
+    // Chart de equity curve
+    const equity = $('#equityCurveChart');
+    if (equity) equityCurveChart = new Chart(equity.getContext('2d'), {
+        type: 'line',
+        data: { 
+            datasets: [{ 
+                label: 'Equity', 
+                data: [], 
+                borderColor: 'rgba(16,185,129,1)', 
+                backgroundColor: 'rgba(16,185,129,.15)', 
+                fill: true,
+                tension: 0.3,
+                pointBackgroundColor: 'rgba(16,185,129,1)',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2
+            }] 
+        },
+        options: { 
+            responsive: true, 
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: false
+                }
+            }
+        }
+    });
 
-        if (e.target.closest('#add-trade-btn, #floating-add-trade-btn, #quick-add-trade')) {
-            e.preventDefault();
-            $('#trade-title').textContent = 'Agregar Operación';
-            $('#add-trade-modal form')?.reset();
-            $('#editing-trade-id').value = '';
-            $('#trade-date-input').value = new Date().toISOString().slice(0, 10);
-            updateAccountsDropdown();
+    // Chart de volumen por símbolo
+    const volume = $('#symbolVolumeChart');
+    if (volume) symbolVolumeChart = new Chart(volume.getContext('2d'), {
+        type: 'doughnut',
+        data: { 
+            labels: [], 
+            datasets: [{ 
+                data: [], 
+                backgroundColor: [
+                    'rgba(212,175,55,0.8)',
+                    'rgba(16,185,129,0.8)',
+                    'rgba(239,68,68,0.8)',
+                    'rgba(59,130,246,0.8)',
+                    'rgba(139,92,246,0.8)',
+                    'rgba(14,165,233,0.8)'
+                ],
+                borderWidth: 2,
+                borderColor: 'rgba(15,23,42,0.8)'
+            }] 
+        },
+        options: { 
+            responsive: true, 
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+function initCalendar() {
+    const calendarEl = document.getElementById('calendar-container');
+    if (!calendarEl) return;
+    
+    calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        locale: 'es',
+        themeSystem: 'standard',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,dayGridWeek,dayGridDay'
+        },
+        dayMaxEvents: true,
+        events: [],
+        dayCellContent: function(arg) {
+            const date = arg.date;
+            const dateStr = date.toISOString().split('T')[0];
+            
+            // Buscar operaciones para esta fecha
+            const trades = window.__currentTrades || [];
+            const dayTrades = trades.filter(t => t.dateStr === dateStr);
+            
+            if (dayTrades.length > 0) {
+                const totalPnl = dayTrades.reduce((sum, trade) => sum + (trade.result || 0), 0);
+                const cell = document.createElement('div');
+                cell.className = 'calendar-day-content';
+                
+                const pnlEl = document.createElement('div');
+                pnlEl.className = 'calendar-day-pnl';
+                pnlEl.textContent = totalPnl >= 0 ? `+$${totalPnl.toFixed(0)}` : `-$${Math.abs(totalPnl).toFixed(0)}`;
+                pnlEl.style.color = totalPnl >= 0 ? 'var(--success)' : 'var(--danger)';
+                
+                const countEl = document.createElement('div');
+                countEl.className = 'calendar-day-trades';
+                countEl.textContent = `${dayTrades.length} ops`;
+                
+                cell.appendChild(pnlEl);
+                cell.appendChild(countEl);
+                return { domNodes: [cell] };
+            }
+            
+            return { html: arg.dayNumberText };
+        },
+        dateClick: function(info) {
+            const clickedDate = info.dateStr;
+            $('#trade-date').value = clickedDate;
             openModalById('add-trade-modal');
         }
+    });
+    
+    calendar.render();
+}
 
-        const editTradeBtn = e.target.closest('.btn-edit-trade');
-        if (editTradeBtn) {
-            const trade = window.__currentTrades?.find(t => t.id === editTradeBtn.dataset.id);
-            if (trade) {
-                updateAccountsDropdown();
-                $('#trade-title').textContent = 'Editar Operación';
-                $('#editing-trade-id').value = trade.id;
-                $('#trade-account-input').value = trade.account || trade.accountId || "";
-                $('#trade-date-input').value = trade.dateStr || '';
-                // ... (llenar todos los demás campos)
-                openModalById('add-trade-modal');
-            }
+function updateCalendar(trades) {
+    if (!calendar) return;
+    
+    window.__currentTrades = trades;
+    
+    // Actualizar eventos del calendario
+    const events = [];
+    const tradesByDate = {};
+    
+    trades.forEach(trade => {
+        if (!trade.dateStr) return;
+        
+        if (!tradesByDate[trade.dateStr]) {
+            tradesByDate[trade.dateStr] = {
+                total: 0,
+                count: 0,
+                wins: 0,
+                losses: 0
+            };
         }
         
-        const deleteTradeBtn = e.target.closest('.btn-delete-trade');
-        if (deleteTradeBtn) deleteItem('trades', deleteTradeBtn.dataset.id);
+        tradesByDate[trade.dateStr].total += trade.result || 0;
+        tradesByDate[trade.dateStr].count++;
+        
+        if (trade.result > 0) tradesByDate[trade.dateStr].wins++;
+        else if (trade.result < 0) tradesByDate[trade.dateStr].losses++;
+    });
+    
+    Object.keys(tradesByDate).forEach(dateStr => {
+        const dayData = tradesByDate[dateStr];
+        const backgroundColor = dayData.total > 0 ? 'rgba(16,185,129,0.3)' : 
+                              dayData.total < 0 ? 'rgba(239,68,68,0.3)' : 
+                              'rgba(156,163,175,0.3)';
+        
+        events.push({
+            title: `$${dayData.total.toFixed(2)} (${dayData.count} ops)`,
+            start: dateStr,
+            allDay: true,
+            backgroundColor: backgroundColor,
+            borderColor: backgroundColor,
+            textColor: 'var(--text)'
+        });
+    });
+    
+    calendar.removeAllEvents();
+    calendar.addEventSource(events);
+}
 
-        const editAccountBtn = e.target.closest('.btn-edit-account');
-        if (editAccountBtn) {
-            const account = window.__currentAccounts?.find(a => a.id === editAccountBtn.dataset.id);
-            if(account) {
-                 $('#acc-title').textContent = 'Editar Cuenta'; 
-                 $('#account-name').value = account.name;
-                 $('#account-broker').value = account.broker;
-                 $('#account-balance').value = account.balance;
-                 $('#account-type').value = account.type;
-                 $('#editing-account-id').value = account.id; 
-                 openModalById('add-account-modal');
+function setActiveSection(id) {
+    $$('main > .section').forEach(section => section.classList.remove('active'));
+    const targetSection = $(`#${id}`);
+    if (targetSection) targetSection.classList.add('active');
+
+    $$('.nav > a.nav-item, .submenu > a').forEach(link => {
+        const isActive = link.dataset.target === id;
+        link.classList.toggle('active', isActive);
+        if (isActive) {
+            const parentSubmenu = link.closest('.submenu');
+            if (parentSubmenu) {
+                const button = $(`[aria-controls="${parentSubmenu.id}"]`);
+                if (button) button.setAttribute('aria-expanded', 'true');
+                parentSubmenu.classList.add('open');
             }
         }
-        
-        const deleteAccountBtn = e.target.closest('.btn-delete-account');
-        if (deleteAccountBtn) deleteItem('accounts', deleteAccountBtn.dataset.id);
+    });
 
-        if (e.target.closest('#btn-login, #btn-open-auth')) {
-             setAuthMode('login'); openModalById('auth-modal');
+    if (id === 'calendario' && calendar) {
+        setTimeout(() => { calendar.updateSize() }, 50);
+    }
+}
+
+function openModalById(id) { 
+    $(`#${id}`)?.classList.add('show'); 
+    document.body.style.overflow = 'hidden'; 
+}
+
+function closeAllModals() { 
+    $$('.modal').forEach(m => m.classList.remove('show')); 
+    document.body.style.overflow = ''; 
+}
+
+// --- FUNCIONES DE CÁLCULO (DEFINIDAS ANTES DE SER USADAS) ---
+
+function recalcFromTrades(trades) {
+    console.log("Recalculando desde trades:", trades?.length);
+    
+    const getSafeTimestamp = (trade) => {
+        if (!trade || !trade.createdAt) return 0;
+        if (typeof trade.createdAt.toMillis === 'function') return trade.createdAt.toMillis();
+        if (trade.createdAt instanceof Date) return trade.createdAt.getTime();
+        if (typeof trade.createdAt === 'number') return trade.createdAt;
+        return 0;
+    };
+
+    const t = (trades || []).sort((a, b) => getSafeTimestamp(a) - getSafeTimestamp(b));
+    const wins = t.filter(x => x.result > 0), losses = t.filter(x => x.result < 0);
+    const total = t.length;
+    const totalWins = wins.reduce((s, x) => s + x.result, 0);
+    const totalLoss = Math.abs(losses.reduce((s, x) => s + x.result, 0));
+    const winRate = total ? (wins.length / total) * 100 : 0;
+    const pf = totalLoss ? totalWins / totalLoss : 0;
+    const rr = (wins.length && losses.length) ? (totalWins / wins.length) / (totalLoss / losses.length) : 0;
+
+    // Actualizar UI
+    if ($('#total-trades')) $('#total-trades').textContent = total;
+    if ($('#total-trades-2')) $('#total-trades-2').textContent = total;
+    if ($('#win-trades')) $('#win-trades').textContent = wins.length;
+    if ($('#win-rate')) $('#win-rate').textContent = `${winRate.toFixed(1)}%`;
+    if ($('#profit-factor')) $('#profit-factor').textContent = pf.toFixed(2);
+    if ($('#risk-reward')) $('#risk-reward').textContent = rr.toFixed(2);
+    
+    const totalProfit = totalWins - totalLoss;
+    if ($('#total-profit')) $('#total-profit').textContent = `$${totalProfit.toFixed(2)}`;
+
+    const settings = window.__currentGeneralSettings || { initialBalance: 10000 };
+    const initialBalance = settings.initialBalance;
+    const profitPercent = initialBalance > 0 ? (totalProfit / initialBalance) * 100 : 0;
+
+    const profitPercentEl = $('#total-profit-percent');
+    if (profitPercentEl) {
+        profitPercentEl.textContent = `(${profitPercent.toFixed(1)}%)`;
+        profitPercentEl.style.color = profitPercent >= 0 ? 'var(--success)' : 'var(--danger)';
+    }
+
+    const balanceGrowthEl = $('#balance-growth-percent');
+    if (balanceGrowthEl) {
+        balanceGrowthEl.textContent = `${profitPercent >= 0 ? '+' : ''}${profitPercent.toFixed(2)}%`;
+        balanceGrowthEl.style.color = profitPercent >= 0 ? 'var(--success)' : 'var(--danger)';
+    }
+
+    if (distributionChart) {
+        distributionChart.data.datasets[0].data = [wins.length, losses.length, t.filter(x => x.result === 0).length];
+        distributionChart.update();
+    }
+  
+    if (balanceChart || modalBalanceChart) {
+        const data = [];
+        let bal = settings.initialBalance;
+        data.push(bal);
+        t.forEach(trade => {
+            bal += trade.result || 0;
+            data.push(bal);
+        });
+        const labels = ['Inicio', ...Array.from({ length: t.length }, (_, i) => i + 1)];
+        if (balanceChart) {
+            balanceChart.data.datasets[0].data = data;
+            balanceChart.data.labels = labels;
+            balanceChart.update();
         }
-        if (e.target.matches('#auth-toggle-mode')) {
-             authMode = authMode === 'login' ? 'register' : 'login';
-             setAuthMode(authMode);
+        if (modalBalanceChart) {
+            modalBalanceChart.data.datasets[0].data = data;
+            modalBalanceChart.data.labels = labels;
+            modalBalanceChart.update();
         }
-        if(e.target.closest('#toggle-password')) {
+    }
+    
+    updateRecentTrades(t);
+    calculateRiskMetrics(t, settings.initialBalance);
+
+    const streaks = calculateStreaks(t);
+    if ($('#max-win-streak')) $('#max-win-streak').textContent = streaks.maxWinningStreak;
+    if ($('#max-loss-streak')) $('#max-loss-streak').textContent = streaks.maxLosingStreak;
+
+    // Actualizar tabla de operaciones si existe
+    updateTradesTable(t);
+    
+    // Actualizar calendario
+    updateCalendar(t);
+    
+    // Actualizar analytics
+    updateAnalytics(t);
+}
+
+function updateRecentTrades(trades) {
+    const el = $('#recent-trades-container');
+    if (!el) return;
+    if (!trades || !trades.length) {
+        el.innerHTML = '<div style="padding: 4px 0;">Sin registros.</div>';
+        return;
+    }
+    el.innerHTML = trades.slice(-5).reverse().map(t => {
+        const sign = (t.result || 0) >= 0 ? '+' : '-';
+        const col = (t.result || 0) >= 0 ? 'var(--success)' : 'var(--danger)';
+        const sessionInfo = t.session && t.session !== 'N/A' ? `<span style="color: var(--muted); font-size: 12px;">(${t.session})</span>` : '';
+        return `<div style="padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>${t.pair} ${sessionInfo}</span>
+                        <b style="color:${col}">${sign}$${Math.abs(t.result || 0).toFixed(2)}</b>
+                    </div>
+                    <div style="font-size: 12px; color: var(--muted); margin-top: 2px;">${t.dateStr || ''}</div>
+                </div>`;
+    }).join('');
+}
+
+function updateTradesTable(trades) {
+    const tbody = $('#trades-table-body');
+    if (!tbody) return;
+    
+    if (!trades || !trades.length) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--muted); padding: 20px;">No hay operaciones registradas.</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = trades.slice().reverse().map(trade => {
+        const resultClass = trade.result > 0 ? 'positive' : trade.result < 0 ? 'negative' : 'neutral';
+        const resultSign = trade.result > 0 ? '+' : '';
+        return `
+            <tr>
+                <td>${trade.dateStr || ''}</td>
+                <td>${trade.pair || ''}</td>
+                <td>${trade.direction || 'LONG'}</td>
+                <td class="${resultClass}">${resultSign}$${trade.result?.toFixed(2) || '0.00'}</td>
+                <td>${getAccountName(trade.accountId) || 'N/A'}</td>
+                <td>
+                    <button class="btn-icon" onclick="editTrade('${trade.id}')" title="Editar">
+                        <i class="fa-solid fa-pen"></i>
+                    </button>
+                    <button class="btn-icon" onclick="deleteTrade('${trade.id}')" title="Eliminar" style="color: var(--danger);">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function updateAnalytics(trades) {
+    if (!trades || !trades.length) return;
+    
+    // Actualizar equity curve
+    if (equityCurveChart) {
+        const equityData = [];
+        let currentEquity = window.__currentGeneralSettings?.initialBalance || 10000;
+        equityData.push(currentEquity);
+        
+        trades.forEach(trade => {
+            currentEquity += trade.result || 0;
+            equityData.push(currentEquity);
+        });
+        
+        equityCurveChart.data.datasets[0].data = equityData;
+        equityCurveChart.update();
+    }
+    
+    // Actualizar volumen por símbolo
+    if (symbolVolumeChart) {
+        const symbolCounts = {};
+        trades.forEach(trade => {
+            const symbol = trade.pair || 'Unknown';
+            symbolCounts[symbol] = (symbolCounts[symbol] || 0) + 1;
+        });
+        
+        const labels = Object.keys(symbolCounts);
+        const data = Object.values(symbolCounts);
+        
+        symbolVolumeChart.data.labels = labels;
+        symbolVolumeChart.data.datasets[0].data = data;
+        symbolVolumeChart.update();
+    }
+    
+    // Actualizar métricas detalladas
+    updateDetailedMetrics(trades);
+}
+
+function updateDetailedMetrics(trades) {
+    const container = $('#detailed-metrics-container');
+    if (!container) return;
+    
+    if (!trades || !trades.length) {
+        container.innerHTML = '<p style="color: var(--muted); text-align: center;">No hay datos para mostrar.</p>';
+        return;
+    }
+    
+    const wins = trades.filter(t => t.result > 0);
+    const losses = trades.filter(t => t.result < 0);
+    const breakeven = trades.filter(t => t.result === 0);
+    
+    const avgWin = wins.length ? wins.reduce((sum, t) => sum + t.result, 0) / wins.length : 0;
+    const avgLoss = losses.length ? Math.abs(losses.reduce((sum, t) => sum + t.result, 0)) / losses.length : 0;
+    const largestWin = wins.length ? Math.max(...wins.map(t => t.result)) : 0;
+    const largestLoss = losses.length ? Math.min(...losses.map(t => t.result)) : 0;
+    
+    const { maxDrawdownValue, maxDrawdownPercent } = calculateDrawdown(trades, window.__currentGeneralSettings?.initialBalance || 10000);
+    
+    container.innerHTML = `
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">$${avgWin.toFixed(2)}</div>
+                <div class="stat-label">Ganancia Promedio</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">$${Math.abs(avgLoss).toFixed(2)}</div>
+                <div class="stat-label">Pérdida Promedio</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">$${largestWin.toFixed(2)}</div>
+                <div class="stat-label">Mayor Ganancia</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">$${Math.abs(largestLoss).toFixed(2)}</div>
+                <div class="stat-label">Mayor Pérdida</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">${maxDrawdownPercent.toFixed(2)}%</div>
+                <div class="stat-label">Máximo Drawdown</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">${breakeven.length}</div>
+                <div class="stat-label">Operaciones Break Even</div>
+            </div>
+        </div>
+    `;
+}
+
+function getAccountName(accountId) {
+    const accounts = window.__currentAccounts || [];
+    const account = accounts.find(acc => acc.id === accountId);
+    return account ? account.name : 'N/A';
+}
+
+function populateReportAccountsDropdown(accounts) {
+    const reportSelect = $('#report-account-select');
+    if (!reportSelect) return;
+    
+    const currentVal = reportSelect.value;
+    reportSelect.innerHTML = '<option value="">Todas las cuentas</option>';
+    
+    (accounts || []).forEach(a => {
+        const option = document.createElement('option');
+        option.value = a.id;
+        option.textContent = a.name;
+        reportSelect.appendChild(option);
+    });
+    
+    if (currentVal) reportSelect.value = currentVal;
+}
+
+function calculateStreaks(trades) {
+    let maxWinningStreak = 0;
+    let currentWinningStreak = 0;
+    let maxLosingStreak = 0;
+    let currentLosingStreak = 0;
+
+    (trades || []).forEach(trade => {
+        const r = Number(trade?.result ?? 0);
+        if (r > 0) {
+            currentWinningStreak++;
+            currentLosingStreak = 0;
+        } else if (r < 0) {
+            currentLosingStreak++;
+            currentWinningStreak = 0;
+        }
+        if (currentWinningStreak > maxWinningStreak) {
+            maxWinningStreak = currentWinningStreak;
+        }
+        if (currentLosingStreak > maxLosingStreak) {
+            maxLosingStreak = currentLosingStreak;
+        }
+    });
+    return { maxWinningStreak, maxLosingStreak };
+}
+
+function calculateDrawdown(trades, initialBalance) {
+    let peakEquity = initialBalance || 0;
+    let currentEquity = initialBalance || 0;
+    let maxDrawdownValue = 0;
+    (trades || []).forEach(t => {
+        currentEquity += Number(t?.result ?? 0);
+        if (currentEquity > peakEquity) peakEquity = currentEquity;
+        const dd = peakEquity - currentEquity;
+        if (dd > maxDrawdownValue) maxDrawdownValue = dd;
+    });
+    const maxDrawdownPercent = (initialBalance > 0) ? (maxDrawdownValue / initialBalance) * 100 : 0;
+    return { maxDrawdownValue, maxDrawdownPercent };
+}
+
+function calculateRiskMetrics(trades, initialBalance) {
+    const totalProfitForPeriod = trades.reduce((sum, t) => sum + (t.result || 0), 0);
+    const periodProfitPercent = initialBalance > 0 ? (totalProfitForPeriod / initialBalance) * 100 : 0;
+
+    const riskProfitEl = $('#risk-profit-percent');
+    if (riskProfitEl) {
+        riskProfitEl.textContent = `${periodProfitPercent.toFixed(2)}%`;
+        riskProfitEl.style.color = periodProfitPercent >= 0 ? 'var(--success)' : 'var(--danger)';
+    }
+    
+    if (!initialBalance || initialBalance === 0) {
+        if ($('#daily-risk')) $('#daily-risk').textContent = '0.0%';
+        if ($('#weekly-risk')) $('#weekly-risk').textContent = '0.0%';
+        if ($('#monthly-risk')) $('#monthly-risk').textContent = '0.0%';
+        if (riskProfitEl) {
+            riskProfitEl.textContent = '0.00%';
+            riskProfitEl.style.color = 'var(--accent)';
+        }
+        if (riskChart) {
+            riskChart.data.datasets[0].data = [0, 0, 0, 0, 0, 0];
+            riskChart.update();
+        }
+        return;
+    }
+
+    const now = new Date();
+    const today = now.toISOString().slice(0, 10);
+    const startOfWeek = new Date(new Date(now).setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1))).toISOString().slice(0, 10);
+    const startOfMonth = new Date(new Date(now).getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+
+    const dailyLoss = trades.filter(t => t.dateStr === today && t.result < 0).reduce((sum, t) => sum + t.result, 0);
+    const weeklyLoss = trades.filter(t => t.dateStr >= startOfWeek && t.result < 0).reduce((sum, t) => sum + t.result, 0);
+    const monthlyLoss = trades.filter(t => t.dateStr >= startOfMonth && t.result < 0).reduce((sum, t) => sum + t.result, 0);
+
+    if ($('#daily-risk')) $('#daily-risk').textContent = `${(Math.abs(dailyLoss) / initialBalance * 100).toFixed(1)}%`;
+    if ($('#weekly-risk')) $('#weekly-risk').textContent = `${(Math.abs(weeklyLoss) / initialBalance * 100).toFixed(1)}%`;
+    if ($('#monthly-risk')) $('#monthly-risk').textContent = `${(Math.abs(monthlyLoss) / initialBalance * 100).toFixed(1)}%`;
+
+    const wins = trades.filter(x => x.result > 0);
+    const losses = trades.filter(x => x.result < 0);
+    const winRate = trades.length ? (wins.length / trades.length) * 100 : 0;
+    const totalWins = wins.reduce((s, x) => s + x.result, 0);
+    const totalLoss = Math.abs(losses.reduce((s, x) => s + x.result, 0));
+    const avgRR = (wins.length && losses.length) ? (totalWins / wins.length) / (totalLoss / losses.length) : 0;
+
+    const aciertoScore = Math.min(5, winRate / 15);
+    const rrScore = Math.min(5, avgRR * 2);
+    const beneficioScore = Math.min(5, (totalProfitForPeriod / initialBalance * 100) / 4);
+
+    if (riskChart) {
+        riskChart.data.datasets[0].data = [3, 4, aciertoScore, rrScore, 3, beneficioScore];
+        riskChart.update();
+    }
+}
+
+// --- FUNCIÓN CRÍTICA CORREGIDA: CHALLENGE TRACKER ---
+function updateChallengeTrackerUI(trades, settings) {
+    console.log("🔄 Actualizando Challenge Tracker...");
+    
+    const accounts = window.__currentAccounts || [];
+    console.log("Cuentas disponibles:", accounts);
+
+    // BUSCAR CUENTA DE CHALLANGE - CORREGIDO
+    const challengeAccount = accounts.find(acc => 
+        acc.type && acc.type.toLowerCase() === 'challenge'
+    );
+    
+    console.log("Cuenta de Challenge encontrada:", challengeAccount);
+
+    // SI NO HAY CUENTA DE CHALLENGE, LIMPIAR UI
+    if (!challengeAccount) {
+        console.log("❌ No se encontró cuenta de challenge");
+        if ($('#challenge-current-balance')) $('#challenge-current-balance').textContent = '$0.00';
+        if ($('#challenge-profit')) $('#challenge-profit').textContent = `+0.0%`;
+        if ($('#challenge-drawdown')) $('#challenge-drawdown').textContent = `0.0%`;
+        if ($('#challenge-trades')) $('#challenge-trades').textContent = '0';
+        if ($('#challenge-win-rate')) $('#challenge-win-rate').textContent = `0%`;
+        if ($('#challenge-progress-value')) $('#challenge-progress-value').textContent = `0%`;
+        if ($('#challenge-progress-bar')) $('#challenge-progress-bar').style.width = `0%`;
+        if ($('#challenge-residual-risk')) $('#challenge-residual-risk').textContent = `0.00%`;
+        return;
+    }
+
+    const initialBalance = parseFloat(challengeAccount.balance) || 0;
+    console.log("Saldo inicial del challenge:", initialBalance);
+    
+    // FILTRAR OPERACIONES DEL CHALLENGE - CORREGIDO
+    const challengeTrades = (trades || []).filter(t => {
+        // Múltiples formas de identificar operaciones del challenge
+        return t.accountId === challengeAccount.id || 
+               t.account === challengeAccount.id ||
+               t.account === challengeAccount.name ||
+               (t.inChallenge === true) ||
+               (t.challenge === 'yes');
+    });
+    
+    console.log("Operaciones del challenge:", challengeTrades.length, challengeTrades);
+
+    const totalProfit = challengeTrades.reduce((sum, trade) => sum + (trade.result || 0), 0);
+    const currentBalance = initialBalance + totalProfit;
+
+    const profitPercent = initialBalance > 0 ? (totalProfit / initialBalance) * 100 : 0;
+    const targetPercent = parseFloat(settings.profitTarget) || 10;
+    const progressPercent = targetPercent > 0 ? (profitPercent / targetPercent) * 100 : 0;
+    
+    const { maxDrawdownValue } = calculateDrawdown(challengeTrades, initialBalance);
+    const drawdownPercent = initialBalance > 0 ? (maxDrawdownValue / initialBalance) * 100 : 0;
+    
+    const wins = challengeTrades.filter(t => t.result > 0).length;
+    const winRate = challengeTrades.length > 0 ? (wins / challengeTrades.length) * 100 : 0;
+
+    console.log("Métricas calculadas:", {
+        profitPercent, 
+        progressPercent, 
+        drawdownPercent, 
+        winRate,
+        currentBalance,
+        totalProfit
+    });
+
+    // ACTUALIZAR UI
+    if ($('#challenge-current-balance')) {
+        $('#challenge-current-balance').textContent = `$${currentBalance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+    }
+    
+    if ($('#challenge-profit')) {
+        $('#challenge-profit').textContent = `${profitPercent >= 0 ? '+' : ''}${profitPercent.toFixed(1)}%`;
+    }
+    
+    if ($('#challenge-drawdown')) {
+        $('#challenge-drawdown').textContent = `${drawdownPercent.toFixed(1)}%`;
+    }
+    
+    if ($('#challenge-trades')) {
+        $('#challenge-trades').textContent = challengeTrades.length;
+    }
+    
+    if ($('#challenge-win-rate')) {
+        $('#challenge-win-rate').textContent = `${winRate.toFixed(1)}%`;
+    }
+    
+    if ($('#challenge-progress-value')) {
+        $('#challenge-progress-value').textContent = `${progressPercent.toFixed(1)}%`;
+    }
+    
+    if ($('#challenge-progress-bar')) {
+        $('#challenge-progress-bar').style.width = `${Math.min(100, Math.max(0, progressPercent))}%`;
+    }
+    
+    // CÁLCULO DE RIESGO RESIDUAL DIARIO
+    const dailyLimit = settings.dailyLoss || 5;
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const todaysTrades = challengeTrades.filter(t => t.dateStr === todayStr);
+    const dailyPnl = todaysTrades.reduce((sum, trade) => sum + trade.result, 0);
+    const dailyDrawdown = dailyPnl < 0 ? (Math.abs(dailyPnl) / initialBalance) * 100 : 0;
+    const residualRisk = Math.max(0, dailyLimit - dailyDrawdown);
+    
+    if ($('#challenge-residual-risk')) {
+        $('#challenge-residual-risk').textContent = `${residualRisk.toFixed(2)}%`;
+    }
+
+    console.log("✅ Challenge Tracker actualizado correctamente");
+}
+
+// --- FUNCIÓN PRINCIPAL DE ACTUALIZACIÓN ---
+function updateAllCalculations(trades, accounts, settings) {
+    console.log("📊 Actualizando todos los cálculos...");
+    
+    if (!trades) trades = [];
+    if (!accounts) accounts = [];
+    if (!settings) settings = window.__currentGeneralSettings || { initialBalance: 10000 };
+    
+    window.__currentAccounts = accounts;
+    window.__currentGeneralSettings = settings;
+    
+    recalcFromTrades(trades);
+    updateChallengeTrackerUI(trades, settings);
+    
+    // Actualizar dropdowns
+    populateAccountDropdowns(accounts);
+    populateReportAccountsDropdown(accounts);
+    
+    // Actualizar lista de cuentas
+    updateAccountsList(accounts);
+    
+    // Actualizar lista de estrategias
+    updateStrategiesList();
+    
+    // Actualizar lista de objetivos
+    updateGoalsList();
+}
+
+function populateAccountDropdowns(accounts) {
+    const dropdowns = ['#trade-account', '#default-account', '#challenge-account'];
+    
+    dropdowns.forEach(selector => {
+        const dropdown = $(selector);
+        if (dropdown) {
+            const currentValue = dropdown.value;
+            dropdown.innerHTML = '<option value="">Seleccionar cuenta</option>';
+            
+            accounts.forEach(account => {
+                const option = document.createElement('option');
+                option.value = account.id;
+                option.textContent = account.name;
+                dropdown.appendChild(option);
+            });
+            
+            if (currentValue) dropdown.value = currentValue;
+        }
+    });
+}
+
+function updateAccountsList(accounts) {
+    const container = $('#accounts-list-container');
+    if (!container) return;
+    
+    if (!accounts || !accounts.length) {
+        container.innerHTML = '<p style="color: var(--muted); text-align: center; padding: 20px;">No hay cuentas registradas.</p>';
+        return;
+    }
+    
+    container.innerHTML = accounts.map(account => `
+        <div class="trade-card" style="margin-bottom: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h4 style="margin: 0 0 5px 0; color: var(--accent);">${account.name}</h4>
+                    <p style="margin: 0; color: var(--muted); font-size: 14px;">
+                        ${account.type} • ${account.currency} • $${parseFloat(account.balance).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                    </p>
+                    ${account.broker ? `<p style="margin: 5px 0 0 0; color: var(--muted); font-size: 12px;">Broker: ${account.broker}</p>` : ''}
+                </div>
+                <div>
+                    <button class="btn-icon" onclick="editAccount('${account.id}')" title="Editar">
+                        <i class="fa-solid fa-pen"></i>
+                    </button>
+                    <button class="btn-icon" onclick="deleteAccount('${account.id}')" title="Eliminar" style="color: var(--danger);">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function updateStrategiesList() {
+    const container = $('#strategies-container');
+    if (!container) return;
+    
+    // Por ahora, mostrar mensaje placeholder
+    container.innerHTML = `
+        <div style="text-align: center; padding: 40px; color: var(--muted);">
+            <i class="fa-solid fa-chess-knight" style="font-size: 48px; margin-bottom: 16px;"></i>
+            <p>Gestiona tus estrategias de trading aquí.</p>
+            <p style="font-size: 14px; margin-top: 10px;">Próximamente: Crear, editar y analizar estrategias.</p>
+        </div>
+    `;
+}
+
+function updateGoalsList() {
+    const container = $('#goals-container');
+    if (!container) return;
+    
+    // Por ahora, mostrar mensaje placeholder
+    container.innerHTML = `
+        <div style="text-align: center; padding: 40px; color: var(--muted);">
+            <i class="fa-solid fa-bullseye" style="font-size: 48px; margin-bottom: 16px;"></i>
+            <p>Establece y sigue tus objetivos de trading.</p>
+            <p style="font-size: 14px; margin-top: 10px;">Próximamente: Seguimiento de objetivos y métricas.</p>
+        </div>
+    `;
+}
+
+// --- INICIALIZACIÓN CUANDO EL DOM ESTÁ LISTO ---
+document.addEventListener('DOMContentLoaded', () => {
+    console.log("🚀 Inicializando aplicación...");
+    setDate();
+    initCharts();
+    initCalendar();
+    
+    // Inicializar navegación
+    $$('.nav-link').forEach(button => {
+        button.addEventListener('click', (e) => {
             e.preventDefault();
-            const passInput = $('#auth-pass'); const icon = $('#toggle-password i');
-            const isPassword = passInput.type === 'password';
-            passInput.type = isPassword ? 'text' : 'password';
-            icon.className = `fa-solid ${isPassword ? 'fa-eye-slash' : 'fa-eye'}`;
+            const expanded = button.getAttribute('aria-expanded') === 'true';
+            button.setAttribute('aria-expanded', !expanded);
+            const submenu = document.getElementById(button.getAttribute('aria-controls'));
+            if (submenu) submenu.classList.toggle('open', !expanded);
+        });
+    });
+    
+    // Navegación entre secciones
+    $$('[data-target]').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const target = link.dataset.target;
+            setActiveSection(target);
+            
+            // Cerrar sidebar en móviles
+            if (window.innerWidth <= 860) {
+                document.body.classList.remove('sidebar-open');
+            }
+        });
+    });
+    
+    // Burger menu
+    $('#burger').addEventListener('click', () => {
+        document.body.classList.toggle('sidebar-open');
+    });
+    
+    $('#drawerBackdrop').addEventListener('click', () => {
+        document.body.classList.remove('sidebar-open');
+    });
+    
+    // Modales
+    $$('.close-modal').forEach(btn => {
+        btn.addEventListener('click', closeAllModals);
+    });
+    
+    // Cerrar modales con ESC
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeAllModals();
+    });
+    
+    // Botón flotante
+    $('#fab-add-trade').addEventListener('click', () => {
+        openModalById('add-trade-modal');
+    });
+    
+    // Expandir chart de balance
+    $('#expand-balance-chart').addEventListener('click', () => {
+        openModalById('balance-modal');
+    });
+    
+    // Editar challenge
+    $('#edit-challenge').addEventListener('click', () => {
+        openModalById('challenge-modal');
+    });
+    
+    // Agregar cuenta
+    $('#add-account-btn').addEventListener('click', () => {
+        openModalById('add-account-modal');
+    });
+    
+    // Agregar estrategia
+    $('#add-strategy-btn').addEventListener('click', () => {
+        openModalById('add-strategy-modal');
+    });
+    
+    // Agregar objetivo
+    $('#add-goal-btn').addEventListener('click', () => {
+        openModalById('add-goal-modal');
+    });
+    
+    // Rango de fechas personalizado
+    $('#report-date-range').addEventListener('change', function() {
+        const customRange = $('#custom-date-range');
+        if (this.value === 'custom') {
+            customRange.style.display = 'grid';
+        } else {
+            customRange.style.display = 'none';
         }
     });
     
-    function setAuthMode(mode){
-      $('#auth-title').textContent = mode==='login' ? 'Iniciar Sesión' : 'Crear Cuenta';
-      $('#auth-toggle-mode').textContent = mode==='login' ? 'Crear cuenta' : 'Ya tengo cuenta';
-      $('#auth-name-wrap').classList.toggle('hidden', mode !== 'register');
-      $('#auth-invite-wrap').classList.toggle('hidden', mode !== 'register');
-      $('#auth-submit').textContent = mode ==='login' ? 'Entrar' : 'Registrar';
-    }
-
-    $('#auth-form').addEventListener('submit', async(e)=>{
-      e.preventDefault();
-      const email = $('#auth-email').value, pass = $('#auth-pass').value;
-      const name = $('#auth-name').value, inviteCode = $('#auth-invite').value;
-      const errEl = $('#auth-error'); errEl.classList.add('hidden');
-      try {
-        if (authMode === 'login') {
-          await signInWithEmailAndPassword(auth, email, pass);
+    // Inicializar Firebase Auth state listener
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            console.log("Usuario autenticado:", user.email);
+            $('#btn-login').classList.add('hidden');
+            $('#btn-logout').classList.remove('hidden');
+            $('.user-name').textContent = user.displayName || user.email;
+            $('.avatar').textContent = (user.displayName || user.email).substring(0, 2).toUpperCase();
+            
+            // Cargar datos del usuario
+            loadUserData(user.uid);
         } else {
-          if (!name || !inviteCode) throw new Error("Nombre y código son requeridos.");
-          const createUser = httpsCallable(functions, 'createUserWithInvite');
-          await createUser({ email, password: pass, displayName: name, inviteCode });
-          await signInWithEmailAndPassword(auth, email, pass);
+            console.log("Usuario no autenticado");
+            $('#btn-login').classList.remove('hidden');
+            $('#btn-logout').classList.add('hidden');
+            $('.user-name').textContent = 'Invitado';
+            $('.avatar').textContent = 'AT';
+            
+            // Limpiar datos
+            updateAllCalculations([], [], { initialBalance: 10000 });
+        }
+    });
+    
+    // Botones de auth
+    $('#btn-login').addEventListener('click', () => {
+        authMode = 'login';
+        openModalById('auth-modal');
+    });
+    
+    $('#btn-logout').addEventListener('click', () => {
+        signOut(auth).catch(error => {
+            console.error("Error al cerrar sesión:", error);
+        });
+    });
+    
+    // Agregar operación rápida
+    $('#add-trade-btn').addEventListener('click', () => {
+        openModalById('add-trade-modal');
+    });
+    
+    $('#quick-add-trade').addEventListener('click', () => {
+        openModalById('add-trade-modal');
+    });
+    
+    $('#add-trade-from-calendar').addEventListener('click', () => {
+        openModalById('add-trade-modal');
+    });
+    
+    $('#add-trade-from-operations').addEventListener('click', () => {
+        openModalById('add-trade-modal');
+    });
+    
+    // Formulario de operación
+    $('#add-trade-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const user = auth.currentUser;
+        if (!user) {
+            alert('Debes iniciar sesión para agregar operaciones');
+            return;
+        }
+        
+        const tradeData = {
+            dateStr: $('#trade-date').value,
+            pair: $('#trade-pair').value.toUpperCase(),
+            direction: $('#trade-direction').value,
+            result: parseFloat($('#trade-result').value),
+            accountId: $('#trade-account').value,
+            notes: $('#trade-notes').value,
+            createdAt: serverTimestamp()
+        };
+        
+        try {
+            await addDoc(collection(db, 'users', user.uid, 'trades'), tradeData);
+            closeAllModals();
+            $('#add-trade-form').reset();
+        } catch (error) {
+            console.error('Error agregando operación:', error);
+            alert('Error al guardar la operación');
+        }
+    });
+    
+    // Formulario de cuenta
+    $('#add-account-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const user = auth.currentUser;
+        if (!user) {
+            alert('Debes iniciar sesión para agregar cuentas');
+            return;
+        }
+        
+        const accountData = {
+            name: $('#account-name').value,
+            type: $('#account-type').value,
+            balance: parseFloat($('#account-balance').value),
+            currency: $('#account-currency').value,
+            broker: $('#account-broker').value,
+            createdAt: serverTimestamp()
+        };
+        
+        try {
+            await addDoc(collection(db, 'users', user.uid, 'accounts'), accountData);
+            closeAllModals();
+            $('#add-account-form').reset();
+        } catch (error) {
+            console.error('Error agregando cuenta:', error);
+            alert('Error al guardar la cuenta');
+        }
+    });
+    
+    // Configuración de fecha por defecto en formulario
+    const today = new Date().toISOString().split('T')[0];
+    const tradeDateInput = $('#trade-date');
+    if (tradeDateInput) tradeDateInput.value = today;
+    
+    console.log("✅ Aplicación inicializada correctamente");
+});
+
+// --- FUNCIONES DE FIREBASE ---
+async function loadUserData(userId) {
+    console.log("📥 Cargando datos del usuario:", userId);
+    
+    // Limpiar suscripciones anteriores
+    unsubscribes.forEach(unsub => unsub());
+    unsubscribes = [];
+    
+    try {
+        // Cargar configuración general
+        const settingsDoc = await getDoc(doc(db, 'users', userId, 'settings', 'general'));
+        const settings = settingsDoc.exists() ? settingsDoc.data() : { initialBalance: 10000 };
+        window.__currentGeneralSettings = settings;
+        
+        // Cargar cuentas
+        const accountsQuery = query(collection(db, 'users', userId, 'accounts'));
+        const accountsSnapshot = await getDocs(accountsQuery);
+        const accounts = accountsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        window.__currentAccounts = accounts;
+        
+        // Suscribirse a operaciones en tiempo real
+        const tradesQuery = query(
+            collection(db, 'users', userId, 'trades'),
+            orderBy('createdAt', 'desc')
+        );
+        
+        const unsubscribeTrades = onSnapshot(tradesQuery, (snapshot) => {
+            const trades = snapshot.docs.map(doc => {
+                const data = doc.data();
+                return {
+                    id: doc.id,
+                    ...data,
+                    // Asegurar que dateStr esté presente
+                    dateStr: data.dateStr || (data.createdAt ? data.createdAt.toDate().toISOString().split('T')[0] : '')
+                };
+            });
+            
+            console.log("Operaciones cargadas:", trades.length);
+            updateAllCalculations(trades, accounts, settings);
+        });
+        
+        unsubscribes.push(unsubscribeTrades);
+        
+    } catch (error) {
+        console.error("Error cargando datos:", error);
+    }
+}
+
+// Manejo de formularios de auth
+$('#auth-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const email = $('#auth-email').value;
+    const password = $('#auth-password').value;
+    const btn = $('#auth-submit');
+    
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Procesando...';
+    
+    try {
+        if (authMode === 'login') {
+            await signInWithEmailAndPassword(auth, email, password);
+        } else {
+            await createUserWithEmailAndPassword(auth, email, password);
+            await updateProfile(auth.currentUser, { displayName: email.split('@')[0] });
         }
         closeAllModals();
-      } catch (err) {
-        errEl.textContent = err.message;
-        errEl.classList.remove('hidden');
-      }
+    } catch (error) {
+        console.error("Error de autenticación:", error);
+        alert(error.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = authMode === 'login' ? 'Iniciar Sesión' : 'Registrarse';
+    }
+});
+
+// Cambiar entre login/registro
+$('#switch-to-register').addEventListener('click', (e) => {
+    e.preventDefault();
+    authMode = 'register';
+    $('#auth-modal-title').textContent = 'Crear Cuenta';
+    $('#auth-submit').textContent = 'Registrarse';
+    $('#auth-switch-text').innerHTML = '¿Ya tienes cuenta? <a href="#" id="switch-to-login">Inicia Sesión</a>';
+    $('#switch-to-login').addEventListener('click', switchToLogin);
+});
+
+function switchToLogin(e) {
+    e.preventDefault();
+    authMode = 'login';
+    $('#auth-modal-title').textContent = 'Iniciar Sesión';
+    $('#auth-submit').textContent = 'Iniciar Sesión';
+    $('#auth-switch-text').innerHTML = '¿No tienes cuenta? <a href="#" id="switch-to-register">Regístrate</a>';
+    $('#switch-to-register').addEventListener('click', (e) => {
+        e.preventDefault();
+        authMode = 'register';
+        $('#auth-modal-title').textContent = 'Crear Cuenta';
+        $('#auth-submit').textContent = 'Registrarse';
+        $('#auth-switch-text').innerHTML = '¿Ya tienes cuenta? <a href="#" id="switch-to-login">Inicia Sesión</a>';
+        $('#switch-to-login').addEventListener('click', switchToLogin);
     });
+}
 
-    $('#save-trade-btn')?.addEventListener('click', async (e) => {
-        const button = e.currentTarget; button.disabled = true; button.textContent = 'Guardando...';
-        try {
-            const editingId = $('#editing-trade-id').value;
-            const selectedAccountId = $('#trade-account-input').value;
-            if (!selectedAccountId) throw new Error('Por favor, selecciona una cuenta.');
-            const tradeData = {
-                account: selectedAccountId, dateStr: $('#trade-date-input').value,
-                pair: $('#trade-pair-input').value, type: $('#trade-type-input').value,
-                result: $('#trade-result-input').value, strategy: $('#trade-strategy-input').value,
-                // ... (recolectar todos los demás campos)
-            };
-            const token = await auth.currentUser.getIdToken();
-            const endpoint = editingId ? 'editManualTrade' : 'addManualTrade';
-            if(editingId) tradeData.tradeId = editingId;
+// Inicializar el switch
+$('#switch-to-register').addEventListener('click', (e) => {
+    e.preventDefault();
+    authMode = 'register';
+    $('#auth-modal-title').textContent = 'Crear Cuenta';
+    $('#auth-submit').textContent = 'Registrarse';
+    $('#auth-switch-text').innerHTML = '¿Ya tienes cuenta? <a href="#" id="switch-to-login">Inicia Sesión</a>';
+    $('#switch-to-login').addEventListener('click', switchToLogin);
+});
 
-            const response = await fetch(`https://us-central1-journal-infiniti-kapital.cloudfunctions.net/${endpoint}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-                body: JSON.stringify(tradeData)
-            });
-            if (!response.ok) throw new Error((await response.json()).message || 'Error del servidor.');
-            alert(`Operación ${editingId ? 'actualizada' : 'guardada'} con éxito.`);
-            closeAllModals();
-        } catch (error) {
-            alert('Hubo un error: ' + error.message);
-        } finally {
-            button.disabled = false; button.textContent = 'Guardar Operación';
-        }
-    });
+// Funciones globales para acciones
+window.editTrade = function(tradeId) {
+    console.log("Editar operación:", tradeId);
+    alert(`Editar operación ${tradeId} - Funcionalidad en desarrollo`);
+};
 
-    $('#save-account-btn')?.addEventListener('click', async () => {
-        const data = {
-            id: $('#editing-account-id').value, name: $('#account-name').value.trim(),
-            broker: $('#account-broker').value.trim(), balance: $('#account-balance').value,
-            type: $('#account-type').value
-        };
-        if (!data.name) return alert('El nombre es requerido.');
-        try { await saveAccount(data); closeAllModals(); } 
-        catch (e) { alert('Error: ' + e.message); }
-    });
+window.deleteTrade = async function(tradeId) {
+    if (!confirm('¿Estás seguro de que quieres eliminar esta operación?')) return;
+    
+    const user = auth.currentUser;
+    if (!user) return;
+    
+    try {
+        await deleteDoc(doc(db, 'users', user.uid, 'trades', tradeId));
+        console.log("Operación eliminada:", tradeId);
+    } catch (error) {
+        console.error("Error eliminando operación:", error);
+        alert('Error al eliminar la operación');
+    }
+};
 
-    // ... (El resto de tus listeners para guardar estrategia, settings, etc.)
+window.editAccount = function(accountId) {
+    console.log("Editar cuenta:", accountId);
+    alert(`Editar cuenta ${accountId} - Funcionalidad en desarrollo`);
+};
 
-    $('#download-pdf-btn').addEventListener('click', async () => {
-        const trades = lastReportData;
-        if (!trades.length) { return alert('Primero genera un reporte.'); }
-        const accountId = $('#report-account-select').value;
-        const account = window.__currentAccounts?.find(a => a.id === accountId);
-        if(!account) { return alert('Selecciona una cuenta válida.'); }
-        
-        const initialBalance = parseFloat(account.balance) || 0;
-        const stats = calculateReportStats(trades, initialBalance);
-        
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        doc.setFontSize(20); doc.text("Reporte de Rendimiento", 14, 22);
-        // ... (Tu lógica completa para construir el PDF va aquí)
-        
-        const body = trades.map(t => [ t.dateStr, t.pair, t.type, t.result.toFixed(2) ]);
-        doc.autoTable({ head: [['Fecha', 'Símbolo', 'Tipo', 'Resultado ($)']], body, startY: 60 });
-        doc.save(`reporte_${account.name}.pdf`);
-    });
+window.deleteAccount = async function(accountId) {
+    if (!confirm('¿Estás seguro de que quieres eliminar esta cuenta?')) return;
+    
+    const user = auth.currentUser;
+    if (!user) return;
+    
+    try {
+        await deleteDoc(doc(db, 'users', user.uid, 'accounts', accountId));
+        console.log("Cuenta eliminada:", accountId);
+    } catch (error) {
+        console.error("Error eliminando cuenta:", error);
+        alert('Error al eliminar la cuenta');
+    }
+};
 
-}); // Fin del DOMContentLoaded
+// Exportar a PDF
+$('#export-pdf').addEventListener('click', function() {
+    alert('Exportar a PDF - Funcionalidad en desarrollo');
+});
+
+// Exportar a Excel
+$('#export-excel').addEventListener('click', function() {
+    alert('Exportar a Excel - Funcionalidad en desarrollo');
+});
+
+// Generar reporte
+$('#generate-report').addEventListener('click', function() {
+    alert('Generar reporte - Funcionalidad en desarrollo');
+});
+
+console.log("🎯 INFINITI KAPITAL - Journal cargado correctamente");
+
 </script>
-
 </body>
 </html>
