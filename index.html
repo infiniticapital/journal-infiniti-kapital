@@ -1179,8 +1179,29 @@ function populateReportAccountsDropdown(accounts) {
     if (currentVal) reportSelect.value = currentVal;
 }
 
+async function saveAccount(accountData) {
+    const user = auth.currentUser;
+    if (!user) throw new Error("Debes iniciar sesión.");
+
+    const dataToSave = {
+        name: accountData.name || "Cuenta sin nombre",
+        broker: accountData.broker || "",
+        balance: parseFloat(accountData.balance) || 0,
+        type: accountData.type || "personal",
+        updatedAt: serverTimestamp() // Buena práctica añadir fecha de actualización
+    };
+
+    if (accountData.id) {
+        const accountRef = doc(db, "users", user.uid, "accounts", accountData.id);
+        await updateDoc(accountRef, dataToSave);
+    } else {
+        dataToSave.createdAt = serverTimestamp();
+        await addDoc(collection(db, "users", user.uid, "accounts"), dataToSave);
+    }
+}
+
 function updateAccountsUI(accounts) {
-    const el = $('#accounts-container');
+    const el = document.getElementById('accounts-container');
     if (!el) return;
 
     el.innerHTML = '';
@@ -1190,12 +1211,12 @@ function updateAccountsUI(accounts) {
     addAccountButton.style = "display:inline-flex; align-items:center; gap:8px; margin-bottom: 20px; cursor: pointer;";
     addAccountButton.innerHTML = `<i class="fa-solid fa-plus"></i> Agregar Cuenta`;
     addAccountButton.onclick = () => {
-        $('#acc-title').textContent = 'Agregar Nueva Cuenta';
-        $('#account-name').value = '';
-        $('#account-broker').value = '';
-        $('#account-balance').value = '';
-        $('#account-type').value = 'principal';
-        $('#editing-account-id').value = '';
+        document.getElementById('acc-title').textContent = 'Agregar Nueva Cuenta';
+        document.getElementById('account-name').value = '';
+        document.getElementById('account-broker').value = '';
+        document.getElementById('account-balance').value = '';
+        document.getElementById('account-type').value = 'principal';
+        document.getElementById('editing-account-id').value = '';
         openModalById('add-account-modal');
     };
     el.appendChild(addAccountButton);
@@ -1216,7 +1237,8 @@ function updateAccountsUI(accounts) {
 
         const initialBalance = parseFloat(a.balance) || 0;
         
-        // --- ESTA ES LA LÍNEA CORREGIDA ---
+        // --- LÍNEA CORREGIDA ---
+        // Busca en 'accountId' o en 'account' para encontrar las operaciones.
         const accountTrades = trades.filter(t => (t.accountId === a.id || t.account === a.id));
         
         const profit = accountTrades.reduce((sum, t) => sum + (t.result || 0), 0);
