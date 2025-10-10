@@ -1272,37 +1272,84 @@ function updateAccountsUI(accounts) {
     });
 }
 
- function renderEquityCurve(trades) {
+function renderEquityCurve(trades) {
+    console.log('📊 RENDERIZANDO CURVA DE CAPITAL');
+    
     const ctx = document.getElementById('equityCurveChart')?.getContext('2d');
-    if (!ctx) return;
+    if (!ctx) {
+        console.log('❌ No se encontró el canvas de equity curve');
+        return;
+    }
+
+    if (!trades || trades.length === 0) {
+        // Limpiar gráfico si no hay datos
+        if (equityCurveChart) {
+            equityCurveChart.data.datasets[0].data = [0];
+            equityCurveChart.data.labels = ['Sin datos'];
+            equityCurveChart.update();
+        }
+        return;
+    }
+
+    const settings = window.__currentGeneralSettings || { initialBalance: 10000 };
+    const initialBalance = parseFloat(settings.initialBalance) || 10000;
+    
     let cumulativeProfit = 0;
-    const equityData = trades.map(trade => {
-        cumulativeProfit += trade.result;
-        return cumulativeProfit;
+    const equityData = [initialBalance]; // Empezar con balance inicial
+    
+    trades.forEach(trade => {
+        cumulativeProfit += trade.result || 0;
+        equityData.push(initialBalance + cumulativeProfit);
     });
-    const labels = Array.from({ length: trades.length }, (_, i) => i + 1);
+
+    const labels = ['Inicio', ...trades.map((_, i) => `Op ${i + 1}`)];
+
     if (equityCurveChart) {
         equityCurveChart.destroy();
     }
+    
     equityCurveChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: ['Inicio', ...labels],
+            labels: labels,
             datasets: [{
-                label: 'Beneficio Acumulado ($)',
-                data: [0, ...equityData],
+                label: 'Curva de Capital ($)',
+                data: equityData,
                 borderColor: 'rgba(212, 175, 55, 1)',
                 backgroundColor: 'rgba(212, 175, 55, 0.15)',
                 fill: true,
-                tension: 0.1
+                tension: 0.1,
+                pointBackgroundColor: 'rgba(212, 175, 55, 1)',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            scales: { y: { beginAtZero: false } }
+            scales: { 
+                y: { 
+                    beginAtZero: false,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    }
+                } 
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `Saldo: $${context.raw.toLocaleString()}`;
+                        }
+                    }
+                }
+            }
         }
     });
+    
+    console.log('✅ Curva de capital renderizada con', equityData.length, 'puntos');
 }
 
 function renderCalendar(trades) {
@@ -1429,61 +1476,90 @@ function populateAnalyticsFilter(strategies) {
         select.appendChild(option);
     });
 }
-
 function updateChallengeTrackerUI(trades, settings) {
+    console.log('🎯 ACTUALIZANDO CHALLENGE TRACKER');
+    
     const accounts = window.__currentAccounts || [];
 
-    // 1. Busca explícitamente la cuenta designada como 'challenge'.
-    const challengeAccount = accounts.find(acc => acc.type && acc.type.toLowerCase() === 'challenge');
+    // BUSCAR CUENTA DE CHALLENGE
+    const challengeAccount = accounts.find(acc => 
+        acc.type && acc.type.toLowerCase() === 'challenge'
+    );
 
-    // 2. Si NO se encuentra NINGUNA cuenta de tipo 'challenge', reinicia la tarjeta y detiene la función.
     if (!challengeAccount) {
+        console.log('❌ No se encontró cuenta de challenge');
+        // Resetear UI si no hay cuenta challenge
         $('#challenge-current-balance').textContent = '$0.00';
-        $('#challenge-profit').textContent = `+0.0%`;
-        $('#challenge-drawdown').textContent = `0.0%`;
+        $('#challenge-profit').textContent = '+0.0%';
+        $('#challenge-drawdown').textContent = '0.0%';
         $('#challenge-trades').textContent = '0';
-        $('#challenge-win-rate').textContent = `0%`;
-        $('#challenge-progress-value').textContent = `0%`;
-        $('#challenge-progress-bar').style.width = `0%`;
-        $('#challenge-residual-risk').textContent = `0.00%`;
+        $('#challenge-win-rate').textContent = '0%';
+        $('#challenge-progress-value').textContent = '0%';
+        $('#challenge-progress-bar').style.width = '0%';
+        $('#challenge-residual-risk').textContent = '0.00%';
         return;
     }
 
-    const initialBalance = parseFloat(challengeAccount.balance) || 0;
+    console.log('✅ Cuenta challenge encontrada:', challengeAccount.name);
+
+    const initialBalance = parseFloat(challengeAccount.balance) || 100000;
     
-    // --- LÍNEA CORREGIDA ---
-    // Ahora busca en 'accountId' o en 'account' para encontrar las operaciones del challenge
-    const challengeTrades = (trades || []).filter(t => (t.accountId === challengeAccount.id || t.account === challengeAccount.id));
-    
+    // FILTRAR OPERACIONES DEL CHALLENGE - CORREGIDO
+    const challengeTrades = (trades || []).filter(t => {
+        // Buscar por accountId O por campo account
+        return (t.accountId === challengeAccount.id) || 
+               (t.account === challengeAccount.id) ||
+               (t.inChallenge === true);
+    });
+
+    console.log('📊 Operaciones del challenge:', challengeTrades.length);
+
     const totalProfit = challengeTrades.reduce((sum, trade) => sum + (trade.result || 0), 0);
     const currentBalance = initialBalance + totalProfit;
 
     const profitPercent = initialBalance > 0 ? (totalProfit / initialBalance) * 100 : 0;
     const targetPercent = parseFloat(settings.profitTarget) || 10;
-    const progressPercent = targetPercent > 0 ? (profitPercent / targetPercent) * 100 : 0;
+    const progressPercent = Math.min(100, Math.max(0, (profitPercent / targetPercent) * 100));
     
+    // CALCULAR DRAWDOWN
     const { maxDrawdownValue } = calculateDrawdown(challengeTrades, initialBalance);
     const drawdownPercent = initialBalance > 0 ? (maxDrawdownValue / initialBalance) * 100 : 0;
     
-    const wins = challengeTrades.filter(t => t.result > 0).length;
+    const wins = challengeTrades.filter(t => (t.result || 0) > 0).length;
     const winRate = challengeTrades.length > 0 ? (wins / challengeTrades.length) * 100 : 0;
 
-    // Actualizar la interfaz
+    // ACTUALIZAR UI DEL CHALLENGE
     $('#challenge-current-balance').textContent = `$${currentBalance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
     $('#challenge-profit').textContent = `${profitPercent >= 0 ? '+' : ''}${profitPercent.toFixed(1)}%`;
+    $('#challenge-profit').style.color = profitPercent >= 0 ? 'var(--success)' : 'var(--danger)';
+    
     $('#challenge-drawdown').textContent = `${drawdownPercent.toFixed(1)}%`;
+    $('#challenge-drawdown').style.color = drawdownPercent > 10 ? 'var(--danger)' : 'var(--warning)';
+    
     $('#challenge-trades').textContent = challengeTrades.length;
     $('#challenge-win-rate').textContent = `${winRate.toFixed(1)}%`;
-    $('#challenge-progress-value').textContent = `${progressPercent.toFixed(1)}%`;
-    $('#challenge-progress-bar').style.width = `${Math.min(100, Math.max(0, progressPercent))}%`;
     
-    const dailyLimit = settings.dailyLoss || 5;
+    $('#challenge-progress-value').textContent = `${progressPercent.toFixed(1)}%`;
+    $('#challenge-progress-bar').style.width = `${progressPercent}%`;
+
+    // RIESGO RESIDUAL DIARIO
+    const dailyLimit = parseFloat(settings.dailyLoss) || 5;
     const todayStr = new Date().toISOString().slice(0, 10);
     const todaysTrades = challengeTrades.filter(t => t.dateStr === todayStr);
-    const dailyPnl = todaysTrades.reduce((sum, trade) => sum + trade.result, 0);
+    const dailyPnl = todaysTrades.reduce((sum, trade) => sum + (trade.result || 0), 0);
     const dailyDrawdown = dailyPnl < 0 ? (Math.abs(dailyPnl) / initialBalance) * 100 : 0;
-    const residualRisk = dailyLimit - dailyDrawdown;
+    const residualRisk = Math.max(0, dailyLimit - dailyDrawdown);
+    
     $('#challenge-residual-risk').textContent = `${residualRisk.toFixed(2)}%`;
+    $('#challenge-residual-risk').style.color = residualRisk < 2 ? 'var(--danger)' : 
+                                              residualRisk < 3 ? 'var(--warning)' : 'var(--success)';
+
+    console.log('✅ Challenge tracker actualizado:', {
+        balance: currentBalance,
+        profit: profitPercent,
+        progress: progressPercent,
+        trades: challengeTrades.length
+    });
 }
   
 function calculateStreaks(trades) {
@@ -1511,6 +1587,8 @@ function calculateStreaks(trades) {
 }
 
 function recalcFromTrades(trades) {
+    console.log('🔄 CALCULANDO MÉTRICAS PARA:', trades?.length || 0, 'operaciones');
+    
     const getSafeTimestamp = (trade) => {
         if (!trade || !trade.createdAt) return 0;
         if (typeof trade.createdAt.toMillis === 'function') {
@@ -1527,30 +1605,41 @@ function recalcFromTrades(trades) {
 
     const t = (trades || []).sort((a, b) => getSafeTimestamp(a) - getSafeTimestamp(b));
 
-    const wins = t.filter(x => x.result > 0), losses = t.filter(x => x.result < 0);
+    // CÁLCULOS BÁSICOS
+    const wins = t.filter(x => (x.result || 0) > 0);
+    const losses = t.filter(x => (x.result || 0) < 0);
+    const breakEven = t.filter(x => (x.result || 0) === 0);
+    
     const total = t.length;
-    const totalWins = wins.reduce((s, x) => s + x.result, 0);
-    const totalLoss = Math.abs(losses.reduce((s, x) => s + x.result, 0));
+    const totalWins = wins.reduce((s, x) => s + (x.result || 0), 0);
+    const totalLoss = Math.abs(losses.reduce((s, x) => s + (x.result || 0), 0));
     const winRate = total ? (wins.length / total) * 100 : 0;
-    const pf = totalLoss ? totalWins / totalLoss : 0;
-    const rr = (wins.length && losses.length) ? (totalWins / wins.length) / (totalLoss / losses.length) : 0;
+    const pf = totalLoss > 0 ? totalWins / totalLoss : (totalWins > 0 ? 999 : 0);
+    
+    // CÁLCULO RIESGO/RECOMPENSA CORREGIDO
+    const avgWin = wins.length ? totalWins / wins.length : 0;
+    const avgLoss = losses.length ? totalLoss / losses.length : 0;
+    const rr = avgLoss > 0 ? avgWin / avgLoss : 0;
 
+    // ACTUALIZAR DASHBOARD
     $('#total-trades').textContent = total;
     $('#total-trades-2').textContent = total;
     $('#win-trades').textContent = wins.length;
     $('#win-rate').textContent = `${winRate.toFixed(1)}%`;
-    $('#profit-factor').textContent = pf.toFixed(2);
+    $('#profit-factor').textContent = pf === 999 ? '∞' : pf.toFixed(2);
     $('#risk-reward').textContent = rr.toFixed(2);
+    
     const totalProfit = totalWins - totalLoss;
     $('#total-profit').textContent = `$${totalProfit.toFixed(2)}`;
 
+    // PORCENTAJE DE BENEFICIO
     const settings = window.__currentGeneralSettings || { initialBalance: 10000 };
-    const initialBalance = settings.initialBalance;
+    const initialBalance = parseFloat(settings.initialBalance) || 10000;
     const profitPercent = initialBalance > 0 ? (totalProfit / initialBalance) * 100 : 0;
 
     const profitPercentEl = $('#total-profit-percent');
     if (profitPercentEl) {
-        profitPercentEl.textContent = `(${profitPercent.toFixed(1)}%)`;
+        profitPercentEl.textContent = `(${profitPercent >= 0 ? '+' : ''}${profitPercent.toFixed(1)}%)`;
         profitPercentEl.style.color = profitPercent >= 0 ? 'var(--success)' : 'var(--danger)';
     }
 
@@ -1560,20 +1649,25 @@ function recalcFromTrades(trades) {
         balanceGrowthEl.style.color = profitPercent >= 0 ? 'var(--success)' : 'var(--danger)';
     }
 
+    // GRÁFICO DE DISTRIBUCIÓN
     if (distributionChart) {
-        distributionChart.data.datasets[0].data = [wins.length, losses.length, t.filter(x => x.result === 0).length];
+        distributionChart.data.datasets[0].data = [wins.length, losses.length, breakEven.length];
         distributionChart.update();
     }
   
+    // CURVA DE CAPITAL (BALANCE CHART)
     if (balanceChart || modalBalanceChart) {
         const data = [];
-        let bal = settings.initialBalance;
+        let bal = initialBalance;
         data.push(bal);
+        
         t.forEach(trade => {
             bal += trade.result || 0;
             data.push(bal);
         });
-        const labels = ['Inicio', ...Array.from({ length: t.length }, (_, i) => i + 1)];
+        
+        const labels = ['Inicio', ...Array.from({ length: t.length }, (_, i) => `Op ${i + 1}`)];
+        
         if (balanceChart) {
             balanceChart.data.datasets[0].data = data;
             balanceChart.data.labels = labels;
@@ -1585,12 +1679,19 @@ function recalcFromTrades(trades) {
             modalBalanceChart.update();
         }
     }
+    
+    // ACTUALIZAR OPERACIONES RECIENTES
     updateRecentTrades(t);
-    calculateRiskMetrics(t, settings.initialBalance);
+    
+    // CALCULAR MÉTRICAS DE RIESGO
+    calculateRiskMetrics(t, initialBalance);
 
+    // CALCULAR RACHAS
     const streaks = calculateStreaks(t);
     $('#max-win-streak').textContent = streaks.maxWinningStreak;
     $('#max-loss-streak').textContent = streaks.maxLosingStreak;
+    
+    console.log('✅ MÉTRICAS CALCULADAS:', { total, wins: wins.length, profit: totalProfit });
 }
 
 function renderHistorySummary(trades) {
@@ -1952,29 +2053,25 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
  
- window.updateAllCalculations = () => {
-    // Debug para verificar que no se ejecuta en loop
-    console.log('🔄 updateAllCalculations ejecutado');
+window.updateAllCalculations = () => {
+    console.log('🔄 EJECUTANDO UPDATE ALL CALCULATIONS');
     
     const allTrades = window.__currentTrades || [];
     const settings = window.__currentSettings || {};
     const selectedStrategyId = $('#analytics-strategy-filter')?.value;
     const filteredTrades = selectedStrategyId ? allTrades.filter(t => t.strategyId === selectedStrategyId) : allTrades;
     
-    // Solo recalcular si hay trades
-    if (allTrades.length > 0) {
-        recalcFromTrades(allTrades);
-        renderHistorySummary(allTrades);
-        renderDetailedHistory(allTrades);
-    }
-    
+    // EJECUTAR TODOS LOS CÁLCULOS
+    recalcFromTrades(allTrades);
+    renderHistorySummary(allTrades);
+    renderDetailedHistory(allTrades); 
     renderAnalytics(filteredTrades);
     renderCalendar(allTrades);
     updateChallengeTrackerUI(allTrades, settings);
     updateAccountsUI(window.__currentAccounts);
     updateWeeklyProgress();
     
-    console.log('✅ Cálculos completados');
+    console.log('✅ TODOS LOS CÁLCULOS COMPLETADOS');
 };
 
 function calculateChallengeProgress(trades, settings) {
@@ -3019,46 +3116,177 @@ function calculateReportStats(trades, initialBalance = 0) {
 window.calculateReportStats = calculateReportStats;
 
 
-// === FIX: minimal renderAnalytics (added) ===
-function renderAnalytics(trades = [], initialBalance = 0) {
-  try {
-    const stats = (typeof calculateReportStats === 'function')
-      ? calculateReportStats(trades, initialBalance)
-      : { total: trades.length, netProfit: 0, wins: 0, losses: 0, winRate: 0 };
-    // Notificar a la UI existente (si escucha estos eventos)
-    window.dispatchEvent(new CustomEvent('analytics:rendered', { detail: { stats } }));
-    return stats;
-  } catch (e) {
-    console.warn('renderAnalytics noop:', e);
-    return { total: trades.length || 0, netProfit: 0, wins: 0, losses: 0, winRate: 0 };
-  }
+function renderAnalytics(trades) {
+    console.log('📈 RENDERIZANDO ANALÍTICAS PARA:', trades?.length || 0, 'operaciones');
+    
+    if (!trades || trades.length === 0) {
+        // Resetear analíticas si no hay datos
+        $('#analytics-total-profit').textContent = '$0.00';
+        $('#analytics-win-rate').textContent = '0%';
+        $('#analytics-profit-factor').textContent = '0.00';
+        $('#analytics-rr').textContent = '0.00';
+        $('#analytics-avg-win').textContent = '$0.00';
+        $('#analytics-avg-loss').textContent = '$0.00';
+        $('#analytics-expectancy').textContent = '$0.00';
+        $('#analytics-max-dd').textContent = '$0.00';
+        $('#analytics-max-dd-percent').textContent = '0.00%';
+        return;
+    }
+
+    // CÁLCULOS PARA ANALÍTICAS
+    const wins = trades.filter(t => (t.result || 0) > 0);
+    const losses = trades.filter(t => (t.result || 0) < 0);
+    
+    const totalProfit = trades.reduce((sum, t) => sum + (t.result || 0), 0);
+    const winRate = trades.length ? (wins.length / trades.length) * 100 : 0;
+    
+    const totalWins = wins.reduce((sum, t) => sum + (t.result || 0), 0);
+    const totalLosses = Math.abs(losses.reduce((sum, t) => sum + (t.result || 0), 0));
+    const profitFactor = totalLosses > 0 ? totalWins / totalLosses : (totalWins > 0 ? 999 : 0);
+    
+    const avgWin = wins.length ? totalWins / wins.length : 0;
+    const avgLoss = losses.length ? totalLosses / losses.length : 0;
+    const riskReward = avgLoss > 0 ? avgWin / avgLoss : 0;
+    
+    const expectancy = trades.length ? totalProfit / trades.length : 0;
+    
+    // CALCULAR DRAWDOWN
+    const settings = window.__currentGeneralSettings || { initialBalance: 10000 };
+    const initialBalance = parseFloat(settings.initialBalance) || 10000;
+    const { maxDrawdown, maxDrawdownPct } = calculateDrawdown(trades, initialBalance);
+
+    // ACTUALIZAR UI DE ANALÍTICAS
+    $('#analytics-total-profit').textContent = `$${totalProfit.toFixed(2)}`;
+    $('#analytics-total-profit').style.color = totalProfit >= 0 ? 'var(--success)' : 'var(--danger)';
+    
+    $('#analytics-win-rate').textContent = `${winRate.toFixed(1)}%`;
+    $('#analytics-profit-factor').textContent = profitFactor === 999 ? '∞' : profitFactor.toFixed(2);
+    $('#analytics-rr').textContent = riskReward.toFixed(2);
+    
+    $('#analytics-avg-win').textContent = `$${avgWin.toFixed(2)}`;
+    $('#analytics-avg-loss').textContent = `$${avgLoss.toFixed(2)}`;
+    $('#analytics-expectancy').textContent = `$${expectancy.toFixed(2)}`;
+    
+    $('#analytics-max-dd').textContent = `$${maxDrawdown.toFixed(2)}`;
+    $('#analytics-max-dd-percent').textContent = `${maxDrawdownPct.toFixed(2)}%`;
+
+    // RENDERIZAR CURVA DE CAPITAL EN ANALÍTICAS
+    renderEquityCurve(trades);
+    
+    console.log('✅ Analíticas renderizadas correctamente');
 }
 window.renderAnalytics = renderAnalytics;
 
-// === FIX: minimal calculateRiskMetrics (added) ===
-function calculateRiskMetrics(trades = [], initialBalance = 0) {
-  const list = Array.isArray(trades) ? trades : [];
-  let wins = 0, losses = 0, net = 0;
-  let equity = Number(initialBalance) || 0;
-  let peak = equity, maxDrawdown = 0;
-  let risked = 0, rewarded = 0;
+// === FUNCIÓN CORREGIDA: calculateRiskMetrics ===
+function calculateRiskMetrics(trades, initialBalance) {
+    console.log('📊 CALCULANDO RIESGO PARA:', trades?.length || 0, 'operaciones');
+    
+    if (!trades || trades.length === 0) {
+        // Resetear valores si no hay trades
+        $('#risk-profit-percent').textContent = '0.00%';
+        $('#daily-risk').textContent = '0.0%';
+        $('#weekly-risk').textContent = '0.0%';
+        $('#monthly-risk').textContent = '0.0%';
+        
+        // También resetear el gráfico de riesgo
+        if (riskChart) {
+            riskChart.data.datasets[0].data = [0, 0, 0, 0, 0, 0];
+            riskChart.update();
+        }
+        return;
+    }
 
-  for (const t of list) {
-    const r = Number((t && (t.result ?? t.pnl ?? t.profit)) || 0);
-    net += r;
-    equity += r;
-    if (equity > peak) peak = equity;
-    const dd = peak - equity;
-    if (dd > maxDrawdown) maxDrawdown = dd;
-    if (r > 0) { wins++; rewarded += r; }
-    else if (r < 0) { losses++; risked += Math.abs(r); }
-  }
-  const avgRisk = losses ? (risked / losses) : 0;
-  const avgReward = wins ? (rewarded / wins) : 0;
-  const rr = avgRisk > 0 ? (avgReward / avgRisk) : 0;
-  const expectancy = list.length ? (net / list.length) : 0;
+    const initial = parseFloat(initialBalance) || 10000;
+    
+    // BENEFICIO/PÉRDIDA DEL PERIODO
+    const totalProfit = trades.reduce((sum, trade) => sum + (trade.result || 0), 0);
+    const profitPercent = initial > 0 ? (totalProfit / initial) * 100 : 0;
+    $('#risk-profit-percent').textContent = `${profitPercent >= 0 ? '+' : ''}${profitPercent.toFixed(2)}%`;
+    $('#risk-profit-percent').style.color = profitPercent >= 0 ? 'var(--success)' : 'var(--danger)';
 
-  return { wins, losses, netProfit: net, maxDrawdown, avgRisk, avgReward, rr, expectancy };
+    // RIESGO POR PERIODOS - CÁLCULO MEJORADO
+    const today = new Date().toISOString().slice(0, 10);
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    const monthAgo = new Date();
+    monthAgo.setMonth(monthAgo.getMonth() - 1);
+    
+    const todayTrades = trades.filter(t => t.dateStr === today);
+    const weekTrades = trades.filter(t => {
+        const tradeDate = new Date(t.dateStr);
+        return tradeDate >= weekAgo;
+    });
+    const monthTrades = trades.filter(t => {
+        const tradeDate = new Date(t.dateStr);
+        return tradeDate >= monthAgo;
+    });
+    
+    const dailyPnl = todayTrades.reduce((sum, t) => sum + (t.result || 0), 0);
+    const weeklyPnl = weekTrades.reduce((sum, t) => sum + (t.result || 0), 0);
+    const monthlyPnl = monthTrades.reduce((sum, t) => sum + (t.result || 0), 0);
+    
+    const dailyRisk = initial > 0 ? Math.abs(dailyPnl) / initial * 100 : 0;
+    const weeklyRisk = initial > 0 ? Math.abs(weeklyPnl) / initial * 100 : 0;
+    const monthlyRisk = initial > 0 ? Math.abs(monthlyPnl) / initial * 100 : 0;
+    
+    // ACTUALIZAR UI DE RIESGO
+    $('#daily-risk').textContent = `${dailyRisk.toFixed(1)}%`;
+    $('#daily-risk').style.color = dailyRisk > 5 ? 'var(--danger)' : (dailyRisk > 2 ? 'var(--warning)' : 'var(--success)');
+    
+    $('#weekly-risk').textContent = `${weeklyRisk.toFixed(1)}%`;
+    $('#weekly-risk').style.color = weeklyRisk > 10 ? 'var(--danger)' : (weeklyRisk > 5 ? 'var(--warning)' : 'var(--success)');
+    
+    $('#monthly-risk').textContent = `${monthlyRisk.toFixed(1)}%`;
+    $('#monthly-risk').style.color = monthlyRisk > 15 ? 'var(--danger)' : (monthlyRisk > 8 ? 'var(--warning)' : 'var(--success)');
+
+    // GRÁFICO DE RIESGO (RADAR) - CÁLCULOS REALES
+    if (riskChart) {
+        const wins = trades.filter(t => (t.result || 0) > 0).length;
+        const winRate = trades.length > 0 ? (wins / trades.length) * 100 : 0;
+        
+        // Calcular R/B promedio real
+        const winningTrades = trades.filter(t => (t.result || 0) > 0);
+        const losingTrades = trades.filter(t => (t.result || 0) < 0);
+        const avgWin = winningTrades.length > 0 ? 
+            winningTrades.reduce((sum, t) => sum + (t.result || 0), 0) / winningTrades.length : 0;
+        const avgLoss = losingTrades.length > 0 ? 
+            Math.abs(losingTrades.reduce((sum, t) => sum + (t.result || 0), 0)) / losingTrades.length : 0;
+        const riskRewardRatio = avgLoss > 0 ? avgWin / avgLoss : 0;
+        
+        // Calcular drawdown máximo
+        let equity = initial;
+        let peak = initial;
+        let maxDrawdown = 0;
+        trades.forEach(trade => {
+            equity += trade.result || 0;
+            if (equity > peak) peak = equity;
+            const drawdown = peak - equity;
+            if (drawdown > maxDrawdown) maxDrawdown = drawdown;
+        });
+        const maxDrawdownPercent = initial > 0 ? (maxDrawdown / initial) * 100 : 0;
+
+        // Métricas para el radar (escala 0-5)
+        const riskData = {
+            gestión: Math.max(0, Math.min(5, 5 - (dailyRisk / 2))), // Mejor gestión = menor riesgo diario
+            consistencia: Math.min(5, Math.max(1, trades.length / 5)), // Más trades = más consistencia
+            acierto: Math.min(5, (winRate / 20)), // 100% win rate = 5, 0% = 0
+            rb: Math.min(5, riskRewardRatio), // R/B ratio directo (3:1 = 3 puntos)
+            dd: Math.max(1, Math.min(5, 5 - (maxDrawdownPercent / 2))), // Menor drawdown = mejor
+            beneficio: Math.min(5, Math.abs(profitPercent) / 2) // 10% profit = 5 puntos
+        };
+        
+        riskChart.data.datasets[0].data = Object.values(riskData);
+        riskChart.update();
+        
+        console.log('📈 Datos del radar:', riskData);
+    }
+    
+    console.log('✅ MÉTRICAS DE RIESGO CALCULADAS', {
+        dailyRisk,
+        weeklyRisk, 
+        monthlyRisk,
+        profitPercent
+    });
 }
 window.calculateRiskMetrics = calculateRiskMetrics;
 
