@@ -20,8 +20,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-
-  <style>
+     <style>
     :root{
       --primary:#0f172a; --secondary:#1e293b; --accent:#d4af37;
       --success:#10b981; --warning:#f59e0b; --danger:#ef4444;
@@ -108,9 +107,131 @@
     .challenge{grid-column:span 6}
     .chart{height:300px; margin-top:10px}
 
-    .metric-card{background:rgba(30,41,59,.5); border-radius:10px; padding:12px; text-align:center}
-    .metric-val{font-size:22px; font-weight:800; color:var(--accent)}
-    .metric-lab{color:var(--muted); font-size:13px}
+    /* MEJORAS INTEGRADAS - Metrics Grid */
+    .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin: 20px 0;
+    }
+
+    .metric-card {
+        background: rgba(30,41,59,.5);
+        padding: 20px;
+        border-radius: 12px;
+        text-align: center;
+        border-left: 4px solid var(--accent);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .metric-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    .metric-card.success {
+        border-left-color: var(--success);
+    }
+
+    .metric-card.warning {
+        border-left-color: var(--warning);
+    }
+
+    .metric-card.danger {
+        border-left-color: var(--danger);
+    }
+
+    .metric-val{
+        font-size: 28px;
+        font-weight: 800;
+        color: var(--accent);
+        display: block;
+        margin-bottom: 5px;
+    }
+
+    .metric-val.positive { 
+        color: var(--success); 
+    }
+
+    .metric-val.negative { 
+        color: var(--danger); 
+    }
+
+    .metric-lab{
+        color: var(--muted);
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* MEJORAS INTEGRADAS - Operations Table */
+    .operations-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        background: var(--card-bg);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .operations-table th {
+        background: var(--secondary);
+        color: var(--text);
+        padding: 15px 12px;
+        text-align: left;
+        font-weight: 600;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .operations-table td {
+        padding: 12px;
+        border-bottom: 1px solid var(--border);
+        color: var(--text);
+    }
+
+    .operations-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .operations-table tr:hover {
+        background: rgba(212,175,55,.08);
+    }
+
+    .positive { 
+        color: var(--success); 
+        font-weight: 700; 
+    }
+
+    .negative { 
+        color: var(--danger); 
+        font-weight: 700; 
+    }
+
+    .neutral {
+        color: var(--muted);
+    }
+
+    .status-badge {
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .status-completed {
+        background: rgba(16,185,129,.15);
+        color: var(--success);
+    }
+
+    .status-pending {
+        background: rgba(245,158,11,.15);
+        color: var(--warning);
+    }
+
+    .status-cancelled {
+        background: rgba(239,68,68,.15);
+        color: var(--danger);
+    }
 
     .fab{
       position:fixed; right:16px; bottom:16px; width:56px; height:56px; border-radius:50%;
@@ -156,6 +277,9 @@
     .drawer-backdrop{display:none; position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:25}
     @media (max-width: 1024px){
       .welcome,.metrics,.dist,.recent,.balance,.risk,.news,.challenge,.factor,.rr,.wins { grid-column:1/-1 }
+      .metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
     }
     @media (max-width: 860px){
       body{ grid-template-columns:1fr; grid-template-areas:"header" "main"; }
@@ -164,6 +288,9 @@
       body.sidebar-open .sidebar{ transform:translateX(0) }
       body.sidebar-open .drawer-backdrop{ display:block }
       main{ padding:16px }
+      .metrics-grid {
+        grid-template-columns: 1fr;
+      }
     }
     @media (min-width: 768px) {
       [style*="md:grid-column: span 4"] { grid-column: span 4; }
@@ -212,6 +339,7 @@
     .hidden{display:none!important}
     .only-admin{display:none}
     body.is-admin .only-admin{display:block !important}
+
   </style>
 </head>
 <body>
@@ -3440,7 +3568,7 @@ window.calculateRiskMetrics = calculateRiskMetrics;
 
 // === UX FIX: Enter-to-login + show/hide password (added, non-breaking) ===
 <div class="form-group">
-  <label>Contraseña</label>
+  <label for="auth-pass">Contraseña</label>
   <div style="position: relative;"> <!-- CONTENEDOR CON POSITION RELATIVE -->
     <input id="auth-pass" type="password" class="form-control" placeholder="••••••••" />
     <!-- El botón ojo se inyectará automáticamente aquí -->
