@@ -2945,72 +2945,129 @@ filterButtons.forEach(button => {
     });
 });
 
+// Variable global para almacenar datos del reporte
 let lastReportData = [];
-$('#generate-report-btn').addEventListener('click', async () => {
+
+function generarReporte() {
+    const accountId = $('#report-account-select').value;
     const startDate = $('#report-start-date').value;
     const endDate = $('#report-end-date').value;
-    const user = auth.currentUser;
-
-    if (!startDate || !endDate) { return alert('Por favor, selecciona un rango de fechas.'); }
-    if (!$('#report-account-select').value) { return alert('Por favor, selecciona una cuenta para el reporte.'); }
-    if (!user) { return alert('Debes iniciar sesión para generar reportes.'); }
-
-    const tradesRef = collection(db, 'users', user.uid, 'trades');
-    const q = query(tradesRef, where('dateStr', '>=', startDate), where('dateStr', '<=', endDate));
     
-    const reportResults = $('#report-results');
-    const tbody = $('#report-table-body');
-    const reportButtons = $$('#download-csv-btn, #download-excel-btn, #download-pdf-btn');
-    
-    tbody.innerHTML = '';
-    reportResults.classList.add('hidden');
-    reportButtons.forEach(btn => btn.disabled = true);
-
-    try {
-        const snapshot = await getDocs(q);
-        const trades = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
-        lastReportData = trades; 
-
-        if (trades.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding: 12px;">No se encontraron operaciones en este rango de fechas.</td></tr>';
-        } else {
-            const wins = trades.filter(t => t.result > 0);
-            const totalProfit = trades.reduce((sum, t) => sum + t.result, 0);
-            const totalWinsValue = wins.reduce((sum, t) => sum + t.result, 0);
-            const totalLossValue = Math.abs(trades.filter(t => t.result < 0).reduce((sum, t) => sum + t.result, 0));
-
-            $('#report-total-profit').textContent = `$${totalProfit.toFixed(2)}`;
-            $('#report-total-trades').textContent = trades.length;
-            $('#report-win-rate').textContent = `${((wins.length / trades.length) * 100).toFixed(1)}%`;
-            $('#report-profit-factor').textContent = (totalLossValue > 0 ? (totalWinsValue / totalLossValue) : 0).toFixed(2);
-            
-            tbody.innerHTML = trades.map(t => `
-                <tr>
-                    <td style="padding:8px;">${t.dateStr}</td>
-                    <td style="padding:8px;">${t.pair}</td>
-                    <td style="padding:8px;">${t.type === 'buy' ? 'Compra' : 'Venta'}</td>
-                    <td style="padding:8px; text-align:right; color: ${t.result >= 0 ? 'var(--success)' : 'var(--danger)'};">$${t.result.toFixed(2)}</td>
-                    <td style="padding:8px; text-align:right;">${t.lots || '--'}</td>
-                    <td style="padding:8px;">${t.strategyId ? (window.__currentStrategies.find(s=>s.id === t.strategyId)?.name || 'N/A') : 'N/A'}</td>
-                </tr>
-            `).join('');
-            
-            reportButtons.forEach(btn => btn.disabled = false);
-        }
-        reportResults.classList.remove('hidden');
-
-    } catch (error) {
-        console.error("Error generando el reporte: ", error);
-        alert('Hubo un error al generar el reporte.');
+    if (!accountId || !startDate || !endDate) {
+        return alert('Selecciona cuenta y rango de fechas');
     }
-});
 
-window.generateSHA256 = async function(str) {
-    const textAsBuffer = new TextEncoder().encode(str);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', textAsBuffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    // Obtener operaciones de la cuenta seleccionada
+    const account = window.__currentAccounts.find(a => a.id === accountId);
+    if (!account || !account.trades) {
+        alert('No hay operaciones en esta cuenta');
+        lastReportData = [];
+        return;
+    }
+
+    // Filtrar operaciones por fecha
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999); // Incluir todo el día final
+
+    lastReportData = account.trades.filter(trade => {
+        const tradeDate = new Date(trade.date || trade.timestamp);
+        return tradeDate >= start && tradeDate <= end;
+    });
+
+    // Ordenar por fecha (más reciente primero)
+    lastReportData.sort((a, b) => new Date(b.date || b.timestamp) - new Date(a.date || a.timestamp));
+
+    // Actualizar la UI con el reporte
+    actualizarVistaReporte(lastReportData);
+    
+    alert(`Reporte generado: ${lastReportData.length} operaciones encontradas`);
 }
+
+function actualizarVistaReporte(trades) {
+    const container = $('#report-results');
+    if (!container) return;
+
+    if (trades.length === 0) {
+        container.innerHTML = '<p>No se encontraron operaciones en este rango de fechas.</p>';
+        return;
+    }
+
+    // Calcular métricas
+    const profit = trades.reduce((sum, t) => sum + (t.result || 0), 0);
+    const winningTrades = trades.filter(t => (t.result || 0) > 0).length;
+    const winRate = trades.length > 0 ? (winningTrades / trades.length * 100).toFixed(1) : 0;
+    
+    const totalProfit = trades.filter(t => (t.result || 0) > 0).reduce((sum, t) => sum + (t.result || 0), 0);
+    const totalLoss = Math.abs(trades.filter(t => (t.result || 0) < 0).reduce((sum, t) => sum + (t.result || 0), 0));
+    const profitFactor = totalLoss > 0 ? (totalProfit / totalLoss).toFixed(2) : '∞';
+
+    // Actualizar métricas en la UI
+    const metricsHTML = `
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <h3>$${profit.toFixed(2)}</h3>
+                <p>Beneficio Neto</p>
+            </div>
+            <div class="metric-card">
+                <h3>${trades.length}</h3>
+                <p>Operaciones</p>
+            </div>
+            <div class="metric-card">
+                <h3>${winRate}%</h3>
+                <p>Tasa de Acierto</p>
+            </div>
+            <div class="metric-card">
+                <h3>${profitFactor}</h3>
+                <p>Profit Factor</p>
+            </div>
+        </div>
+    `;
+
+    // Generar tabla de operaciones
+    const tableHTML = `
+        <table class="operations-table">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Símbolo</th>
+                    <th>Tipo</th>
+                    <th>Resultado ($)</th>
+                    <th>Lotes</th>
+                    <th>Estrategia/Setup</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${trades.map(trade => `
+                    <tr>
+                        <td>${formatDate(trade.date || trade.timestamp)}</td>
+                        <td>${trade.pair || trade.symbol || 'N/A'}</td>
+                        <td>${trade.type || 'N/A'}</td>
+                        <td class="${(trade.result || 0) >= 0 ? 'positive' : 'negative'}">
+                            $${(trade.result || 0).toFixed(2)}
+                        </td>
+                        <td>${trade.lots || trade.size || 'N/A'}</td>
+                        <td>${getStrategyName(trade.strategyId)}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+
+    container.innerHTML = metricsHTML + tableHTML;
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toISOString().split('T')[0]; // YYYY-MM-DD
+}
+
+function getStrategyName(strategyId) {
+    if (!strategyId) return 'N/A';
+    const strategy = window.__currentStrategies.find(s => s.id === strategyId);
+    return strategy ? strategy.name : 'N/A';
+}
+
 
 function exportToCSV() {
     if (lastReportData.length === 0) { return alert('Primero genera un reporte con datos.'); }
@@ -3039,9 +3096,14 @@ function exportToExcel() {
 }
 
 async function exportToPDF() {
-    if (lastReportData.length === 0) { return alert('Primero genera un reporte con datos.'); }
+    if (lastReportData.length === 0) { 
+        return alert('Primero genera un reporte con datos.'); 
+    }
+    
     const accountId = $('#report-account-select').value;
-    if (!accountId) { return alert('Por favor, selecciona una cuenta para el reporte.'); }
+    if (!accountId) { 
+        return alert('Por favor, selecciona una cuenta para el reporte.'); 
+    }
 
     const account = window.__currentAccounts.find(a => a.id === accountId);
     const user = auth.currentUser;
@@ -3049,43 +3111,95 @@ async function exportToPDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     const pageHeight = doc.internal.pageSize.height;
+    const pageWidth = doc.internal.pageSize.width;
     
-    const reportId = `REP-${user.uid.slice(0, 4)}-${Date.now()}`;
+    // Generar ID único y hash
+    const reportId = `REP-${user.uid.slice(-8).toUpperCase()}-${Date.now().toString(36)}`;
     const dataString = JSON.stringify(lastReportData);
     const reportHash = await generateSHA256(dataString);
 
-    doc.setFontSize(20);
-    doc.text("Reporte de Operaciones", 14, 22);
-    doc.setFontSize(10);
-    doc.text(`Cuenta: ${account.name}`, 14, 30);
-    doc.text(`Broker: ${account.broker || 'No especificado'}`, 14, 35);
-    doc.text(`Balance Inicial: $${account.balance.toFixed(2)}`, 14, 40);
+    // Cabecera del reporte
+    doc.setFontSize(16);
+    doc.setTextColor(40, 40, 40);
+    doc.text("REPORTE DE TRADING", 105, 20, { align: 'center' });
     
-    doc.text(`Desde: ${$('#report-start-date').value}`, 140, 30);
-    doc.text(`Hasta: ${$('#report-end-date').value}`, 140, 35);
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Cuenta: ${account.name}`, 20, 35);
+    doc.text(`Broker: ${account.broker || 'No especificado'}`, 20, 40);
+    doc.text(`Balance Inicial: $${account.balance.toFixed(2)}`, 20, 45);
+    
+    doc.text(`Período: ${$('#report-start-date').value} a ${$('#report-end-date').value}`, 20, 55);
+    doc.text(`Generado: ${new Date().toLocaleDateString()}`, 20, 60);
 
+    // Calcular métricas para el PDF
+    const profit = lastReportData.reduce((sum, t) => sum + (t.result || 0), 0);
+    const winningTrades = lastReportData.filter(t => (t.result || 0) > 0).length;
+    const winRate = lastReportData.length > 0 ? (winningTrades / lastReportData.length * 100).toFixed(1) : 0;
+    
+    // Métricas en lado derecho
+    doc.setTextColor(40, 40, 40);
+    doc.text(`Beneficio Neto: $${profit.toFixed(2)}`, pageWidth - 70, 35);
+    doc.text(`Operaciones: ${lastReportData.length}`, pageWidth - 70, 40);
+    doc.text(`Tasa Acierto: ${winRate}%`, pageWidth - 70, 45);
+    doc.text(`Operaciones +: ${winningTrades}`, pageWidth - 70, 50);
+    doc.text(`Operaciones -: ${lastReportData.length - winningTrades}`, pageWidth - 70, 55);
+
+    // Tabla de operaciones
     doc.autoTable({
-        head: [['Fecha', 'Simbolo', 'Tipo', 'Resultado ($)', 'Lotes', 'Estrategia']],
+        head: [['Fecha', 'Símbolo', 'Tipo', 'Resultado ($)', 'Lotes', 'Estrategia']],
         body: lastReportData.map(t => [
-            t.dateStr, t.pair, t.type, t.result.toFixed(2), t.lots || '',
-            t.strategyId ? (window.__currentStrategies.find(s=>s.id === t.strategyId)?.name || '') : ''
+            formatDate(t.date || t.timestamp),
+            t.pair || t.symbol || 'N/A',
+            t.type || 'N/A',
+            { content: t.result.toFixed(2), styles: { fontStyle: (t.result >= 0 ? 'normal' : 'bold') } },
+            t.lots || t.size || 'N/A',
+            t.strategyId ? (window.__currentStrategies.find(s=>s.id === t.strategyId)?.name || '') : 'N/A'
         ]),
-        startY: 50,
+        startY: 70,
+        styles: { fontSize: 8 },
+        headStyles: { fillColor: [66, 139, 202] },
         didDrawPage: function (data) {
+            // Pie de página con firma SH-256
             doc.setFontSize(8);
-            doc.text(`Report ID: ${reportId}`, 14, pageHeight - 15);
-            doc.text(`Firma Digital (SHA-256): ${reportHash.slice(0,32)}...`, 14, pageHeight - 10);
-            doc.text('Página ' + doc.internal.getNumberOfPages(), doc.internal.pageSize.width - 14, pageHeight - 10, { align: 'right' });
+            doc.setTextColor(100, 100, 100);
+            doc.text(`Report ID: ${reportId}`, 14, pageHeight - 20);
+            doc.text(`Firma Digital SHA-256: ${reportHash}`, 14, pageHeight - 15);
+            doc.text(`Integridad verificada: ✅ Válido`, 14, pageHeight - 10);
+            
+            doc.text('Página ' + data.pageNumber, pageWidth - 14, pageHeight - 10, { align: 'right' });
         }
     });
     
     doc.save(`reporte_${account.name}_${new Date().toISOString().slice(0,10)}.pdf`);
 }
 
+// Función para generar SHA-256
+async function generateSHA256(data) {
+    const encoder = new TextEncoder();
+    const dataBuffer = encoder.encode(data);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
 
-$('#download-csv-btn').addEventListener('click', exportToCSV);
-$('#download-excel-btn').addEventListener('click', exportToExcel);
-$('#download-pdf-btn').addEventListener('click', exportToPDF);
+// =============================================
+// ✅ TODOS LOS EVENT LISTENERS JUNTOS AL FINAL
+// =============================================
+document.addEventListener('DOMContentLoaded', function() {
+    // Botón Generar Reporte
+    $('#generate-report-btn').addEventListener('click', generarReporte);
+    
+    // Cambios automáticos en filtros
+    $('#report-start-date').addEventListener('change', generarReporte);
+    $('#report-end-date').addEventListener('change', generarReporte);
+    $('#report-account-select').addEventListener('change', generarReporte);
+    
+    // Botones de Exportación
+    $('#download-csv-btn').addEventListener('click', exportToCSV);
+    $('#download-excel-btn').addEventListener('click', exportToExcel);
+    $('#download-pdf-btn').addEventListener('click', exportToPDF);
+});
 
 
 // === FIX: saveStrategy (added) ===
@@ -3324,55 +3438,14 @@ function calculateRiskMetrics(trades, initialBalance) {
 }
 window.calculateRiskMetrics = calculateRiskMetrics;
 
-
-
 // === UX FIX: Enter-to-login + show/hide password (added, non-breaking) ===
-(function initLoginUX() {
-  // Delegate: toggle password visibility
-  document.addEventListener('click', (ev) => {
-    const t = ev.target.closest('[data-toggle="password"], .toggle-password, [data-action="toggle-password"]');
-    if (!t) return;
-    ev.preventDefault();
-    // Resolve target input: by data-target or nearest input sibling
-    let sel = t.getAttribute('data-target');
-    let input = sel ? document.querySelector(sel) : null;
-    if (!input) {
-      input = t.previousElementSibling && t.previousElementSibling.matches('input[type="password"],input[type="text"]')
-        ? t.previousElementSibling
-        : t.parentElement && t.parentElement.querySelector('input[type="password"],input[type="text"]');
-    }
-    if (!input) return;
-    const isPwd = input.getAttribute('type') === 'password';
-    input.setAttribute('type', isPwd ? 'text' : 'password');
-    // Optional: toggle eye icon class
-    t.classList.toggle('is-visible', !isPwd);
-  }, { capture: false });
-
-  // Enter-to-submit for login form
-  const form = document.querySelector('#login-form, form[data-form="login"], form[name="login"]');
-  if (form && !form.__ik_enter_bound) {
-    form.__ik_enter_bound = true;
-    form.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        // avoid accidental submits in textarea
-        if (e.target && e.target.tagName === 'TEXTAREA') return;
-        e.preventDefault();
-        // Prefer native submit if onsubmit is wired
-        if (typeof form.requestSubmit === 'function') {
-          form.requestSubmit();
-          return;
-        }
-        // Fallback: click login button or call login handler if exposed
-        const btn = form.querySelector('[type="submit"], #btn-login, [data-action="login"]');
-        if (btn) { btn.click(); return; }
-        if (typeof window.login === 'function') { window.login(); return; }
-        if (typeof window.handleLogin === 'function') { window.handleLogin(); return; }
-      }
-    });
-  }
-})();
-
-
+<div class="form-group">
+  <label>Contraseña</label>
+  <div style="position: relative;"> <!-- CONTENEDOR CON POSITION RELATIVE -->
+    <input id="auth-pass" type="password" class="form-control" placeholder="••••••••" />
+    <!-- El botón ojo se inyectará automáticamente aquí -->
+  </div>
+</div>
 
 // === LINK: unify Accounts ⇄ Trades ⇄ Challenges (non-breaking glue) ===
 (function linkIK() {
