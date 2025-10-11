@@ -3566,15 +3566,6 @@ function calculateRiskMetrics(trades, initialBalance) {
 }
 window.calculateRiskMetrics = calculateRiskMetrics;
 
-// === UX FIX: Enter-to-login + show/hide password (added, non-breaking) ===
-<div class="form-group">
-  <label for="auth-pass">Contraseña</label>
-  <div style="position: relative;"> <!-- CONTENEDOR CON POSITION RELATIVE -->
-    <input id="auth-pass" type="password" class="form-control" placeholder="••••••••" />
-    <!-- El botón ojo se inyectará automáticamente aquí -->
-  </div>
-</div>
-
 // === LINK: unify Accounts ⇄ Trades ⇄ Challenges (non-breaking glue) ===
 (function linkIK() {
   // Shared state container
